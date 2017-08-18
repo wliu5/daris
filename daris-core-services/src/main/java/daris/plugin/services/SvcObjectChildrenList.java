@@ -1,5 +1,6 @@
 package daris.plugin.services;
 
+import java.util.Collection;
 import java.util.List;
 
 import arc.mf.plugin.PluginService;
@@ -51,6 +52,8 @@ public class SvcObjectChildrenList extends PluginService {
 
         addSortArgument(_defn);
 
+        addFilterArgument(_defn);
+
         _defn.add(new Interface.Element("count", BooleanType.DEFAULT,
                 "If set, returns the number of matches in the set. Defaults to true.", 0, 1));
 
@@ -70,6 +73,11 @@ public class SvcObjectChildrenList extends PluginService {
         sort.add(new Interface.Element("order", new EnumType(new String[] { "asc", "desc" }),
                 "Sort ascending or descending. Default is ascending.", 0, 1));
         defn.add(sort);
+    }
+
+    static void addFilterArgument(Interface defn) {
+        defn.add(new Interface.Element("filter", StringType.DEFAULT,
+                "Additional selection query to filter the results.", 0, Integer.MAX_VALUE));
     }
 
     @Override
@@ -120,16 +128,24 @@ public class SvcObjectChildrenList extends PluginService {
         }
 
         StringBuilder sb = new StringBuilder();
+        sb.append("(");
         if (id == null && cid == null) {
             sb.append("model='om.pssd.project'");
         } else {
             if (cid == null) {
-                XmlDoc.Element ae = executor().execute("asset.get", "<args><id>" + id + "</id></args>", null, null)
-                        .element("asset");
-                cid = ae.value("cid");
+                cid = executor().execute("asset.identifier.get", "<args><id>" + id + "</id></args>", null, null)
+                        .value("id/@cid");
             }
             parentType = PSSDObject.Type.fromId(cid);
             sb.append("cid in '").append(cid).append("'");
+        }
+        sb.append(")");
+
+        Collection<String> filters = args.values("filter");
+        if (filters != null) {
+            for (String filter : filters) {
+                sb.append(" and (").append(filter).append(")");
+            }
         }
 
         String where = sb.toString();

@@ -1,5 +1,6 @@
 package daris.plugin.services;
 
+import java.util.Collection;
 import java.util.AbstractMap.SimpleEntry;
 
 import arc.mf.plugin.PluginService;
@@ -28,6 +29,7 @@ public class SvcObjectChildCursorGet extends PluginService {
                 "Number of results to return. Defaults to 100.", 0, 1));
 
         SvcObjectChildrenList.addSortArgument(_defn);
+        SvcObjectChildrenList.addFilterArgument(_defn);
     }
 
     @Override
@@ -56,11 +58,21 @@ public class SvcObjectChildCursorGet extends PluginService {
         int size = args.intValue("size", 100);
 
         StringBuilder sb = new StringBuilder();
+        sb.append("(");
         if (pid == null) {
             sb.append("model='om.pssd.project'");
         } else {
             sb.append("cid in '").append(pid).append("'");
         }
+        sb.append(")");
+
+        Collection<String> filters = args.values("filter");
+        if (filters != null) {
+            for (String filter : filters) {
+                sb.append(" and (").append(filter).append(")");
+            }
+        }
+
         String where = sb.toString();
 
         XmlDocMaker dm = new XmlDocMaker("args");
