@@ -77,7 +77,9 @@ public class SvcObjectChildCursorGet extends PluginService {
 
         XmlDocMaker dm = new XmlDocMaker("args");
         dm.add("where", where);
-        dm.add("seek-to", id);
+        if (id != null) {
+            dm.add("seek-to", id);
+        }
         dm.add("size", size);
         if (args.elementExists("sort")) {
             dm.add(args.element("sort"), true);
