@@ -132,7 +132,7 @@ public class CSAAttributeList {
 			dis.readInsistently(buffer, 0, length);
 			data[i] = bytesToString(buffer, 0, length, true);
 			// skip the padding 00
-			dis.skip((4 - length % 4) % 4);
+			dis.skipInsistently((4 - length % 4) % 4);
 		}
 		CSAAttribute csaa = new CSAAttribute(name, vm, vr, syngoDT, nItems,
 				data);
