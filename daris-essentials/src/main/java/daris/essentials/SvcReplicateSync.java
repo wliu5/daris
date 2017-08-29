@@ -338,10 +338,9 @@ public class SvcReplicateSync extends PluginService {
 				String path = t.get(4).value();
 				nExtra++;
 
-
 				// Put in correct list
 				if (type==null) {
-					destroyOther.add("id",  new String[]{"rid", rid}, idOnPeer);
+					destroyOther.add("id",  new String[]{"name", name, "rid", rid, "path", path}, idOnPeer);
 				} else {
 					if (type.equals("dicom/patient")) {
 						destroyDICOMPatient.add("id", new String[]{"name", name, "rid", rid, "path", path}, idOnPeer);
