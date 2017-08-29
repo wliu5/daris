@@ -3,9 +3,13 @@ package daris.plugin.services;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Objects;
 
 import arc.archive.ArchiveOutput;
 import arc.archive.ArchiveRegistry;
@@ -61,10 +65,10 @@ public class SvcTmpDirConsume extends PluginService {
     @Override
     public void execute(Element args, Inputs inputs0, Outputs outputs0, XmlWriter w) throws Throwable {
         final Path dir = Paths.get(args.value("path"));
-        if (Files.exists(dir)) {
+        if (!Files.exists(dir)) {
             throw new IllegalArgumentException("'file:" + dir + "' does not exist.");
         }
-        if (Files.isDirectory(dir)) {
+        if (!Files.isDirectory(dir)) {
             throw new IllegalArgumentException("'file:" + dir + "' is not a directory.");
         }
         XmlDoc.Element se = args.element("service");
@@ -85,9 +89,26 @@ public class SvcTmpDirConsume extends PluginService {
             public void run() {
                 try {
                     try {
-                        ArchiveOutput ao = ArchiveRegistry.createOutput(pos, ctype, clevel, null);
+                        final ArchiveOutput ao = ArchiveRegistry.createOutput(pos, ctype, clevel, null);
                         try {
-                            ao.addDirectory(dir.toString());
+                            Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+                                @Override
+                                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                                        throws IOException {
+                                    try {
+                                        ao.add(null, relativePath(dir, file), file.toFile());
+                                    } catch (Throwable e) {
+                                        e.printStackTrace(System.err);
+                                    }
+                                    return FileVisitResult.CONTINUE;
+                                }
+
+                                @Override
+                                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                                    exc.printStackTrace(System.err);
+                                    return FileVisitResult.CONTINUE;
+                                }
+                            });
                         } finally {
                             ao.close();
                         }
@@ -124,6 +145,12 @@ public class SvcTmpDirConsume extends PluginService {
             throw e;
         }
 
+    }
+
+    private static String relativePath(Path dir, Path file) {
+        String dirPath = dir.toString();
+        String filePath = file.toString();
+        return filePath.substring(dirPath.length() + 1);
     }
 
     @Override
