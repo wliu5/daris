@@ -1,5 +1,6 @@
 package daris.plugin.services;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -9,7 +10,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Objects;
 
 import arc.archive.ArchiveOutput;
 import arc.archive.ArchiveRegistry;
@@ -64,13 +64,15 @@ public class SvcTmpDirConsume extends PluginService {
 
     @Override
     public void execute(Element args, Inputs inputs0, Outputs outputs0, XmlWriter w) throws Throwable {
-        final Path dir = Paths.get(args.value("path"));
-        if (!Files.exists(dir)) {
-            throw new IllegalArgumentException("'file:" + dir + "' does not exist.");
+        Path tmpDir = Paths.get(args.value("path"));
+        if (!Files.exists(tmpDir)) {
+            throw new IllegalArgumentException("'file:" + tmpDir + "' does not exist.");
         }
-        if (!Files.isDirectory(dir)) {
-            throw new IllegalArgumentException("'file:" + dir + "' is not a directory.");
+        if (!Files.isDirectory(tmpDir)) {
+            throw new IllegalArgumentException("'file:" + tmpDir + "' is not a directory.");
         }
+        File[] files = tmpDir.toFile().listFiles();
+        final Path dir = (files != null && files.length == 1 && files[0].isDirectory()) ? files[0].toPath() : tmpDir;
         XmlDoc.Element se = args.element("service");
         String serviceName = se.value("@name");
         String atype = args.stringValue("atype", "aar");

@@ -67,6 +67,11 @@ public class SvcTmpDirFileUpload extends PluginService {
                 } else if ("error".equalsIgnoreCase(ifExists)) {
                     throw new Exception("'file:" + path + "' already exists.");
                 }
+            } else {
+                Path parentPath = path.getParent();
+                if (!Files.exists(parentPath)) {
+                    Files.createDirectories(parentPath);
+                }
             }
             PluginService.Input input = inputs.input(0);
             try {
