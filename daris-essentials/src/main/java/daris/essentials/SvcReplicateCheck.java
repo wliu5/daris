@@ -23,11 +23,10 @@ public class SvcReplicateCheck extends PluginService {
 	public SvcReplicateCheck() {
 		_defn = new Interface();
 		_defn.add(new Interface.Element("peer",StringType.DEFAULT, "Name of peer that objects have been replicated to.", 1, 1));
-		_defn.add(new Interface.Element("where",StringType.DEFAULT, "Query predicate to restrict the selected assets on the local host. If unset, all assets are considered.", 0, 1));
+		_defn.add(new Interface.Element("where",StringType.DEFAULT, "Query predicate to restrict the selected assets on the local host. If unset, all assets are considered. If there is more than one where clause, then the second and subsequent clauses are evaluated (linearly) against the result set of the first where clause (a post filter).", 0, Integer.MAX_VALUE));
 		_defn.add(new Interface.Element("size",IntegerType.DEFAULT, "Limit the accumulation loop to this number of assets per iteration (if too large, the host may run out of virtual memory).  Defaults to 5000.", 0, 1));
 		_defn.add(new Interface.Element("dst", StringType.DEFAULT, "The destination parent namespace. If supplied (use '/' for root namespace), assets will actually be replicated (one at a time; not efficient). The default is no replication.", 0, 1));
 		_defn.add(new Interface.Element("check-asset", BooleanType.DEFAULT, "Check modification time and size of existing replicas (default false) as well as their existence (hugely slows the process if activated).", 0, 1));
-		_defn.add(new Interface.Element("exclude-daris-proc", BooleanType.DEFAULT, "By default, processed DaRIS DataSets (ones for which (pssd-derivation/processed)='true' AND mf-dicom-series is absent) are included. Set to true to exclude these.", 0, 1));
 		_defn.add(new Interface.Element("use-indexes", BooleanType.DEFAULT, "Turn on or off the use of indexes in the query. Defaults to true.", 0, 1));
 		_defn.add(new Interface.Element("debug", BooleanType.DEFAULT, "Write some stuff in the log. Default to false.", 0, 1));
 		_defn.add(new Interface.Element("include-destroyed", BooleanType.DEFAULT, "Include soft destroyed assets (so don't include soft destroy selection in the where predicate. Default to false.", 0, 1));
@@ -62,7 +61,6 @@ public class SvcReplicateCheck extends PluginService {
 
 	public void execute(XmlDoc.Element args, Inputs in, Outputs out, XmlWriter w) throws Throwable {
 
-
 		// Init
 		int[] idx = new int[]{1};
 		int[] count = new int[]{0};
@@ -70,12 +68,11 @@ public class SvcReplicateCheck extends PluginService {
 		String dateTime = date.toString();     // Just used to tag message in log file
 
 		// Get inputs
-		String where = args.value("where");
+		Collection<String> wheres = args.values("where");
 		String peer = args.value("peer");
 		String size = args.stringValue("size", "5000");
 		String dst = args.value("dst");
 		Boolean checkAsset = args.booleanValue("check-asset", false);
-		Boolean exclDaRISProc = args.booleanValue("exclude-daris-proc", false);
 		Boolean useIndexes = args.booleanValue("use-indexes", true);
 		Boolean dbg = args.booleanValue("debug", false);
 		Boolean list = args.booleanValue("list", false);
@@ -100,8 +97,8 @@ public class SvcReplicateCheck extends PluginService {
 		Vector<String> assetIDs = new Vector<String>();
 		String schemaID = schemaID(executor());
 		while (more) {
-			more = find (executor(),  schemaID, dateTime, where, peer, sr, uuidLocal, size, 
-					assetIDs, checkAsset, exclDaRISProc, useIndexes, 
+			more = find (executor(),  schemaID, dateTime, wheres, peer, sr, uuidLocal, size, 
+					assetIDs, checkAsset, useIndexes, 
 					dbg,  list, includeDestroyed, idx, count, w);
 			if (dbg) {
 				log(dateTime, "nig.replicate.check : checking for abort \n");
@@ -182,15 +179,15 @@ public class SvcReplicateCheck extends PluginService {
 		return r.value("uuid");
 	}
 
-	private boolean find (ServiceExecutor executor, String schemaID, String dateTime, String where, String peer, ServerRoute sr, String uuidLocal, String size, 
-			Vector<String> assetList, Boolean checkAsset, Boolean exclDaRISProc, 
-			Boolean useIndexes, Boolean dbg, Boolean list,
+	private boolean find (ServiceExecutor executor, String schemaID, String dateTime, Collection<String> wheres, String peer, ServerRoute sr, String uuidLocal, String size, 
+			Vector<String> assetList, Boolean checkAsset,  Boolean useIndexes, Boolean dbg, Boolean list,
 			Boolean includeDestroyed, int[] idx, int[] count, XmlWriter w)	throws Throwable {
 
 		// Find local  assets  with the given query. We work through the cursor else
 		// we may run out of memory
 		if (dbg) log(dateTime, "nig.replicate.check : find assets on primary in chunk starting with idx = " + idx[0]);
 		XmlDocMaker dm = new XmlDocMaker("args");
+		/*
 		if (exclDaRISProc) {
 			// Drop processed DataSets from query
 			if (where==null) where = "";
@@ -198,25 +195,38 @@ public class SvcReplicateCheck extends PluginService {
 			// (not(xpath(pssd-derivation/processed)='true') or (mf-dicom-series has value))
 			where += " and ( (xpath(daris:pssd-derivation/processed)='false' or daris:pssd-derivation hasno value or daris:pssd-derivation/processed hasno value) or (mf-dicom-series has value) )";
 		}
+		*/
 		if (includeDestroyed) {
-			if (where==null) {
-				where = "((asset has been destroyed) or (asset has not been destroyed))";
+			if (wheres!=null) {
+				boolean first = true;
+				for (String where : wheres) {
+					if (first)  {
+						String where2 = where += " and ((asset has been destroyed) or (asset has not been destroyed))";
+						first = false;
+						dm.add("where", where2);						
+					} else {
+						dm.add("where", where);
+					}
+				}
 			} else {
-				where += "and ((asset has been destroyed) or (asset has not been destroyed))";
+				dm.add("where",  "((asset has been destroyed) or (asset has not been destroyed))");
 			}
-			dm.add("include-destroyed", true);
+			dm.add("include-destroyed", true);			
+		} else {
+			if (wheres!=null) {
+				for (String where : wheres) {
+					dm.add("where", where);
+				}
+			}
 		}
-		if (where!=null) dm.add("where", where);
 
+		
 		dm.add("idx", idx[0]);
 		dm.add("size", size);
 		dm.add("pdist", 0);
 		dm.add("action", "get-meta");
 		dm.add("use-indexes", useIndexes);
-		if (dbg) {
-			log(dateTime, "   nig.replicate.check : query string is '" + where + "'");
-
-		}
+		System.out.println("dm="+dm.root());
 		XmlDoc.Element r = executor().execute("asset.query", dm.root());
 		if (r==null) return false;  
 		Collection<XmlDoc.Element> assets = r.elements("asset");
