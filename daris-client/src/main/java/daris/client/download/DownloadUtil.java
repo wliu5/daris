@@ -21,31 +21,30 @@ import arc.utils.ProgressMonitor;
 import arc.xml.XmlDoc;
 import arc.xml.XmlDoc.Element;
 import arc.xml.XmlStringWriter;
-import daris.client.download.DownloadOptions.Parts;
+import daris.client.download.DataDownloadOptions.Parts;
 import daris.client.pssd.CiteableIdUtils;
+import daris.client.session.MFSession;
 import daris.client.util.XmlUtils;
 
 public class DownloadUtil {
 
-    public static void download(ServerClient.Connection cxn, Logger logger,
-            Set<String> cids, DownloadOptions options) throws Throwable {
+    public static void download(MFSession session, Logger logger, Set<String> cids, DataDownloadOptions options)
+            throws Throwable {
         for (String cid : cids) {
-            download(cxn, logger, cid, options);
+            download(session, logger, cid, options);
         }
     }
 
-    public static void download(ServerClient.Connection cxn, Logger logger,
-            String cid, DownloadOptions options) throws Throwable {
-        XmlDoc.Element ae = cxn.execute("asset.get",
-                "<cid>" + cid + "</cid><lock>true</lock>", null, null)
+    public static void download(MFSession session, Logger logger, String cid, DataDownloadOptions options)
+            throws Throwable {
+        XmlDoc.Element ae = session.execute("asset.get", "<cid>" + cid + "</cid><lock>true</lock>", null, null)
                 .element("asset");
         String assetId = ae.value("@id");
         try {
             if (!options.recursive()) {
-                downloadObject(cxn, logger, ae, options);
+                downloadObject(session, logger, ae, options);
             } else {
-                StringBuilder sb = new StringBuilder("(cid='").append(cid)
-                        .append("' or cid starts with '").append(cid)
+                StringBuilder sb = new StringBuilder("(cid='").append(cid).append("' or cid starts with '").append(cid)
                         .append("')");
                 if (options.filter() != null) {
                     sb.append("and (").append(options.filter()).append(")");
@@ -58,51 +57,44 @@ public class DownloadUtil {
                 int remaining = Integer.MAX_VALUE;
                 XmlDoc.Element re = null;
                 while (remaining > 0) {
-                    re = cxn.execute("asset.query",
-                            "<where>" + sb.toString()
-                                    + "</where><count>true</count><idx>" + idx
-                                    + "</idx><size>" + size
-                                    + "</size><action>get-meta</action>",
-                            null, null);
+                    re = session.execute("asset.query", "<where>" + sb.toString() + "</where><count>true</count><idx>"
+                            + idx + "</idx><size>" + size + "</size><action>get-meta</action>", null, null);
                     remaining = re.intValue("cursor/remaining", 0);
                     List<XmlDoc.Element> caes = re.elements("asset");
                     if (caes != null) {
                         for (XmlDoc.Element cae : caes) {
-                            downloadObject(cxn, logger, cae, options);
+                            downloadObject(session, logger, cae, options);
                         }
                     }
                     idx += size;
                 }
             }
         } finally {
-            cxn.execute("asset.unlock", "<id>" + assetId + "</id>", null, null);
+            session.execute("asset.unlock", "<id>" + assetId + "</id>", null, null);
         }
     }
 
-    private static void downloadObject(ServerClient.Connection cxn,
-            Logger logger, XmlDoc.Element ae, DownloadOptions options)
-                    throws Throwable {
+    private static void downloadObject(MFSession session, Logger logger, XmlDoc.Element ae, DataDownloadOptions options)
+            throws Throwable {
         File objectDir = createObjectDirectory(options.outputDir(), ae);
         if (options.includeAttachments()) {
-            Collection<String> attachments = ae
-                    .values("related[@type='attachment']/to");
+            Collection<String> attachments = ae.values("related[@type='attachment']/to");
             if (attachments != null && !attachments.isEmpty()) {
                 for (String attachment : attachments) {
-                    downloadAttachment(cxn, logger, ae, attachment, objectDir,
-                            options);
+                    downloadAttachment(session, logger, ae, attachment, objectDir, options);
                 }
             }
         }
         if (options.parts() == Parts.META || options.parts() == Parts.ALL) {
-            downloadMeta(cxn, logger, ae, objectDir, options);
+            downloadMeta(session, logger, ae, objectDir, options);
         }
         if (options.parts() == Parts.CONTENT || options.parts() == Parts.ALL) {
             String mimeType = ae.value("type");
             if (ae.elementExists("content")) {
                 if (options.hasTranscode(mimeType)) {
-                    transcodeContent(cxn, logger, ae, objectDir, options);
+                    transcodeContent(session, logger, ae, objectDir, options);
                 } else {
-                    downloadContent(cxn, logger, ae, objectDir, options);
+                    downloadContent(session, logger, ae, objectDir, options);
                 }
             }
         }
@@ -120,8 +112,7 @@ public class DownloadUtil {
         return "asset " + assetId;
     }
 
-    private static File createObjectDirectory(File outputDir, XmlDoc.Element ae)
-            throws Throwable {
+    private static File createObjectDirectory(File outputDir, XmlDoc.Element ae) throws Throwable {
         StringBuilder sb = new StringBuilder();
         String cid = ae.value("cid");
         String assetId = ae.value("@id");
@@ -135,8 +126,7 @@ public class DownloadUtil {
                 String subjectCID = CiteableIdUtils.getSubjectCID(cid);
                 sb.append(File.separator);
                 sb.append(subjectCID);
-                if (!(CiteableIdUtils.isSubjectCID(cid)
-                        || CiteableIdUtils.isExMethodCID(cid))) {
+                if (!(CiteableIdUtils.isSubjectCID(cid) || CiteableIdUtils.isExMethodCID(cid))) {
 
                     String studyCID = CiteableIdUtils.getStudyCID(cid);
                     sb.append(File.separator);
@@ -155,18 +145,15 @@ public class DownloadUtil {
         return objectDir;
     }
 
-    private static File createMetaFile(File objectDir, XmlDoc.Element ae)
-            throws Throwable {
+    private static File createMetaFile(File objectDir, XmlDoc.Element ae) throws Throwable {
         String cid = ae.value("cid");
         String assetId = ae.value("@id");
-        String fileName = new StringBuilder(cid == null ? assetId : cid)
-                .append(".meta.xml").toString();
+        String fileName = new StringBuilder(cid == null ? assetId : cid).append(".meta.xml").toString();
         File file = new File(objectDir, fileName);
         return file;
     }
 
-    private static File createAttachmentDirectory(File objectDir,
-            XmlDoc.Element aae) throws Throwable {
+    private static File createAttachmentDirectory(File objectDir, XmlDoc.Element aae) throws Throwable {
         String attachmentDirName = "attachment-" + aae.value("@id");
         File attachmentDir = new File(objectDir, attachmentDirName);
         if (!attachmentDir.exists()) {
@@ -175,8 +162,7 @@ public class DownloadUtil {
         return attachmentDir;
     }
 
-    private static File createContentDirectory(File objectDir,
-            XmlDoc.Element ae) throws Throwable {
+    private static File createContentDirectory(File objectDir, XmlDoc.Element ae) throws Throwable {
         String type = ae.value("type");
         if (type != null) {
             File contentDir = new File(objectDir, type.replace('/', '_'));
@@ -189,8 +175,7 @@ public class DownloadUtil {
         }
     }
 
-    private static File createContentFile(File contentDir, XmlDoc.Element ae)
-            throws Throwable {
+    private static File createContentFile(File contentDir, XmlDoc.Element ae) throws Throwable {
         String cid = ae.value("cid");
         String assetId = ae.value("@id");
         String ext = ae.value("content/type/@ext");
@@ -205,15 +190,14 @@ public class DownloadUtil {
         return contentFile;
     }
 
-    private static File createTranscodedDirectory(File objectDir, String type)
-            throws Throwable {
+    private static File createTranscodedDirectory(File objectDir, String type) throws Throwable {
         File transcodedDir = new File(objectDir, type.replace('/', '_'));
         transcodedDir.mkdirs();
         return transcodedDir;
     }
 
-    private static File createTranscodedFile(File transcodedDir,
-            XmlDoc.Element ae, String toType, String toExt) throws Throwable {
+    private static File createTranscodedFile(File transcodedDir, XmlDoc.Element ae, String toType, String toExt)
+            throws Throwable {
         String cid = ae.value("cid");
         String assetId = ae.value("@id");
         String ext = ae.value("content/type/@ext");
@@ -223,8 +207,7 @@ public class DownloadUtil {
             fileName = cid == null ? assetId : cid;
         }
         if (ext != null && fileName.endsWith("." + ext)) {
-            fileName = fileName.substring(0,
-                    fileName.length() - ext.length() - 1);
+            fileName = fileName.substring(0, fileName.length() - ext.length() - 1);
         }
         if (!fileName.endsWith("." + toExt)) {
             fileName += "." + toExt;
@@ -234,34 +217,28 @@ public class DownloadUtil {
         return file;
     }
 
-    private static void downloadMeta(ServerClient.Connection cxn, Logger logger,
-            XmlDoc.Element ae, File objectDir, DownloadOptions options)
-                    throws Throwable {
+    private static void downloadMeta(MFSession session, Logger logger, XmlDoc.Element ae, File objectDir,
+            DataDownloadOptions options) throws Throwable {
         File file = createMetaFile(objectDir, ae);
         String cid = ae.value("cid");
         String assetId = ae.value("@id");
         XmlDoc.Element e;
         if (cid == null) {
-            e = cxn.execute("asset.get", "<id>" + assetId + "</id>", null, null)
-                    .element("asset");
+            e = session.execute("asset.get", "<id>" + assetId + "</id>", null, null).element("asset");
         } else {
-            e = cxn.execute("om.pssd.object.describe", "<id>" + cid + "</id>",
-                    null, null).element("object");
+            e = session.execute("om.pssd.object.describe", "<id>" + cid + "</id>", null, null).element("object");
         }
         logger.info("writing file: " + file.getAbsolutePath());
         XmlUtils.saveToFile(e, file);
     }
 
-    private static void downloadAttachment(ServerClient.Connection cxn,
-            final Logger logger, XmlDoc.Element ae,
-            final String attachmentAssetId, File objectDir,
-            DownloadOptions options) throws Throwable {
+    private static void downloadAttachment(MFSession session, final Logger logger, XmlDoc.Element ae,
+            final String attachmentAssetId, File objectDir, DataDownloadOptions options) throws Throwable {
 
         /*
          * attachment asset meta
          */
-        XmlDoc.Element aae = cxn.execute("asset.get",
-                "<id>" + attachmentAssetId + "</id>", null, null)
+        XmlDoc.Element aae = session.execute("asset.get", "<id>" + attachmentAssetId + "</id>", null, null)
                 .element("asset");
 
         /*
@@ -278,8 +255,7 @@ public class DownloadUtil {
         File attachmentDir = createAttachmentDirectory(objectDir, aae);
         final File attachmentFile = new File(attachmentDir, attachmentFileName);
         if (attachmentFile.exists() && !options.overwrite()) {
-            logger.info("skipping attachment file: "
-                    + attachmentFile.getAbsolutePath());
+            logger.info("skipping attachment file: " + attachmentFile.getAbsolutePath());
             return;
         }
 
@@ -313,9 +289,8 @@ public class DownloadUtil {
             @Override
             public void update(final long itemProgress) {
                 _downloaded += itemProgress;
-                logger.fine("downloading attachment file: "
-                        + attachmentFile.getAbsolutePath() + "... "
-                        + _downloaded + "bytes downloaded.");
+                logger.fine("downloading attachment file: " + attachmentFile.getAbsolutePath() + "... " + _downloaded
+                        + "bytes downloaded.");
             }
         };
 
@@ -324,24 +299,18 @@ public class DownloadUtil {
          */
         ServerClient.OutputConsumer output = new ServerClient.OutputConsumer() {
             @Override
-            protected void consume(Element re, LongInputStream is)
-                    throws Throwable {
-                ProgressMonitoredInputStream pis = new ProgressMonitoredInputStream(
-                        pm, is, true);
-                logger.info(
-                        "writing file: " + attachmentFile.getAbsolutePath());
+            protected void consume(Element re, LongInputStream is) throws Throwable {
+                ProgressMonitoredInputStream pis = new ProgressMonitoredInputStream(pm, is, true);
+                logger.info("writing file: " + attachmentFile.getAbsolutePath());
                 StreamCopy.copy(pis, attachmentFile);
             }
         };
-        logger.info("downloading attachment file: "
-                + attachmentFile.getAbsolutePath());
-        cxn.execute("asset.content.get", "<id>" + attachmentAssetId + "</id>",
-                null, output);
+        logger.info("downloading attachment file: " + attachmentFile.getAbsolutePath());
+        session.execute("asset.content.get", "<id>" + attachmentAssetId + "</id>", null, output);
     }
 
-    private static void downloadContent(ServerClient.Connection cxn,
-            final Logger logger, final XmlDoc.Element ae, final File objectDir,
-            final DownloadOptions options) throws Throwable {
+    private static void downloadContent(MFSession session, final Logger logger, final XmlDoc.Element ae,
+            final File objectDir, final DataDownloadOptions options) throws Throwable {
         String assetId = ae.value("@id");
         final String title = titleFor(ae);
         final String ctype = ae.value("content/type");
@@ -374,55 +343,44 @@ public class DownloadUtil {
             @Override
             public void update(final long itemProgress) {
                 _downloaded += itemProgress;
-                logger.fine("downloading content of " + title + "... "
-                        + _downloaded + " bytes downloaded.");
+                logger.fine("downloading content of " + title + "... " + _downloaded + " bytes downloaded.");
             }
         };
 
         ServerClient.OutputConsumer output = new ServerClient.OutputConsumer() {
             @Override
-            protected void consume(Element re, LongInputStream is)
-                    throws Throwable {
-                ProgressMonitoredInputStream pis = new ProgressMonitoredInputStream(
-                        pm, is, true);
+            protected void consume(Element re, LongInputStream is) throws Throwable {
+                ProgressMonitoredInputStream pis = new ProgressMonitoredInputStream(pm, is, true);
                 Archive.declareSupportForAllTypes();
-                if (ArchiveRegistry.isAnArchive(ctype)
-                        && options.decompress()) {
-                    ArchiveInput ai = ArchiveRegistry.createInput(
-                            new NonCloseInputStream(pis),
+                if (ArchiveRegistry.isAnArchive(ctype) && options.decompress()) {
+                    ArchiveInput ai = ArchiveRegistry.createInput(new NonCloseInputStream(pis),
                             new NamedMimeType(ctype));
                     logger.info("extracting content archive of " + title);
-                    ArchiveExtractor.extract(ai, contentDir, true,
-                            options.overwrite(), false,
+                    ArchiveExtractor.extract(ai, contentDir, true, options.overwrite(), false,
                             new ArchiveExtractor.Terminator() {
-                        private long _totalDecompressed = 0;
+                                private long _totalDecompressed = 0;
 
-                        @Override
-                        public void checkIfTerminatedProcessed(
-                                long bytesDecompressed) throws Throwable {
-                            _totalDecompressed += bytesDecompressed;
-                            logger.fine("extracting content archive of " + title
-                                    + "... " + _totalDecompressed
-                                    + " bytes extracted.");
+                                @Override
+                                public void checkIfTerminatedProcessed(long bytesDecompressed) throws Throwable {
+                                    _totalDecompressed += bytesDecompressed;
+                                    logger.fine("extracting content archive of " + title + "... " + _totalDecompressed
+                                            + " bytes extracted.");
 
-                        }
+                                }
 
-                        @Override
-                        public void checkIfTerminatedAfterEntry()
-                                throws Throwable {
-                            // nbFielsDecompressed++;
-                        }
-                    });
+                                @Override
+                                public void checkIfTerminatedAfterEntry() throws Throwable {
+                                    // nbFielsDecompressed++;
+                                }
+                            });
                     ArchiveInput.discardToEndOfStream(pis);
                 } else {
                     File contentFile = createContentFile(contentDir, ae);
                     if (!contentFile.exists() || options.overwrite()) {
-                        logger.info("writing file: "
-                                + contentFile.getAbsolutePath());
+                        logger.info("writing file: " + contentFile.getAbsolutePath());
                         StreamCopy.copy(pis, contentFile);
                     } else {
-                        logger.info("skipping file: "
-                                + contentFile.getAbsolutePath());
+                        logger.info("skipping file: " + contentFile.getAbsolutePath());
                         // TODO: check if pis.discard() can be used.
                         StreamCopy.copy(pis, new OutputStream() {
                             @Override
@@ -435,13 +393,11 @@ public class DownloadUtil {
             }
         };
         logger.info("downloading content of " + title);
-        cxn.execute("asset.content.get", "<id>" + assetId + "</id>", null,
-                output);
+        session.execute("asset.content.get", "<id>" + assetId + "</id>", null, output);
     }
 
-    private static void transcodeContent(ServerClient.Connection cxn,
-            final Logger logger, final XmlDoc.Element ae, File objectDir,
-            final DownloadOptions options) throws Throwable {
+    private static void transcodeContent(MFSession session, final Logger logger, final XmlDoc.Element ae,
+            File objectDir, final DataDownloadOptions options) throws Throwable {
         String assetId = ae.value("@id");
         String type = ae.value("type");
         final String toType = options.transcode(type);
@@ -484,55 +440,44 @@ public class DownloadUtil {
             @Override
             public void update(final long itemProgress) {
                 _downloaded += itemProgress;
-                logger.fine("downloading transcoded content of " + title
-                        + "... " + _downloaded + " bytes downloaded.");
+                logger.fine("downloading transcoded content of " + title + "... " + _downloaded + " bytes downloaded.");
             }
         };
 
         ServerClient.OutputConsumer output = new ServerClient.OutputConsumer() {
             @Override
-            protected void consume(Element re, LongInputStream is)
-                    throws Throwable {
-                ProgressMonitoredInputStream pis = new ProgressMonitoredInputStream(
-                        pm, is, true);
+            protected void consume(Element re, LongInputStream is) throws Throwable {
+                ProgressMonitoredInputStream pis = new ProgressMonitoredInputStream(pm, is, true);
                 Archive.declareSupportForAllTypes();
                 if (options.decompress()) {
-                    ArchiveInput ai = ArchiveRegistry.createInput(
-                            new NonCloseInputStream(pis),
+                    ArchiveInput ai = ArchiveRegistry.createInput(new NonCloseInputStream(pis),
                             new NamedMimeType("application/arc-archive"));
                     logger.info("extracting transcoded content of " + title);
-                    ArchiveExtractor.extract(ai, transcodedDir, true,
-                            options.overwrite(), false,
+                    ArchiveExtractor.extract(ai, transcodedDir, true, options.overwrite(), false,
                             new ArchiveExtractor.Terminator() {
-                        private long _totalDecompressed = 0;
+                                private long _totalDecompressed = 0;
 
-                        @Override
-                        public void checkIfTerminatedProcessed(
-                                long bytesDecompressed) throws Throwable {
-                            _totalDecompressed += bytesDecompressed;
-                            logger.fine("extracting transcoded content of "
-                                    + title + "... " + _totalDecompressed
-                                    + " bytes extracted.");
-                        }
+                                @Override
+                                public void checkIfTerminatedProcessed(long bytesDecompressed) throws Throwable {
+                                    _totalDecompressed += bytesDecompressed;
+                                    logger.fine("extracting transcoded content of " + title + "... "
+                                            + _totalDecompressed + " bytes extracted.");
+                                }
 
-                        @Override
-                        public void checkIfTerminatedAfterEntry()
-                                throws Throwable {
-                            // nbFielsDecompressed++;
-                        }
-                    });
+                                @Override
+                                public void checkIfTerminatedAfterEntry() throws Throwable {
+                                    // nbFielsDecompressed++;
+                                }
+                            });
                     ArchiveInput.discardToEndOfStream(pis);
                 } else {
 
-                    File transcodedFile = createTranscodedFile(transcodedDir,
-                            ae, toType, atype);
+                    File transcodedFile = createTranscodedFile(transcodedDir, ae, toType, atype);
                     if (!transcodedFile.exists() || options.overwrite()) {
-                        logger.info("writing file: "
-                                + transcodedFile.getAbsolutePath());
+                        logger.info("writing file: " + transcodedFile.getAbsolutePath());
                         StreamCopy.copy(pis, transcodedFile);
                     } else {
-                        logger.info("skipping file: "
-                                + transcodedFile.getAbsolutePath());
+                        logger.info("skipping file: " + transcodedFile.getAbsolutePath());
                         // TODO: check if pis.discard() can be used.
                         StreamCopy.copy(pis, new OutputStream() {
                             @Override
@@ -544,7 +489,7 @@ public class DownloadUtil {
             }
         };
         logger.info("transcoding " + title + " from " + type + " to " + toType);
-        cxn.execute("asset.transcode", w.document(), null, output);
+        session.execute("asset.transcode", w.document(), null, output);
     }
 
 }

@@ -47,7 +47,7 @@ public class SvcCollectionContentSizeSum extends PluginService {
         boolean includeAttachments = args.booleanValue("include-attachments", true);
         XmlDoc.Element ve = sumContentSize(executor(), cid, where, includeAttachments);
         int nbAssets = ve.intValue("@nbe", 0);
-        long totalSize = ve.longValue();
+        long totalSize = ve.value() == null ? 0 : ve.longValue();
         w.add("size", new String[] { "nbe", Integer.toString(nbAssets) }, totalSize);
     }
 

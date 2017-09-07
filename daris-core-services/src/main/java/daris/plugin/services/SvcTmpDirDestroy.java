@@ -8,6 +8,7 @@ import arc.mf.plugin.PluginService;
 import arc.mf.plugin.dtype.StringType;
 import arc.xml.XmlDoc.Element;
 import arc.xml.XmlWriter;
+import daris.util.FileUtils;
 
 public class SvcTmpDirDestroy extends PluginService {
 
@@ -38,7 +39,9 @@ public class SvcTmpDirDestroy extends PluginService {
     @Override
     public void execute(Element args, Inputs inputs, Outputs outputs, XmlWriter w) throws Throwable {
         Path dir = Paths.get(args.value("path"));
-        Files.deleteIfExists(dir);
+        if (Files.exists(dir) && Files.isDirectory(dir)) {
+            FileUtils.deleteDirectory(dir);
+        }
     }
 
     @Override

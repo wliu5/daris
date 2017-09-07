@@ -22,6 +22,7 @@ import arc.mf.plugin.dtype.StringType;
 import arc.mf.plugin.dtype.XmlDocType;
 import arc.xml.XmlDoc;
 import arc.xml.XmlDoc.Element;
+import daris.util.FileUtils;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
 
@@ -124,9 +125,10 @@ public class SvcTmpDirConsume extends PluginService {
                     e.printStackTrace(System.out);
                     System.out.println("Deleting temporary directory: " + dir);
                     try {
-                        Files.deleteIfExists(dir);
+                        FileUtils.deleteDirectory(dir);
                     } catch (IOException ioe) {
-                        ioe.printStackTrace();
+                        System.err.println("Failed to delete directory: " + dir);
+                        ioe.printStackTrace(System.err);
                     }
                 }
             }

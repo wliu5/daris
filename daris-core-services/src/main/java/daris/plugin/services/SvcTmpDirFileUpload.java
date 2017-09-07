@@ -2,6 +2,7 @@ package daris.plugin.services;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,6 +14,7 @@ import arc.mf.plugin.dtype.StringType;
 import arc.streams.StreamCopy;
 import arc.xml.XmlDoc.Element;
 import arc.xml.XmlWriter;
+import daris.util.FileUtils;
 
 public class SvcTmpDirFileUpload extends PluginService {
 
@@ -82,7 +84,12 @@ public class SvcTmpDirFileUpload extends PluginService {
         } catch (Throwable e) {
             if (cleanupOnError) {
                 System.out.println("Deleting temporary directory: " + dir);
-                Files.deleteIfExists(dir);
+                try {
+                    FileUtils.deleteDirectory(dir);
+                } catch (IOException ioe) {
+                    System.err.println("Failed to delete directory: " + dir);
+                    ioe.printStackTrace(System.err);
+                }
             }
             throw e;
         }
