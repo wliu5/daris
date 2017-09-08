@@ -101,10 +101,14 @@ public class AssetDownloadTask extends AbstractTask {
         String cid = ae.value("cid");
         String assetId = ae.value("@id");
         if (cid == null) {
-            sb.append(File.separator).append(assetId).toString();
+            sb.append("__asset_id__").append(assetId);
+            String assetName = ae.value("name");
+            if (assetName != null) {
+                sb.append("_").append(assetName.replaceAll("[\\/:*?\"<>|]", "_"));
+            }
         } else {
+            // TODO
             String projectCID = CiteableIdUtils.getProjectCID(cid);
-            sb.append(File.separator);
             sb.append(projectCID);
             if (!CiteableIdUtils.isProjectCID(cid)) {
                 String subjectCID = CiteableIdUtils.getSubjectCID(cid);
@@ -253,7 +257,7 @@ public class AssetDownloadTask extends AbstractTask {
                 StreamCopy.copy(is, attachmentFile);
             }
         };
-        log.logInfo("downloading attachment file: " + attachmentFile.getAbsolutePath());
+        log.logInfo("Downloading attachment: '" + attachmentFile.getAbsolutePath() + "'");
         session.execute("asset.content.get", "<id>" + attachmentAssetId + "</id>", null, output);
     }
 
@@ -271,7 +275,7 @@ public class AssetDownloadTask extends AbstractTask {
                 try {
                     if (ArchiveRegistry.isAnArchive(ctype) && options.decompress()) {
                         ArchiveInput ai = ArchiveRegistry.createInput(is, new NamedMimeType(ctype));
-                        logger.logInfo("extracting content archive of " + title);
+                        logger.logInfo("Unpacking: " + title + "...");
                         try {
                             ArchiveExtractor.extract(ai, contentDir, true, options.overwrite(), false);
                             // ArchiveInput.discardToEndOfStream(is);
@@ -292,7 +296,7 @@ public class AssetDownloadTask extends AbstractTask {
                 }
             }
         };
-        logger.logInfo("downloading content of " + title);
+        logger.logInfo("Downloading: " + title + "...");
         session.execute("asset.content.get", "<id>" + assetId + "</id>", null, output);
     }
 

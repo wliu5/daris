@@ -1,15 +1,8 @@
 package daris.client.cli;
 
 import java.io.File;
-import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.logging.FileHandler;
-import java.util.logging.Formatter;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
-import java.util.logging.StreamHandler;
 
 import daris.client.download.DataDownload;
 import daris.client.download.DataDownloadOptions;
@@ -20,10 +13,10 @@ import daris.client.session.MFSession;
 
 public class DataDownloadCLI {
 
-    public static void main(String[] args) throws Throwable {
+    public static void main(String[] args) {
 
         if (args == null || args.length == 0) {
-            showHelp();
+            showUsage();
             System.exit(1);
         }
 
@@ -33,7 +26,7 @@ public class DataDownloadCLI {
         try {
             for (int i = 0; i < args.length;) {
                 if (args[i].equals("--help") || args[i].equals("-h")) {
-                    showHelp();
+                    showUsage();
                     System.exit(0);
                 } else if (args[i].equals("--mf.host")) {
                     connectionSettings.setServerHost(args[i + 1]);
@@ -138,64 +131,19 @@ public class DataDownloadCLI {
             }
             MFSession session = new MFSession(connectionSettings);
             try {
+                session.startPingServerPeriodically(60000);
                 new DataDownload(session, cids, options).run();
             } finally {
                 session.discard();
             }
         } catch (Throwable ex) {
             ex.printStackTrace(System.err);
-            showHelp();
+            if (ex instanceof IllegalArgumentException) {
+                showUsage();
+            }
             System.exit(1);
         }
 
-    }
-
-    static Logger createLogger() throws Throwable {
-        Logger logger = Logger.getLogger("daris-download");
-        logger.setLevel(Level.ALL);
-        logger.setUseParentHandlers(false);
-        /*
-         * add file handler
-         */
-        try {
-            FileHandler fileHandler = new FileHandler("%t/.daris-download.%g.log", 5000000, 2);
-            fileHandler.setLevel(Level.ALL);
-            fileHandler.setFormatter(new Formatter() {
-
-                @Override
-                public String format(LogRecord record) {
-                    StringBuilder sb = new StringBuilder();
-                    sb.append(new Date(record.getMillis())).append(" ");
-                    sb.append("[thread: ").append(record.getThreadID()).append("] ");
-                    sb.append(record.getLevel().getName()).append(" ");
-                    sb.append(record.getMessage());
-                    sb.append("\n");
-                    return sb.toString();
-                }
-            });
-            logger.addHandler(fileHandler);
-        } catch (Throwable e) {
-            System.err.println("Warning: failed to create .daris-download.*.log file.");
-            e.printStackTrace(System.err);
-        }
-        /*
-         * console handler
-         */
-        StreamHandler consoleHandler = new StreamHandler(System.out, new Formatter() {
-            @Override
-            public String format(LogRecord record) {
-                return record.getMessage() + "\n";
-            }
-        }) {
-            @Override
-            public synchronized void publish(LogRecord record) {
-                super.publish(record);
-                super.flush();
-            }
-        };
-        consoleHandler.setLevel(Level.INFO);
-        logger.addHandler(consoleHandler);
-        return logger;
     }
 
     private static void parseTranscodes(DataDownloadOptions options, String transcodes) {
@@ -209,7 +157,7 @@ public class DataDownloadCLI {
         }
     }
 
-    private static void showHelp() {
+    private static void showUsage() {
         // @formatter:off
         System.out.println();
         System.out.println("USAGE: ");
