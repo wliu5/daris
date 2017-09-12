@@ -123,6 +123,7 @@ public class SvcTmpDirConsume extends PluginService {
                     }
                 } catch (Throwable e) {
                     e.printStackTrace(System.out);
+                } finally {
                     System.out.println("Deleting temporary directory: " + dir);
                     try {
                         FileUtils.deleteDirectory(dir);
