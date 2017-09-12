@@ -23,7 +23,7 @@ source mime-types.tcl
 
 # install plugins
 set plugin_label      [string toupper PACKAGE_$package]
-set plugin_namespace  mflux/plugins
+set plugin_namespace  mflux/plugins/daris-transcoders
 set plugin_zip        daris-transcoders-plugin.zip
 set plugin_jar        daris-transcoders-plugin.jar
 set plugin_path       $plugin_namespace/$plugin_jar
