@@ -51,7 +51,7 @@ asset.doc.type.update :create yes :type daris:siemens-raw-mr-study \
 #=============================================================================
 asset.doc.type.update :create yes :type daris:siemens-raw-petct-series \
     :label "siemens-raw-petct-series" \
-    :description "Meta-describing raw Siemens PET and CT files" \
+    :description "Meta-describing raw Siemens PET and CT DataSets" \
     :definition < \
     :element -name "date" -type "date" -index "true" -max-occurs "1" < \
         :description "Date and time of the acquisition" > \
@@ -88,3 +88,25 @@ asset.doc.type.update :create yes :type daris:siemens-raw-petct-series \
         :description "Date and time that the acquisition was exported from the Biograph Console system" > \
     :element -name "date-expire" -type "date" -index true -min-occurs 0 -max-occurs 1 < \
         :description "Date when asset expires from archive and can be destroyed." > >
+        
+        
+        
+#=============================================================================
+# daris:siemens-raw-mr-series
+#=============================================================================
+asset.doc.type.update :create yes :type daris:siemens-raw-mr-series \
+    :label "siemens-raw-mr-series" \
+    :description "Meta-describing raw Siemens MR DataSets" \
+    :definition < \
+    :element -name "date" -type "date" -index "true" -max-occurs "1" < \
+        :description "Date and time of the acquisition" > \
+    :element -name "modality" -type "enumeration" -max-occurs "1" < \
+        :description "Modality of data " \
+        :restriction -base "enumeration" < \
+            :value "MR" \
+            :case-sensitive "true" > > \
+    :element -name "description" -type "string" -index "true" -max-occurs "1" < \
+        :description "Description of the acquisition" > \
+    :element -name "date-expire" -type "date" -index true -min-occurs 0 -max-occurs 1 < \
+        :description "Date when asset expires from archive and can be destroyed." > >
+        
