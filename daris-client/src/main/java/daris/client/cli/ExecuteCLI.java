@@ -1,8 +1,6 @@
 package daris.client.cli;
 
 import java.io.File;
-import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -18,10 +16,6 @@ import arc.mf.client.ServerClient;
 import arc.mf.client.ServerClient.ExSessionInvalid;
 import arc.mf.client.ServerClient.Input;
 import arc.mf.client.ServerClient.Output;
-import arc.streams.LongInputStream;
-import arc.streams.SizedInputStream;
-import arc.streams.UnsizedInputStream;
-import arc.utils.URLUtil;
 import arc.xml.XmlDoc;
 import arc.xml.XmlDoc.Element;
 
@@ -160,12 +154,10 @@ public class ExecuteCLI {
             if (parts.length == 3) {
                 _domain = parts[0];
                 _user = parts[1];
-                if (parts[2].matches(
-                        "^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$")
+                if (parts[2].matches("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$")
                         && Base64.isBase64(parts[2])) {
                     // password is base64 encoded.
-                    _password = new String(Base64.decodeBase64(parts[2]))
-                            .trim();
+                    _password = new String(Base64.decodeBase64(parts[2])).trim();
                 } else {
                     _password = parts[2];
                 }
@@ -180,14 +172,13 @@ public class ExecuteCLI {
         }
 
         public void setOutputFormat(String outputFormat) {
-            _outputFormat = OutputFormat.fromString(outputFormat,
-                    OutputFormat.SHELL);
+            _outputFormat = OutputFormat.fromString(outputFormat, OutputFormat.SHELL);
         }
 
         public void setPort(int port) throws Throwable {
             if (port < 0 || port > 65535) {
-                throw new ArgumentParseException("Invalid mf.port: " + port
-                        + ". Expects a integer between 0 and 65535.");
+                throw new ArgumentParseException(
+                        "Invalid mf.port: " + port + ". Expects a integer between 0 and 65535.");
             }
             _port = port;
         }
@@ -201,8 +192,7 @@ public class ExecuteCLI {
             try {
                 p = Integer.parseInt(port);
             } catch (Throwable e) {
-                throw new ArgumentParseException(
-                        "Failed to parse mf.port: " + port + ".");
+                throw new ArgumentParseException("Failed to parse mf.port: " + port + ".");
             }
             setPort(p);
         }
@@ -216,8 +206,7 @@ public class ExecuteCLI {
             if (isFile) {
                 _sid = readFromSidFile(new File(sid));
                 if (_sid == null) {
-                    throw new ArgumentParseException(
-                            "Invalid sid file: " + sid);
+                    throw new ArgumentParseException("Invalid sid file: " + sid);
                 }
             } else {
                 _sid = sid;
@@ -234,11 +223,9 @@ public class ExecuteCLI {
                 _encrypt = null;
                 return;
             }
-            if (!("HTTP".equalsIgnoreCase(transport)
-                    || "HTTPS".equalsIgnoreCase(transport)
+            if (!("HTTP".equalsIgnoreCase(transport) || "HTTPS".equalsIgnoreCase(transport)
                     || "TCP/IP".equalsIgnoreCase(transport))) {
-                throw new ArgumentParseException(
-                        "Invalid mf.transport: " + transport);
+                throw new ArgumentParseException("Invalid mf.transport: " + transport);
             }
             if (transport.equalsIgnoreCase("HTTP")) {
                 _useHttp = true;
@@ -286,8 +273,7 @@ public class ExecuteCLI {
 
     public static enum OutputFormat {
         SHELL, XML;
-        public static OutputFormat fromString(String s,
-                OutputFormat defaultValue) {
+        public static OutputFormat fromString(String s, OutputFormat defaultValue) {
             if (s != null) {
                 if (XML.name().equalsIgnoreCase(s)) {
                     return XML;
@@ -301,44 +287,18 @@ public class ExecuteCLI {
 
     private static class ServiceCommand {
 
-        private static ServerClient.Input createInput(String s)
-                throws Throwable {
+        private static ServerClient.Input createInput(String s) throws Throwable {
             if (s.startsWith("file:") || s.startsWith("FILE:")) {
                 return new ServerClient.FileInput(new File(s.substring(5)));
-            } else if (s.startsWith("http://") || s.startsWith("HTTP://")
-                    || s.startsWith("https://") || s.startsWith("HTTPS://")
-                    || s.startsWith("ftp://") || s.startsWith("FTP://")) {
-                return createUrlInput(s);
+            } else if (s.startsWith("http://") || s.startsWith("HTTP://") || s.startsWith("https://")
+                    || s.startsWith("HTTPS://") || s.startsWith("ftp://") || s.startsWith("FTP://")) {
+                return ServerClient.createInputFromURL(s);
             } else {
                 return new ServerClient.FileInput(new File(s));
             }
         }
 
-        private static ServerClient.Input createUrlInput(String url)
-                throws Throwable {
-            URL urlObject = new URL(url);
-            final URLConnection conn = urlObject.openConnection();
-            String type = conn.getContentType();
-            if (type != null) {
-                int idx = type.indexOf(';');
-                if (idx != -1) {
-                    type = type.substring(0, idx);
-                }
-            }
-            LongInputStream is = URLUtil.openStream(urlObject.toExternalForm());
-            long length = is.remaining();
-            String source = url.replace('\\', '/');
-            if (length < 0L) {
-                return new ServerClient.Input(type, new UnsizedInputStream(is),
-                        source);
-            } else {
-                return new ServerClient.Input(type,
-                        new SizedInputStream(is, length), source);
-            }
-        }
-
-        private static ServerClient.Output createOutput(String s)
-                throws Throwable {
+        private static ServerClient.Output createOutput(String s) throws Throwable {
             if (s.startsWith("file:") || s.startsWith("FILE:")) {
                 return new ServerClient.FileOutput(new File(s.substring(5)));
             } else {
@@ -346,8 +306,7 @@ public class ExecuteCLI {
             }
         }
 
-        private static XmlDoc.Element parseArgsFromXmlString(String args)
-                throws Throwable {
+        private static XmlDoc.Element parseArgsFromXmlString(String args) throws Throwable {
             StringBuilder sb = new StringBuilder(args);
             if (!args.startsWith("<args>")) {
                 sb.insert(0, "<args>");
@@ -410,16 +369,13 @@ public class ExecuteCLI {
             if (argsStr.startsWith("<") && argsStr.endsWith(">")) {
                 // xml string
                 args = parseArgsFromXmlString(argsStr);
-            } else if (new File(argsStr).exists()
-                    && new File(argsStr).isFile()) {
+            } else if (new File(argsStr).exists() && new File(argsStr).isFile()) {
                 // xml file
                 args = parseArgsFromXmlString(
-                        new String(Files.readAllBytes(Paths.get(argsStr)))
-                                .replace("\r\n", "").trim());
+                        new String(Files.readAllBytes(Paths.get(argsStr))).replace("\r\n", "").trim());
             } else {
                 throw new ArgumentParseException(
-                        "Failed parse service arguments: " + argsStr
-                                + ". Expects a xml string or a xml file path.");
+                        "Failed parse service arguments: " + argsStr + ". Expects a xml string or a xml file path.");
             }
             if (args != null) {
                 List<XmlDoc.Element> ies = args.elements("in");
@@ -432,9 +388,7 @@ public class ExecuteCLI {
                 List<XmlDoc.Element> oes = args.elements("out");
                 if (oes != null) {
                     if (oes.size() > 1) {
-                        throw new ArgumentParseException(
-                                "Expects at most 1 service output. Found "
-                                        + oes.size());
+                        throw new ArgumentParseException("Expects at most 1 service output. Found " + oes.size());
                     }
                     XmlDoc.Element oe = oes.get(0);
                     _output = createOutput(oe.value());
@@ -452,8 +406,7 @@ public class ExecuteCLI {
 
     public static class ShellString {
 
-        public static String format(Element re,
-                boolean includeTopLevelElement) {
+        public static String format(Element re, boolean includeTopLevelElement) {
             if (re == null) {
                 return null;
             }
@@ -471,8 +424,7 @@ public class ExecuteCLI {
             return sb.toString();
         }
 
-        private static void format(StringBuilder sb, Element re, int indent,
-                int step) {
+        private static void format(StringBuilder sb, Element re, int indent, int step) {
             sb.append(new String(new char[indent]).replace('\0', ' '));
             sb.append(":" + re.name());
             if (re.hasAttributes()) {
@@ -506,8 +458,7 @@ public class ExecuteCLI {
         }
     }
 
-    private static void execute(Options options, String[] cmdArgs)
-            throws Throwable {
+    private static void execute(Options options, String[] cmdArgs) throws Throwable {
 
         ServiceCommand svc = new ServiceCommand();
         svc.setService(cmdArgs[0]);
@@ -516,15 +467,12 @@ public class ExecuteCLI {
         }
         XmlDoc.Element re = null;
         if (options.hasAuth()) {
-            re = execute(options.host(), options.port(), options.useHttp(),
-                    options.encrypt(), options.app(), options.domain(),
-                    options.user(), options.password(), svc.service(),
-                    svc.args(), svc.inputs(), svc.output());
-        } else {
-            re = execute(options.host(), options.port(), options.useHttp(),
-                    options.encrypt(), options.app(), options.sid(),
-                    options.token(), svc.service(), svc.args(), svc.inputs(),
+            re = execute(options.host(), options.port(), options.useHttp(), options.encrypt(), options.app(),
+                    options.domain(), options.user(), options.password(), svc.service(), svc.args(), svc.inputs(),
                     svc.output());
+        } else {
+            re = execute(options.host(), options.port(), options.useHttp(), options.encrypt(), options.app(),
+                    options.sid(), options.token(), svc.service(), svc.args(), svc.inputs(), svc.output());
         }
         if (options.outputFormat() == OutputFormat.XML) {
             System.out.println(re.toString());
@@ -534,10 +482,8 @@ public class ExecuteCLI {
 
     }
 
-    private static XmlDoc.Element execute(String host, int port,
-            boolean useHttp, boolean encrypt, String app, String sid,
-            String token, String service, String args, List<Input> inputs,
-            Output output) throws Throwable {
+    private static XmlDoc.Element execute(String host, int port, boolean useHttp, boolean encrypt, String app,
+            String sid, String token, String service, String args, List<Input> inputs, Output output) throws Throwable {
         RemoteServer server = new RemoteServer(host, port, useHttp, encrypt);
         ServerClient.Connection cxn = null;
         XmlDoc.Element re = null;
@@ -563,10 +509,9 @@ public class ExecuteCLI {
         return re;
     }
 
-    private static XmlDoc.Element execute(String host, int port,
-            boolean useHttp, boolean encrypt, String app, String domain,
-            String user, String password, String service, String args,
-            List<Input> inputs, Output output) throws Throwable {
+    private static XmlDoc.Element execute(String host, int port, boolean useHttp, boolean encrypt, String app,
+            String domain, String user, String password, String service, String args, List<Input> inputs, Output output)
+            throws Throwable {
         RemoteServer server = new RemoteServer(host, port, useHttp, encrypt);
         ServerClient.Connection cxn = null;
         XmlDoc.Element re = null;
@@ -587,8 +532,7 @@ public class ExecuteCLI {
     }
 
     public static String getDefaultSidFilePath(String host) {
-        return System.getProperty("user.home") + File.separatorChar
-                + ".MFLUX_SID_" + host;
+        return System.getProperty("user.home") + File.separatorChar + ".MFLUX_SID_" + host;
     }
 
     private static void logoff(Options options) throws Throwable {
@@ -597,8 +541,7 @@ public class ExecuteCLI {
         if (sidFile.exists()) {
             sidFile.delete();
         }
-        RemoteServer server = new RemoteServer(options.host(), options.port(),
-                options.useHttp(), options.encrypt());
+        RemoteServer server = new RemoteServer(options.host(), options.port(), options.useHttp(), options.encrypt());
         ServerClient.Connection cxn = null;
         try {
             cxn = server.open();
@@ -610,11 +553,9 @@ public class ExecuteCLI {
         }
     }
 
-    private static void logon(Options options, String[] cmdArgs)
-            throws Throwable {
+    private static void logon(Options options, String[] cmdArgs) throws Throwable {
         if (cmdArgs == null || cmdArgs.length != 3) {
-            throw new ArgumentParseException(
-                    "Invalid arguments for logon command.");
+            throw new ArgumentParseException("Invalid arguments for logon command.");
         }
         String domain = cmdArgs[0];
         String user = cmdArgs[1];
@@ -622,8 +563,7 @@ public class ExecuteCLI {
         if (options.sid() != null) {
             logoff(options);
         }
-        RemoteServer server = new RemoteServer(options.host(), options.port(),
-                options.useHttp(), options.encrypt());
+        RemoteServer server = new RemoteServer(options.host(), options.port(), options.useHttp(), options.encrypt());
         ServerClient.Connection cxn = null;
         String sid = null;
         try {
@@ -659,8 +599,7 @@ public class ExecuteCLI {
                 if (cmd != null) {
                     optionsArray = Arrays.copyOfRange(args, 0, i);
                     if (i + 1 < args.length) {
-                        cmdArgsArray = Arrays.copyOfRange(args, i + 1,
-                                args.length);
+                        cmdArgsArray = Arrays.copyOfRange(args, i + 1, args.length);
                     }
                     break;
                 }
@@ -682,28 +621,24 @@ public class ExecuteCLI {
             switch (cmd) {
             case EXECUTE:
                 if (cmdArgsArray == null || cmdArgsArray.length == 0) {
-                    throw new ArgumentParseException(
-                            "Missing arguments for execute command.");
+                    throw new ArgumentParseException("Missing arguments for execute command.");
                 }
                 execute(options, cmdArgsArray);
                 break;
             case LOGON:
                 if (cmdArgsArray == null || cmdArgsArray.length == 0) {
-                    throw new ArgumentParseException(
-                            "Missing arguments for logon command.");
+                    throw new ArgumentParseException("Missing arguments for logon command.");
                 }
                 logon(options, cmdArgsArray);
                 break;
             case LOGOFF:
                 if (cmdArgsArray != null) {
-                    throw new ArgumentParseException(
-                            "Unexpected arguments for logoff command.");
+                    throw new ArgumentParseException("Unexpected arguments for logoff command.");
                 }
                 logoff(options);
             }
         } catch (ExSessionInvalid e) {
-            System.err.println("Error: " + e.getMessage()
-                    + " Please logon first or provide a token.");
+            System.err.println("Error: " + e.getMessage() + " Please logon first or provide a token.");
             showHelp(null);
         } catch (ArgumentParseException e) {
             System.err.println("Error: " + e.getMessage());
@@ -713,8 +648,7 @@ public class ExecuteCLI {
         }
     }
 
-    private static Options parseOptions(String[] options, Command cmd)
-            throws Throwable {
+    private static Options parseOptions(String[] options, Command cmd) throws Throwable {
         Options o = new Options();
 
         for (int i = 0; i < options.length;) {
@@ -726,64 +660,56 @@ public class ExecuteCLI {
                     o.setHost(options[i + 1]);
                     i += 2;
                 } else {
-                    throw new ArgumentParseException(
-                            "Missing value for option mf.host.");
+                    throw new ArgumentParseException("Missing value for option mf.host.");
                 }
             } else if ("--mf.port".equals(opt)) {
                 if (i + 1 < options.length) {
                     o.setPort(options[i + 1]);
                     i += 2;
                 } else {
-                    throw new ArgumentParseException(
-                            "Missing value for option mf.port.");
+                    throw new ArgumentParseException("Missing value for option mf.port.");
                 }
             } else if ("--mf.transport".equals(opt)) {
                 if (i + 1 < options.length) {
                     o.setTransport(options[i + 1]);
                     i += 2;
                 } else {
-                    throw new ArgumentParseException(
-                            "Missing value for option mf.transport.");
+                    throw new ArgumentParseException("Missing value for option mf.transport.");
                 }
             } else if ("--mf.sid".equals(opt)) {
                 if (i + 1 < options.length) {
                     o.setSid(options[i + 1]);
                     i += 2;
                 } else {
-                    throw new ArgumentParseException(
-                            "Missing value for option mf.sid.");
+                    throw new ArgumentParseException("Missing value for option mf.sid.");
                 }
             } else if ("--mf.token".equals(opt)) {
                 if (i + 1 < options.length) {
                     o.setToken(options[i + 1]);
                     i += 2;
                 } else {
-                    throw new ArgumentParseException(
-                            "Missing value for option mf.token.");
+                    throw new ArgumentParseException("Missing value for option mf.token.");
                 }
             } else if ("--mf.app".equals(opt)) {
                 if (i + 1 < options.length) {
                     o.setApp(options[i + 1]);
                     i += 2;
                 } else {
-                    throw new ArgumentParseException(
-                            "Missing value for option mf.app.");
+                    throw new ArgumentParseException("Missing value for option mf.app.");
                 }
             } else if ("--mf.auth".equals(opt)) {
                 if (i + 1 < options.length) {
                     o.setAuth(options[i + 1]);
                     i += 2;
                 } else {
-                    throw new ArgumentParseException(
-                            "Missing value for option mf.auth.");
+                    throw new ArgumentParseException("Missing value for option mf.auth.");
                 }
             } else if ("--mf.output".equals(opt)) {
                 if (i + 1 < options.length) {
                     o.setOutputFormat(options[i + 1]);
                     i += 2;
                 } else {
-                    throw new ArgumentParseException(
-                            "Missing value for option mf.output.");
+                    throw new ArgumentParseException("Missing value for option mf.output.");
                 }
             } else {
                 throw new ArgumentParseException("Unexpected option: " + opt);
@@ -818,9 +744,7 @@ public class ExecuteCLI {
         if (!sidFile.exists()) {
             return null;
         }
-        String sid = new String(
-                Files.readAllBytes(Paths.get(sidFile.getAbsolutePath())))
-                        .replace("\r\n", "").trim();
+        String sid = new String(Files.readAllBytes(Paths.get(sidFile.getAbsolutePath()))).replace("\r\n", "").trim();
         if (sid == null || sid.length() == 0) {
             return null;
         } else {
@@ -830,24 +754,18 @@ public class ExecuteCLI {
 
     private static void showHelp(Command cmd) {
         if (cmd == null) {
-            System.out.println(
-                    "Usage: " + prefix() + " [<options>] <command> [<args>]");
+            System.out.println("Usage: " + prefix() + " [<options>] <command> [<args>]");
             System.out.println("");
             System.out.println("Description:");
-            System.out.println(
-                    "    Execute a service on the remote Mediaflux server or logon/logoff Mediaflux.");
+            System.out.println("    Execute a service on the remote Mediaflux server or logon/logoff Mediaflux.");
             System.out.println("");
             System.out.println("Options:");
-            System.out.println(
-                    "    --help                           Prints usage.");
-            System.out.println(
-                    "    --mf.host <host>                 The Mediaflux server host.");
-            System.out.println(
-                    "    --mf.port <port>                 The Mediaflux server port.");
+            System.out.println("    --help                           Prints usage.");
+            System.out.println("    --mf.host <host>                 The Mediaflux server host.");
+            System.out.println("    --mf.port <port>                 The Mediaflux server port.");
             System.out.println(
                     "    --mf.transport <transport>       The Mediaflux server transport. Can be http, https or tcp/ip.");
-            System.out.println(
-                    "    --mf.app <app>                   The context application name if applicable.");
+            System.out.println("    --mf.app <app>                   The context application name if applicable.");
             System.out.println(
                     "    --mf.sid <sid>                   The Mediaflux session code (or the file contains the session code). For execute command only.");
             System.out.println(
@@ -862,67 +780,51 @@ public class ExecuteCLI {
             System.out.println("    execute    Execute a service.");
             System.out.println("    logoff     Log off Mediaflux.");
             System.out.println("");
-            System.out.println("See '" + prefix()
-                    + " --help <command>' to read about a specific command.");
+            System.out.println("See '" + prefix() + " --help <command>' to read about a specific command.");
         } else {
             switch (cmd) {
             case LOGON:
-                System.out.println("Usage: " + prefix()
-                        + " [<options>] logon <domain> <user> <password>");
+                System.out.println("Usage: " + prefix() + " [<options>] logon <domain> <user> <password>");
                 System.out.println("");
                 System.out.println("Description:");
-                System.out.println(
-                        "    Log on Mediaflux with specified arguments.");
+                System.out.println("    Log on Mediaflux with specified arguments.");
                 System.out.println("");
                 System.out.println("Options:");
-                System.out.println(
-                        "    --help                           Prints usage for logon command.");
-                System.out.println(
-                        "    --mf.host <host>                 The Mediaflux server host.");
-                System.out.println(
-                        "    --mf.port <port>                 The Mediaflux server port.");
+                System.out.println("    --help                           Prints usage for logon command.");
+                System.out.println("    --mf.host <host>                 The Mediaflux server host.");
+                System.out.println("    --mf.port <port>                 The Mediaflux server port.");
                 System.out.println(
                         "    --mf.transport <transport>       The Mediaflux server transport. Can be http, https or tcp/ip.");
                 break;
             case EXECUTE:
-                System.out.println("Usage: " + prefix()
-                        + " [<options>] execute <service> [<args|args-file>]");
+                System.out.println("Usage: " + prefix() + " [<options>] execute <service> [<args|args-file>]");
                 System.out.println("");
                 System.out.println("Description:");
                 System.out.println("    Execute the specfied service.");
                 System.out.println("");
                 System.out.println("Options:");
-                System.out.println(
-                        "    --help                           Prints usage for execute command.");
-                System.out.println(
-                        "    --mf.host <host>                 The Mediaflux server host.");
-                System.out.println(
-                        "    --mf.port <port>                 The Mediaflux server port.");
+                System.out.println("    --help                           Prints usage for execute command.");
+                System.out.println("    --mf.host <host>                 The Mediaflux server host.");
+                System.out.println("    --mf.port <port>                 The Mediaflux server port.");
                 System.out.println(
                         "    --mf.transport <transport>       The Mediaflux server transport. Can be http, https or tcp/ip.");
                 System.out.println(
                         "    --mf.sid <sid>                   The Mediaflux session code (or the file contains the session code).");
-                System.out.println(
-                        "    --mf.token <token>               The Mediaflux secure identity token.");
+                System.out.println("    --mf.token <token>               The Mediaflux secure identity token.");
                 System.out.println(
                         "    --mf.auth <domain,user,password> The Mediaflux user authentication details, it is in the form of domain,user,password.");
-                System.out.println(
-                        "    --mf.output <xml|shell>          The output format. Can be xml or shell.");
+                System.out.println("    --mf.output <xml|shell>          The output format. Can be xml or shell.");
                 break;
             case LOGOFF:
-                System.out
-                        .println("Usage: " + prefix() + " [<options>] logoff");
+                System.out.println("Usage: " + prefix() + " [<options>] logoff");
                 System.out.println("");
                 System.out.println("Description:");
                 System.out.println("    Log off Mediaflux.");
                 System.out.println("");
                 System.out.println("Options:");
-                System.out.println(
-                        "    --help                           Prints usage for execute command.");
-                System.out.println(
-                        "    --mf.host <host>                 The Mediaflux server host.");
-                System.out.println(
-                        "    --mf.port <port>                 The Mediaflux server port.");
+                System.out.println("    --help                           Prints usage for execute command.");
+                System.out.println("    --mf.host <host>                 The Mediaflux server host.");
+                System.out.println("    --mf.port <port>                 The Mediaflux server port.");
                 System.out.println(
                         "    --mf.transport <transport>       The Mediaflux server transport. Can be http, https or tcp/ip.");
                 break;
@@ -932,11 +834,10 @@ public class ExecuteCLI {
         }
     }
 
-    public static void writeToDefaultSidFile(String host, String sid)
-            throws Throwable {
+    public static void writeToDefaultSidFile(String host, String sid) throws Throwable {
         String path = getDefaultSidFilePath(host);
-        Files.write(Paths.get(path), sid.getBytes(), StandardOpenOption.CREATE,
-                StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+        Files.write(Paths.get(path), sid.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.WRITE,
+                StandardOpenOption.TRUNCATE_EXISTING);
     }
 
 }

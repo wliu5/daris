@@ -9,6 +9,7 @@ import nig.util.StringUtil;
 public abstract class AbstractSession implements Session {
 
     private UserDetails _userDetails;
+    private String _home;
 
     protected AbstractSession(UserDetails userDetails) {
         _userDetails = userDetails;
@@ -53,12 +54,14 @@ public abstract class AbstractSession implements Session {
 
     @Override
     public String getHome() throws Throwable {
-        String home = execCommand("echo $HOME").output;
-        if (home != null) {
-            return StringUtil.trimTrailing(home, "\n", true);
-        } else {
-            return home;
+        if (_home == null) {
+            String home = execCommand("echo $HOME").output;
+            if (home == null) {
+                throw new Exception("Failed to retrieve $HOME env.");
+            }
+            _home = StringUtil.trimTrailing(home, "\n", true);
         }
+        return _home;
     }
 
     @Override
@@ -77,10 +80,8 @@ public abstract class AbstractSession implements Session {
             StringBuilder cmd = new StringBuilder();
             cmd.append("if [[ ! -f " + Ssh.AUTHORIZED_KEYS_FILE + " ]]; then ");
             cmd.append("echo '" + ak.toString() + "' >> " + Ssh.AUTHORIZED_KEYS_FILE + "; ");
-            cmd.append("elif [[ -z $(cat " + Ssh.AUTHORIZED_KEYS_FILE + " | grep '" + ak.key()
-                    + "') ]]; then ");
-            cmd.append("cp " + Ssh.AUTHORIZED_KEYS_FILE + " $(mktemp " + Ssh.AUTHORIZED_KEYS_FILE
-                    + ".bak.XXXXX); ");
+            cmd.append("elif [[ -z $(cat " + Ssh.AUTHORIZED_KEYS_FILE + " | grep '" + ak.key() + "') ]]; then ");
+            cmd.append("cp " + Ssh.AUTHORIZED_KEYS_FILE + " $(mktemp " + Ssh.AUTHORIZED_KEYS_FILE + ".bak.XXXXX); ");
             cmd.append("echo '" + ak.toString() + "' >> " + Ssh.AUTHORIZED_KEYS_FILE + "; ");
             cmd.append("fi; ");
             cmd.append("chmod 600 " + Ssh.AUTHORIZED_KEYS_FILE);
@@ -142,12 +143,16 @@ public abstract class AbstractSession implements Session {
         // "AAAAB3NzaC1yc2EAAAADAQABAAACAQCzUMQ2F/PCax0sfkU6MqUb9N3Nc4KW5L25sOYo+O668QVXRBA8Xvb512sKMDejhysiTzj/PyYnF3AOt8WOEcyhUdBG3r4Ni2DVEw9E8SwUQfBKxwzhWrw9Wae/q3/q1SIhT3OdiS+unyfb+fFdr52Qanx7HwPX0y7ZHiZb81FavAbs/QmaGqgNdPqpNTKcqB3F88jhzaO1QEZGYZuXDOajwkQHRWxImliFQGBl/MRA3zl22lEywi90DACy0AiDgiM6Tb3uxjsyW09sCNmYskygDSAV7OmLHdzcJm0sequeoO6qZdgRJ9ApOKBd/S1dBsv641G4NsT2HLqw/VJ2tVfl5h+Y1fs2cAXP37xGRfZt9Cc2RGxF3Y0qKmO3/qdG4IwvxnDJvhWEbW+EbX+bh7qTNeASQ2FGAxRltmNmxtoWRqtK2qIO/JSmP1xnDQRXCX3JZVUn2cYKlvHn57a/ld7HU4UU6gya+JoiR1M6D+T98g3PQbBygto3md9Tb+MzABxRbigqn2urg8SyCdJxVOHA9VLyXLr+hXryWUO2YNWirSqevCe8L2TW2Q/wiwNGBsktxqx3iTccdhI+JhdbXH2ICUk2pMJIbSfg6kEFeXkpViV3WluVS3w1xo2I4M1iMXe0d05u2ysBxIJ5A54q9cp5+fIfW01FtqCs+NRaL3znew==");
         // StringBuilder cmd = new StringBuilder();
         // cmd.append("if [[ ! -f " + Ssh.AUTHORIZED_KEYS_FILE + " ]]; then ");
-        // cmd.append("echo '" + ak.toString() + "' >> " + Ssh.AUTHORIZED_KEYS_FILE + "; ");
-        // cmd.append("elif [[ -z $(cat " + Ssh.AUTHORIZED_KEYS_FILE + " | grep '" + ak.key() +
+        // cmd.append("echo '" + ak.toString() + "' >> " +
+        // Ssh.AUTHORIZED_KEYS_FILE + "; ");
+        // cmd.append("elif [[ -z $(cat " + Ssh.AUTHORIZED_KEYS_FILE + " | grep
+        // '" + ak.key() +
         // "') ]]; then ");
-        // cmd.append("cp " + Ssh.AUTHORIZED_KEYS_FILE + " $(mktemp " + Ssh.AUTHORIZED_KEYS_FILE +
+        // cmd.append("cp " + Ssh.AUTHORIZED_KEYS_FILE + " $(mktemp " +
+        // Ssh.AUTHORIZED_KEYS_FILE +
         // ".bak.XXXXX); ");
-        // cmd.append("echo '" + ak.toString() + "' >> " + Ssh.AUTHORIZED_KEYS_FILE + "; ");
+        // cmd.append("echo '" + ak.toString() + "' >> " +
+        // Ssh.AUTHORIZED_KEYS_FILE + "; ");
         // cmd.append("fi; ");
         // cmd.append("chmod 600 " + Ssh.AUTHORIZED_KEYS_FILE);
         // System.out.println(cmd.toString());

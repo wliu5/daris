@@ -5,13 +5,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DownloadOptions {
+public class DataDownloadOptions {
 
     public static enum Parts {
         META, CONTENT, ALL;
 
-        public static Parts fromString(String s, Parts def)
-                throws IllegalArgumentException {
+        public static Parts fromString(String s, Parts def) throws IllegalArgumentException {
             if (s == null || s.trim().isEmpty()) {
                 return def;
             }
@@ -37,11 +36,12 @@ public class DownloadOptions {
     private Map<String, String> _transcodes;
     private boolean _overwrite;
     private String _filter;
+    private int _nbWorkers;
+    private boolean _logging;
 
-    public DownloadOptions(boolean recursive, File outputDir,
-            boolean includeAttachments, boolean decompress, boolean datasetOnly,
-            Parts parts, Map<String, String> transcodes, boolean overwrite,
-            String filter) {
+    public DataDownloadOptions(boolean recursive, File outputDir, boolean includeAttachments, boolean decompress,
+            boolean datasetOnly, Parts parts, Map<String, String> transcodes, boolean overwrite, String filter,
+            int nbWorkers, boolean logging) {
         _recursive = recursive;
         _outputDir = outputDir;
         _includeAttachments = includeAttachments;
@@ -50,11 +50,13 @@ public class DownloadOptions {
         _parts = parts;
         _transcodes = transcodes;
         _overwrite = overwrite;
+        _nbWorkers = nbWorkers;
+        _logging = logging;
     }
 
-    public DownloadOptions() {
-        this(true, new File(System.getProperty("user.dir")), false, true, false,
-                Parts.CONTENT, null, true, null);
+    public DataDownloadOptions() {
+        this(true, new File(System.getProperty("user.dir")), false, true, false, Parts.CONTENT, null, true, null, 1,
+                false);
     }
 
     public File outputDir() {
@@ -158,5 +160,21 @@ public class DownloadOptions {
 
     public void setIncludeAttachments(boolean includeAttachments) {
         _includeAttachments = includeAttachments;
+    }
+
+    public int numberOfWorkers() {
+        return _nbWorkers;
+    }
+
+    public void setNumberOfWorkers(int nbWorkers) {
+        _nbWorkers = nbWorkers;
+    }
+
+    public void setLogging(boolean enabled) {
+        _logging = enabled;
+    }
+
+    public boolean logging() {
+        return _logging;
     }
 }
