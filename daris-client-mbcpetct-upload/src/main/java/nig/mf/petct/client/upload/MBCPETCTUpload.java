@@ -56,7 +56,6 @@ public class MBCPETCTUpload {
 		public boolean expire = false;		
 		public boolean logger = true;
 		public String  id = null;
-		public boolean addNIGSubjectMeta = false;
 		public boolean decrypt = true;
 		public String sleep = null;
 		//
@@ -68,7 +67,6 @@ public class MBCPETCTUpload {
 			System.out.println("no-log        = " + !logger);
 			System.out.println("logpath       = " + logpath);
 			System.out.println("id            = " + id);
-			//			System.out.println("nig-subject-meta-add = " + addNIGSubjectMeta);
 			System.out.println("no-decrypt    = " + !decrypt);
 			if (sleep!=null) System.out.println("sleep         = " + sleep + " minutes");
 		}
@@ -81,7 +79,6 @@ public class MBCPETCTUpload {
 			writer.println("no-log        = " + !logger);
 			writer.println("logpath       = " + logpath);
 			writer.println("id            = " + id);
-			//			writer.println("nig-subject-meta-add = " + addNIGSubjectMeta);
 			writer.println("no-decrpyt    = " + !decrypt);
 			if (sleep!=null) writer.println("sleep         = " + sleep + " minutes");
 		}
@@ -96,7 +93,6 @@ public class MBCPETCTUpload {
 	public static final String NODELETE_ARG = "-no-delete";
 	public static final String EXPIRE_ARG = "-expire";
 	public static final String ID_ARG = "-id";
-	public static final String NIG_META_ARG = "-nig-subject-meta-add";
 	public static final String DECRYPT_ARG = "-no-decrypt";
 	public static final String SLEEP_ARG = "-sleep";
 
@@ -135,8 +131,6 @@ public class MBCPETCTUpload {
 				ops.logger = false;
 			} else if (args[i].equalsIgnoreCase(ID_ARG)) {
 				ops.id = args[++i];
-			} else if (args[i].equalsIgnoreCase(NIG_META_ARG)) {
-				ops.addNIGSubjectMeta = true;
 			} else if (args[i].equalsIgnoreCase(DECRYPT_ARG)) {
 				ops.decrypt = false;
 			} else if (args[i].equalsIgnoreCase(DEST_ARG)) {
@@ -189,10 +183,6 @@ public class MBCPETCTUpload {
 			logger.close();
 		}
 	}
-
-
-
-
 
 
 
@@ -280,132 +270,18 @@ public class MBCPETCTUpload {
 			return;
 		}
 
-		// Branch for DICOM or PSSD data model
-		if (ops.id==null) {
+		// See if we can find the subject.  Null if we didn't find it or multiples
+		String subjectID = MBCRawUploadUtil.findSubjectAsset (cxn, MF_NAMESPACE, ops.id, false,
+				MBCRawUploadUtil.SUBJECT_FIND_METHOD.NAME, pm.getFirstName(), pm.getLastName(), null, logger);
 
-			// DICOM Data model
 
-			// See if we can find the patient.
-			String assetID = MBCRawUploadUtil.findPatientAssetFromDICOM (cxn, MBCRawUploadUtil.SUBJECT_FIND_METHOD.NAME, 
-					pm.getFirstName(), pm.getLastName(), null, null, MF_NAMESPACE, logger);
-
-			// Upload
-			if (assetID != null) {
-				MBCRawUploadUtil.log (logger, "     Patient asset = " + assetID);
-				createDICOMAssets (cxn, path, pm, assetID, cred, ops, logger);
-			} else {
-				// Skip uploading this one
-			}
+		// Upload
+		if (subjectID != null) {
+			MBCRawUploadUtil.log (logger, "     Subject asset = " + subjectID);
+			createPSSDAssets (cxn, path, pm, subjectID, cred, ops, logger);
 		} else {
-			// PSSD Data model
-
-			// See if we can find the subject.  Null if we didn't find it or multiples
-			String subjectID = MBCRawUploadUtil.findSubjectAsset (cxn, MF_NAMESPACE, ops.id, ops.addNIGSubjectMeta,
-					MBCRawUploadUtil.SUBJECT_FIND_METHOD.NAME, pm.getFirstName(), pm.getLastName(), null, logger);
-
-
-			// Upload
-			if (subjectID != null) {
-				MBCRawUploadUtil.log (logger, "     Subject asset = " + subjectID);
-				createPSSDAssets (cxn, path, pm, subjectID, cred, ops, logger);
-			} else {
-				// Skip uploading this one
-			}
+			// Skip uploading this one
 		}
-	}
-
-
-
-
-	private static void setNIGDomainMetaData (ServerClient.Connection cxn, String cid, PETCTMetaData pm) throws Throwable {
-		if (pm==null) return;
-
-		String subjectMetaService = "nig.pssd.subject.meta.set";
-		XmlStringWriter dm = new XmlStringWriter();
-		dm.add("id", cid);
-
-		// Pretend we are using DICOM as the container
-		XmlStringWriter w = new XmlStringWriter("dicom");
-		w.add("id", cid);
-		w.push("dicom");
-		w.push("subject");
-		// This is how DICOM names end up being manifested <First> <Middle> <Last>
-		w.add("name", pm.getFirstName() + " " + pm.getLastName());
-		w.pop();
-		w.pop();
-		if (w!=null) {
-			try {
-				cxn.execute(subjectMetaService, w.document());
-			} catch (Throwable t) {
-				// If it fails, we don't want to throw an exception. Just write to logfile
-				System.out.println("Failed to set domain-specific subject meta-data with service " + subjectMetaService + " : " + t.getMessage());
-			}
-		}
-	}
-
-
-
-
-	private static String createDICOMAssets (ServerClient.Connection cxn, File file, PETCTMetaData pm, String patientAssetID,
-			UserCredential cred, Options ops, PrintWriter logger) throws Throwable {
-
-
-		// Look for PET/CT raw STudy associated with this Patient
-		String rawStudyID = findRawStudy  (cxn, pm, patientAssetID, null);
-
-		// Create Study if needed
-		if (rawStudyID==null) {
-			rawStudyID = createRawStudy (cxn, pm, patientAssetID, null, cred);
-			MBCRawUploadUtil.log (logger, "     Created raw Study asset = " + rawStudyID);
-		} else {
-			MBCRawUploadUtil.log (logger, "     Study asset = " + rawStudyID);
-		}
-
-		// Look for PET/CT raw Series
-		String rawSeriesID = findRawSeries  (cxn, pm, rawStudyID, null);
-
-		// Create asset for raw PET data file. Skip if pre-exists
-		Boolean chkSumOK = false;
-		if (rawSeriesID==null) {
-			MBCRawUploadUtil.log (logger, "   Uploading file");
-			long tsize = FileUtils.sizeOf(file);
-			MBCRawUploadUtil.log (logger, "      File size = " + FileUtils.byteCountToDisplaySize(tsize));
-			rawSeriesID = createRawSeries (cxn, file, pm, rawStudyID, null, ops.expire);
-			if (rawSeriesID==null) {
-				throw new Exception ("Failed to create series asset");
-			}
-			MBCRawUploadUtil.log (logger, "     Created raw Series asset = " + rawSeriesID);
-			if (ops.chksum) {
-				MBCRawUploadUtil.log (logger, "        Validating checksum");
-
-				// Get chksum from disk
-				MBCRawUploadUtil.log (logger, "           Computing disk file check sum");
-				String chkSumDisk = ZipUtil.getCRC32(file, 16);
-
-				// Get chksum from asset
-				String chkSumAsset = MBCRawUploadUtil.getCheckSum (cxn, rawSeriesID, null);
-
-				if (chkSumDisk.equalsIgnoreCase(chkSumAsset)) {
-					MBCRawUploadUtil.log(logger, "            Checksums match");	
-					chkSumOK = true;
-				} else {
-					MBCRawUploadUtil.log (logger, "       Checksums do not match. Checksums are:");	
-					MBCRawUploadUtil.log (logger, "           Input file      = " + chkSumDisk);
-					MBCRawUploadUtil.log (logger, "           Mediaflux asset = " + chkSumAsset);
-					//
-					AssetUtil.destroy(cxn, rawSeriesID, null);
-					MBCRawUploadUtil.log (logger, "           Destroyed Mediaflux asset");
-				}
-			}
-		} else {
-			MBCRawUploadUtil.log (logger, "     *** Found existing raw Series ID = " + rawSeriesID + " - skipping");
-			chkSumOK = true;  // This will trigger a deletion since the file has already been successfully uploaded
-		}
-		//
-		// Clean up
-		if (ops.delete && chkSumOK) MBCRawUploadUtil.deleteFile(file, logger);
-		//
-		return null;
 	}
 
 
@@ -488,23 +364,14 @@ public class MBCPETCTUpload {
 		// FInds by date only as there is no study 'UID'. Only UIDs for Series (data sets).
 		XmlStringWriter w = new XmlStringWriter();
 		String query = null;
-		if (subjectCID!=null) {
-			query = "model='om.pssd.study' and cid starts with '" + subjectCID + "'";	
-			w.add("action", "get-cid");
-		} else {
-			query = MBCRawUploadUtil.nameSpaceQuery(MF_NAMESPACE);
-			query += " and (related to{had-by} (id=" + patientAssetID + "))";
-		}
+		query = "model='om.pssd.study' and cid starts with '" + subjectCID + "'";	
+		w.add("action", "get-cid");
 		query += " and xpath(" + RAW_STUDY_DOC_TYPE + "/date)='" + 
 				DateUtil.formatDate(pm.getAcquisitionDateTime(), false, null) + "'";
 		w.add("where", query);
 		XmlDoc.Element r = cxn.execute("asset.query", w.document());
 		if (r==null) return null;
-		if (subjectCID!=null) {
-			return r.value("cid");
-		} else {
-			return r.value("id");
-		}
+		return r.value("cid");
 	}
 
 	/**
@@ -723,8 +590,6 @@ public class MBCPETCTUpload {
 		System.out.println("   " + NODELETE_ARG + "     Disables the deletion of the input file after check sum validation");
 		System.out.println("   " + EXPIRE_ARG + "        Specifies that meta-data is to be attached to the file with an expiry data of 1 year after acquisition");
 		System.out.println("   " + ID_ARG + "            Specifies the PSSD data model (DaRIS) should be used and that this is the citeable ID that the Study should be associated with. Can be depth 2 (the repository), 3 (a Project) or 4 (a Subject).");
-		System.out.println("   " + NIG_META_ARG);
-		System.out.println("                  Specifies the NIG-domain meta-data should be added to the PSSD Subject");
 		System.out.println("   " + DECRYPT_ARG + "    Specifies the password should not be decrypted.");
 		System.out.println("   " + SLEEP_ARG +   "         Specifies the amount of time (minutes) to wait before trying to upload data.Some early parsing/checking happens before the sleep is activated.");
 		System.out.println("");
