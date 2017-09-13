@@ -19,7 +19,7 @@ import arc.xml.XmlStringWriter;
 
 
 /**
- * SOme functions shared by the PET/CT and MR uploaders for Siemens raw data files.
+ * Some functions shared by the PET/CT and MR uploaders for Siemens raw data files.
  * 
  * @author nebk
  *
