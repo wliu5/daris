@@ -52,11 +52,9 @@ import arc.xml.XmlWriter;
  * 
  */
 public class SvcObjectFind extends PluginService {
-	
-	
-	// White list of additional non PSSD doc types we want to present
-	private static String[] DocTypeWhiteList = {"mf-image", "mf-image-exif", "mf-image-iptc", "mf-image-tiff"};
-	        
+
+    // White list of additional non PSSD doc types we want to present
+    private static String[] DocTypeWhiteList = { "mf-image", "mf-image-exif", "mf-image-iptc", "mf-image-tiff" };
 
     private Interface _defn;
 
@@ -64,23 +62,18 @@ public class SvcObjectFind extends PluginService {
 
         _defn = new Interface();
         _defn.add(new Interface.Element("type",
-                new EnumType(new String[] { Project.TYPE.toString(),
-                        Subject.TYPE.toString(), ExMethod.TYPE.toString(),
-                        Study.TYPE.toString(), DataSet.TYPE.toString(),
-                        DataObject.TYPE.toString(), RSubject.TYPE.toString() }),
-                "The type of the object(s) to restrict the search, if any.", 0,
-                1));
-        _defn.add(new Interface.Element("text", StringType.DEFAULT,
-                "Arbitrary search text for free text query.", 0, 1));
-        _defn.add(new Interface.Element("idx", LongType.POSITIVE_ONE,
-                "Cursor position. Defaults to 1", 0, 1));
-        _defn.add(new Interface.Element("size", IntegerType.POSITIVE_ONE,
-                "Cursor size. Defaults to 100", 0, 1));
+                new EnumType(new String[] { Project.TYPE.toString(), Subject.TYPE.toString(), ExMethod.TYPE.toString(),
+                        Study.TYPE.toString(), DataSet.TYPE.toString(), DataObject.TYPE.toString(),
+                        RSubject.TYPE.toString() }),
+                "The type of the object(s) to restrict the search, if any.", 0, 1));
+        _defn.add(
+                new Interface.Element("text", StringType.DEFAULT, "Arbitrary search text for free text query.", 0, 1));
+        _defn.add(new Interface.Element("idx", LongType.POSITIVE_ONE, "Cursor position. Defaults to 1", 0, 1));
+        _defn.add(new Interface.Element("size", IntegerType.POSITIVE_ONE, "Cursor size. Defaults to 100", 0, 1));
         _defn.add(new Interface.Element("foredit", BooleanType.DEFAULT,
                 "Indicates whether the object may be edited. If true, then a description of the structure of the data is returned. Defaults to 'false'.",
                 0, 1));
-        _defn.add(new Interface.Element("asset-type",
-                new EnumType(new String[] { "primary", "replica", "all" }),
+        _defn.add(new Interface.Element("asset-type", new EnumType(new String[] { "primary", "replica", "all" }),
                 "Specify type of asset to find. Defaults to all.", 0, 1));
         _defn.add(new Interface.Element("pdist", IntegerType.DEFAULT,
                 "Specifies the peer distance for a distributed query. Defaults to all servers in a federated session.  Set to 0 for local only or infinity for all peers (regardless of whether session is federated or not).",
@@ -107,8 +100,7 @@ public class SvcObjectFind extends PluginService {
         return ACCESS_ACCESS;
     }
 
-    public void execute(XmlDoc.Element args, Inputs in, Outputs out,
-            XmlWriter w) throws Throwable {
+    public void execute(XmlDoc.Element args, Inputs in, Outputs out, XmlWriter w) throws Throwable {
 
         String type = args.value("type");
         String text = args.value("text");
@@ -135,8 +127,7 @@ public class SvcObjectFind extends PluginService {
         }
 
         // Primary/replica/both (default)
-        DistributedQuery.appendResultAssetTypePredicate(query,
-                DistributedQuery.ResultAssetType.instantiate(assetType));
+        DistributedQuery.appendResultAssetTypePredicate(query, DistributedQuery.ResultAssetType.instantiate(assetType));
 
         // Set up service call
         XmlDocMaker dm = new XmlDocMaker("args");
@@ -166,16 +157,14 @@ public class SvcObjectFind extends PluginService {
         addPssdObjects(executor(), w, r.elements("asset"), false, forEdit);
     }
 
-    public static void addPssdObjects(ServiceExecutor executor, XmlWriter w,
-            XmlDoc.Element r, boolean isleaf, boolean forEdit)
-                    throws Throwable {
+    public static void addPssdObjects(ServiceExecutor executor, XmlWriter w, XmlDoc.Element r, boolean isleaf,
+            boolean forEdit) throws Throwable {
 
         addPssdObjects(executor, w, r.elements("asset"), isleaf, forEdit);
     }
 
-    public static void addPssdObjects(ServiceExecutor executor, XmlWriter w,
-            List<XmlDoc.Element> aes, boolean isleaf, boolean forEdit)
-                    throws Throwable {
+    public static void addPssdObjects(ServiceExecutor executor, XmlWriter w, List<XmlDoc.Element> aes, boolean isleaf,
+            boolean forEdit) throws Throwable {
 
         addPssdObjects(executor, w, aes, isleaf, forEdit, false, false, true);
     }
@@ -205,19 +194,16 @@ public class SvcObjectFind extends PluginService {
      *            object regardless of the user's role
      * @throws Throwable
      */
-    public static void addPssdObjects(ServiceExecutor executor, XmlWriter w,
-            XmlDoc.Element r, boolean isleaf, boolean forEdit,
-            boolean showRSubjectIdentity, boolean showSubjectPrivate)
-                    throws Throwable {
+    public static void addPssdObjects(ServiceExecutor executor, XmlWriter w, XmlDoc.Element r, boolean isleaf,
+            boolean forEdit, boolean showRSubjectIdentity, boolean showSubjectPrivate) throws Throwable {
 
-        addPssdObjects(executor, w, r.elements("asset"), isleaf, forEdit,
-                showRSubjectIdentity, showSubjectPrivate, true);
+        addPssdObjects(executor, w, r.elements("asset"), isleaf, forEdit, showRSubjectIdentity, showSubjectPrivate,
+                true);
     }
 
-    public static void addPssdObjects(ServiceExecutor executor, XmlWriter w,
-            List<XmlDoc.Element> aes, boolean isleaf, boolean forEdit,
-            boolean showRSubjectIdentity, boolean showSubjectPrivate,
-            boolean sortByCid) throws Throwable {
+    public static void addPssdObjects(ServiceExecutor executor, XmlWriter w, List<XmlDoc.Element> aes, boolean isleaf,
+            boolean forEdit, boolean showRSubjectIdentity, boolean showSubjectPrivate, boolean sortByCid)
+            throws Throwable {
 
         if (aes != null) {
             if (sortByCid && aes.size() > 1) {
@@ -246,8 +232,7 @@ public class SvcObjectFind extends PluginService {
             ProjectMemberMap pmmap = null;
             for (XmlDoc.Element ae : aes) {
                 String nameSpace = ae.value("namespace");
-                PSSDObject.Type type = PSSDObject.Type
-                        .parse(ae.value("meta/daris:pssd-object/type"));
+                PSSDObject.Type type = PSSDObject.Type.parse(ae.value("meta/daris:pssd-object/type"));
                 if (type != null) { // Only include PSSD objects
                     // if (Model.isPSSDModel(ae.value("model"))) {
                     // Only include PSSD objects (some redundancy with
@@ -256,8 +241,7 @@ public class SvcObjectFind extends PluginService {
                     String proute = ae.value("@proute");
                     DistributedAsset dAsset = new DistributedAsset(proute, id);
                     if (!ObjectUtil.equals(proute, lastProute)) {
-                        methods = MethodSet.load(executor,
-                                new ServerRoute(proute), false);
+                        methods = MethodSet.load(executor, new ServerRoute(proute), false);
                         lastProute = proute;
                     }
 
@@ -266,10 +250,8 @@ public class SvcObjectFind extends PluginService {
                     // Therefore, before we start adding the generic PSSD
                     // meta-data to the output, we must apply this filtering
                     if (type.equals(Subject.TYPE)) {
-                        DataUse subjectDataUse = DataUse.instantiate(
-                                ae.value("meta/daris:pssd-subject/data-use"));
-                        if (!validateSubjectDataUse(id, subjectDataUse,
-                                selfRoles)) {
+                        DataUse subjectDataUse = DataUse.instantiate(ae.value("meta/daris:pssd-subject/data-use"));
+                        if (!validateSubjectDataUse(id, subjectDataUse, selfRoles)) {
                             // violates subject data-use, drop it.
                             continue;
                         }
@@ -284,37 +266,29 @@ public class SvcObjectFind extends PluginService {
                     Boolean editable = false;
                     if (!type.equals(Method.TYPE)) {
                         dProject = dAsset.getParentProject(true);
-                        editable = isEditable(type, dProject.getCiteableID(),
-                                selfRoles);
+                        editable = isEditable(type, dProject.getCiteableID(), selfRoles);
                     }
 
                     // Establish if user holds a system admin role or generic
                     // PSSD admin role on the host
                     // that manages the object we are describing
-                    boolean userIsAdmin = ModelUser.hasRole(
-                            dAsset.getServerRouteObject(), executor,
+                    boolean userIsAdmin = ModelUser.hasRole(dAsset.getServerRouteObject(), executor,
                             "system-administrator")
-                            || ModelUser.hasRole(dAsset.getServerRouteObject(),
-                                    executor, Role.objectAdminRoleName());
+                            || ModelUser.hasRole(dAsset.getServerRouteObject(), executor, Role.objectAdminRoleName());
 
                     // Further see if the user holds at least Subject admin role
                     // for PSSD tree objects
                     // on the server managing the parent project
                     if (!type.equals(Method.TYPE)) {
-                        userIsAdmin = userIsAdmin || ModelUser.hasRole(
-                                dProject.getServerRouteObject(), executor,
-                                Project.subjectAdministratorRoleName(
-                                        dProject.getCiteableID()));
+                        userIsAdmin = userIsAdmin || ModelUser.hasRole(dProject.getServerRouteObject(), executor,
+                                Project.subjectAdministratorRoleName(dProject.getCiteableID()));
                     }
 
                     // Start accumulating the PSSD formatted meta-data. Start
                     // with the basic/required meta-data for all objects
                     //
-                    w.push("object",
-                            new String[] { "type", type.toString(), "editable",
-                                    Boolean.toString(editable), "version",
-                                    ae.value("@version"), "vid",
-                                    ae.value("@vid") });
+                    w.push("object", new String[] { "type", type.toString(), "editable", Boolean.toString(editable),
+                            "version", ae.value("@version"), "vid", ae.value("@vid") });
 
                     /*
                      * Regardless of whether it is called locally or as a peer,
@@ -337,20 +311,15 @@ public class SvcObjectFind extends PluginService {
                                 pmmap = ProjectMemberMap.load(executor, null);
                             } else {
                                 // optimised for single project
-                                pmmap = ProjectMemberMap.load(executor, null,
-                                        dProject.getCiteableID());
+                                pmmap = ProjectMemberMap.load(executor, null, dProject.getCiteableID());
                             }
                         }
-                        addPssdProject(executor, proute, w, ae,
-                                dProject.getCiteableID(), selfRoles, methods,
-                                pmmap);
+                        addPssdProject(executor, proute, w, ae, dProject.getCiteableID(), selfRoles, methods, pmmap);
                     } else if (type == Subject.TYPE) {
-                        addObject = addPssdSubject(executor,
-                                dProject.getServerRouteObject(), dAsset, w, ae,
-                                forEdit, showSubjectPrivate, userIsAdmin);
+                        addObject = addPssdSubject(executor, dProject.getServerRouteObject(), dAsset, w, ae, forEdit,
+                                showSubjectPrivate, userIsAdmin);
                     } else if (type == RSubject.TYPE) {
-                        addPssdRSubject(executor, dAsset, w, ae, forEdit,
-                                showRSubjectIdentity);
+                        addPssdRSubject(executor, dAsset, w, ae, forEdit, showRSubjectIdentity);
                         addMeta = false;
                     } else if (type == ExMethod.TYPE) {
                         addPssdExMethod(executor, w, ae, forEdit);
@@ -367,13 +336,11 @@ public class SvcObjectFind extends PluginService {
                     // If wanted, identify if node is a leaf or not
                     if (isleaf) {
                         XmlDocMaker dm = new XmlDocMaker("args");
-                        String query = "cid in '" + dAsset.getCiteableID()
-                                + "'";
+                        String query = "cid in '" + dAsset.getCiteableID() + "'";
                         dm.add("where", query);
                         dm.add("action", "count");
 
-                        int nbc = executor.execute("asset.query", dm.root())
-                                .intValue("value", 0);
+                        int nbc = executor.execute("asset.query", dm.root()).intValue("value", 0);
                         w.add("isleaf", nbc == 0);
                         w.add("number-of-children", nbc);
                     }
@@ -395,9 +362,8 @@ public class SvcObjectFind extends PluginService {
 
     }
 
-    public static boolean validateSubjectDataUse(String subjectId,
-            DataUse subjectDataUse, ModelUserRoleSet selfRoles)
-                    throws Throwable {
+    public static boolean validateSubjectDataUse(String subjectId, DataUse subjectDataUse, ModelUserRoleSet selfRoles)
+            throws Throwable {
 
         // Find the parent project so that we know the CID for project-specific
         // roles and what server to check roles on. Because this class is only
@@ -408,8 +374,7 @@ public class SvcObjectFind extends PluginService {
         // Check the user's roles on the server managing the Project.
         // A project-admin can see/do anything and by definition a Subject
         // admin is allowed to access all Subjects
-        if (selfRoles.hasProjectAdminRole(projectId)
-                || selfRoles.hasSubjectAdminRole(projectId)) {
+        if (selfRoles.hasProjectAdminRole(projectId) || selfRoles.hasSubjectAdminRole(projectId)) {
             return true;
         }
 
@@ -425,11 +390,9 @@ public class SvcObjectFind extends PluginService {
         // had 'specific'. However, we only actually need the 'extended' and
         // 'unspecified' roles to be given to a user as 'specific' is implicit.
         if (subjectDataUse == DataUse.specific
-                && (selfRoles.hasExtendedDataUseRole(projectId)
-                        || selfRoles.hasUnspecifiedDataUseRole(projectId))) {
+                && (selfRoles.hasExtendedDataUseRole(projectId) || selfRoles.hasUnspecifiedDataUseRole(projectId))) {
             return false;
-        } else if (subjectDataUse == DataUse.extended
-                && selfRoles.hasUnspecifiedDataUseRole(projectId)) {
+        } else if (subjectDataUse == DataUse.extended && selfRoles.hasUnspecifiedDataUseRole(projectId)) {
             return false;
         }
         return true;
@@ -545,8 +508,7 @@ public class SvcObjectFind extends PluginService {
      * dm.root()); return r.booleanValue("role"); }
      */
 
-    public static boolean isEditable(PSSDObject.Type type, String projectId,
-            ModelUserRoleSet selfRoles) {
+    public static boolean isEditable(PSSDObject.Type type, String projectId, ModelUserRoleSet selfRoles) {
 
         if (selfRoles.hasProjectAdminRole(projectId)) {
             return true;
@@ -574,8 +536,7 @@ public class SvcObjectFind extends PluginService {
      * @param ae
      * @throws Throwable
      */
-    public static void addPssdObject(XmlWriter w, XmlDoc.Element ae,
-            Boolean userIsAdmin) throws Throwable {
+    public static void addPssdObject(XmlWriter w, XmlDoc.Element ae, Boolean userIsAdmin) throws Throwable {
 
         XmlDoc.Element poe = ae.element("meta/daris:pssd-object");
         String id = ae.value("cid");
@@ -592,11 +553,8 @@ public class SvcObjectFind extends PluginService {
         String name = poe.value("name");
         String description = poe.value("description");
         Boolean destroyed = ae.booleanValue("@destroyed", false);
-        w.add("id",
-                new String[] { "proute", proute, "asset",
-                        ae.attribute("id").value(), "destroyed",
-                        destroyed.toString(), "rid", rid },
-                id);
+        w.add("id", new String[] { "proute", proute, "asset", ae.attribute("id").value(), "destroyed",
+                destroyed.toString(), "rid", rid }, id);
 
         w.add("namespace", ae.value("namespace"));
 
@@ -628,10 +586,8 @@ public class SvcObjectFind extends PluginService {
             for (XmlDoc.Element te : tes) {
                 // Includes only the tags from dictionary pssd.tags.xxx
                 if (ObjectUtil.equals(te.value("name/@dictionary"),
-                        ProjectSpecificTagDictionary.dictionaryFor(id)
-                                .name())) {
-                    w.add("tag", new String[] { "id", te.value("@id") },
-                            te.value("name"));
+                        ProjectSpecificTagDictionary.dictionaryFor(id).name())) {
+                    w.add("tag", new String[] { "id", te.value("@id") }, te.value("name"));
                 }
             }
         }
@@ -653,9 +609,8 @@ public class SvcObjectFind extends PluginService {
      * @param editable
      * @throws Throwable
      */
-    private static void addPssdProject(ServiceExecutor executor, XmlWriter w,
-            String projectId, DistributedAsset dAsset, XmlDoc.Element ae,
-            boolean editable, ModelUserRoleSet selfRoles) throws Throwable {
+    private static void addPssdProject(ServiceExecutor executor, XmlWriter w, String projectId, DistributedAsset dAsset,
+            XmlDoc.Element ae, boolean editable, ModelUserRoleSet selfRoles) throws Throwable {
 
         // Indicate if the user is allowed to create Subject objects for this
         // Project
@@ -687,8 +642,7 @@ public class SvcObjectFind extends PluginService {
 
                 // Dereference the Method.. This invokes a call to
                 // the server that manages this Method
-                addProjectMethod(executor, w, dAsset.getServerRouteObject(), id,
-                        notes);
+                addProjectMethod(executor, w, dAsset.getServerRouteObject(), id, notes);
             }
         }
 
@@ -700,8 +654,7 @@ public class SvcObjectFind extends PluginService {
         String proute = dAsset.getServerRoute();
         dm.add("id", new String[] { "proute", proute }, dAsset.getCiteableID());
         dm.add("dereference", false);
-        XmlDoc.Element r = executor.execute("om.pssd.project.members.list",
-                dm.root());
+        XmlDoc.Element r = executor.execute("om.pssd.project.members.list", dm.root());
         if (r != null) {
 
             // user members
@@ -742,9 +695,8 @@ public class SvcObjectFind extends PluginService {
      * @param methodNotes
      * @throws Throwable
      */
-    private static void addProjectMethod(ServiceExecutor executor, XmlWriter w,
-            ServerRoute sroute, String methodId, String methodNotes)
-                    throws Throwable {
+    private static void addProjectMethod(ServiceExecutor executor, XmlWriter w, ServerRoute sroute, String methodId,
+            String methodNotes) throws Throwable {
 
         /*
          * We require that the Method exists on the server that manages the
@@ -804,10 +756,9 @@ public class SvcObjectFind extends PluginService {
      *         at all.
      * @throws Throwable
      */
-    public static boolean addPssdSubject(ServiceExecutor executor,
-            ServerRoute projectRoute, DistributedAsset dSubject, XmlWriter w,
-            XmlDoc.Element ae, boolean forEdit, boolean showSubjectPrivate,
-            boolean userIsAdmin) throws Throwable {
+    public static boolean addPssdSubject(ServiceExecutor executor, ServerRoute projectRoute, DistributedAsset dSubject,
+            XmlWriter w, XmlDoc.Element ae, boolean forEdit, boolean showSubjectPrivate, boolean userIsAdmin)
+            throws Throwable {
 
         // Get all of the meta-data
         XmlDoc.Element me = ae.element("meta");
@@ -870,8 +821,7 @@ public class SvcObjectFind extends PluginService {
         }
 
         // Is virtual subject?
-        w.add("virtual",
-                ae.booleanValue("meta/daris:pssd-subject/virtual", false));
+        w.add("virtual", ae.booleanValue("meta/daris:pssd-subject/virtual", false));
 
         // Now add the Method (with which this Subject was created) to the
         // "method" element
@@ -913,9 +863,8 @@ public class SvcObjectFind extends PluginService {
      *            regardless of the user's role
      * @throws Throwable
      */
-    public static void addPssdRSubject(ServiceExecutor executor,
-            DistributedAsset dRSubject, XmlWriter w, XmlDoc.Element ae,
-            boolean forEdit, boolean showRSubjectIdentity) throws Throwable {
+    public static void addPssdRSubject(ServiceExecutor executor, DistributedAsset dRSubject, XmlWriter w,
+            XmlDoc.Element ae, boolean forEdit, boolean showRSubjectIdentity) throws Throwable {
 
         // Get all of the meta-data
         XmlDoc.Element me = ae.element("meta");
@@ -937,24 +886,20 @@ public class SvcObjectFind extends PluginService {
             // yet
             // as we administer R-Subjects per project). Validate the role
             // on the server that manages the RSubject
-            boolean admin = ModelUser.hasRole(rSubjectRoute, executor,
-                    Role.rSubjectAdminRoleName());
+            boolean admin = ModelUser.hasRole(rSubjectRoute, executor, Role.rSubjectAdminRoleName());
 
             if (!admin) {
                 // R-Subject admin access for this specific RSubject
                 // Generally this is given to the user who created the RSubject
-                admin = ModelUser.hasRole(rSubjectRoute, executor,
-                        RSubject.administratorRoleName(cid));
+                admin = ModelUser.hasRole(rSubjectRoute, executor, RSubject.administratorRoleName(cid));
             }
 
             // Generic R-Subject PSSD guest (e.g. other Project.SUbject admin)
-            boolean guest = ModelUser.hasRole(rSubjectRoute, executor,
-                    Role.rSubjectGuestRoleName());
+            boolean guest = ModelUser.hasRole(rSubjectRoute, executor, Role.rSubjectGuestRoleName());
 
             if (!guest) {
                 // Guest access for this specific R-Subject
-                guest = ModelUser.hasRole(rSubjectRoute, executor,
-                        RSubject.guestRoleName(cid));
+                guest = ModelUser.hasRole(rSubjectRoute, executor, RSubject.guestRoleName(cid));
             }
 
             // SHow the R-Subject Identity information
@@ -1028,8 +973,7 @@ public class SvcObjectFind extends PluginService {
         if (method != null) {
             Boolean readOnly = true;
             DistributedAsset dProject = dRSubject.getParentProject(readOnly);
-            addProjectMethod(executor, w, dProject.getServerRouteObject(),
-                    method, null);
+            addProjectMethod(executor, w, dProject.getServerRouteObject(), method, null);
         }
 
         XmlDoc.Element se = ae.element("meta/daris:pssd-state");
@@ -1051,8 +995,8 @@ public class SvcObjectFind extends PluginService {
      * @param forEdit
      * @throws Throwable
      */
-    public static void addPssdExMethod(ServiceExecutor executor, XmlWriter w,
-            XmlDoc.Element ae, boolean forEdit) throws Throwable {
+    public static void addPssdExMethod(ServiceExecutor executor, XmlWriter w, XmlDoc.Element ae, boolean forEdit)
+            throws Throwable {
 
         ExMethod em = new ExMethod();
         em.parseAssetMeta(ae);
@@ -1089,8 +1033,7 @@ public class SvcObjectFind extends PluginService {
          */
     }
 
-    public static void addPssdMethod(ServiceExecutor executor, XmlWriter w,
-            XmlDoc.Element ae) throws Throwable {
+    public static void addPssdMethod(ServiceExecutor executor, XmlWriter w, XmlDoc.Element ae) throws Throwable {
 
         Method.describe(executor, w, ae, false);
     }
@@ -1104,8 +1047,7 @@ public class SvcObjectFind extends PluginService {
      * @param forEdit
      * @throws Throwable
      */
-    public static void addPssdStudy(XmlWriter w, XmlDoc.Element ae,
-            boolean forEdit) throws Throwable {
+    public static void addPssdStudy(XmlWriter w, XmlDoc.Element ae, boolean forEdit) throws Throwable {
 
         XmlDoc.Element se = ae.element("meta/daris:pssd-study");
         if (se == null) {
@@ -1181,8 +1123,7 @@ public class SvcObjectFind extends PluginService {
      * @param ae
      * @throws Throwable
      */
-    public static void addPssdDataSet(XmlWriter w, XmlDoc.Element ae)
-            throws Throwable {
+    public static void addPssdDataSet(XmlWriter w, XmlDoc.Element ae) throws Throwable {
 
         XmlDoc.Element se = ae.element("meta/daris:pssd-dataset");
         if (se == null) {
@@ -1207,8 +1148,7 @@ public class SvcObjectFind extends PluginService {
         addPssdDataSetContent(w, ae);
     }
 
-    public static void addPssdValueId(XmlWriter w, XmlDoc.Element ae)
-            throws Throwable {
+    public static void addPssdValueId(XmlWriter w, XmlDoc.Element ae) throws Throwable {
 
         String vid = ae.value("content/@stime");
         if (vid == null) {
@@ -1222,8 +1162,7 @@ public class SvcObjectFind extends PluginService {
         w.add("vid", vid);
     }
 
-    public static void addPssdDataSetAcquisition(XmlWriter w, XmlDoc.Element ae)
-            throws Throwable {
+    public static void addPssdDataSetAcquisition(XmlWriter w, XmlDoc.Element ae) throws Throwable {
 
         XmlDoc.Element pae = ae.element("meta/daris:pssd-acquisition");
 
@@ -1254,8 +1193,7 @@ public class SvcObjectFind extends PluginService {
 
     }
 
-    public static void addPssdDataSetDerivation(XmlWriter w, XmlDoc.Element ae)
-            throws Throwable {
+    public static void addPssdDataSetDerivation(XmlWriter w, XmlDoc.Element ae) throws Throwable {
 
         XmlDoc.Element pde = ae.element("meta/daris:pssd-derivation");
         if (pde == null) {
@@ -1273,8 +1211,7 @@ public class SvcObjectFind extends PluginService {
         }
         XmlDoc.Element ie = pde.element("input");
         if (ie != null) {
-            w.add("input", new String[] { "vid", ie.value("@vid") },
-                    ie.value());
+            w.add("input", new String[] { "vid", ie.value("@vid") }, ie.value());
         }
 
         XmlDoc.Element me = pde.element("method");
@@ -1288,31 +1225,28 @@ public class SvcObjectFind extends PluginService {
         w.pop();
     }
 
-    private static void addPssdDataSetTransform(XmlWriter w, XmlDoc.Element ae)
-            throws Throwable {
+    private static void addPssdDataSetTransform(XmlWriter w, XmlDoc.Element ae) throws Throwable {
 
         XmlDoc.Element te = ae.element("meta/daris:pssd-transform");
         if (te == null) {
             return;
         }
-        if (te.element("mid") != null || te.element("tuid") != null
-                || te.element("software") != null) {
+        if (te.element("mid") != null || te.element("tuid") != null || te.element("software") != null) {
             w.push("transform");
             w.add(te, false);
             w.pop();
         }
     }
 
-    public static void addPssdDataSetContent(XmlWriter w, XmlDoc.Element ae)
-            throws Throwable {
+    public static void addPssdDataSetContent(XmlWriter w, XmlDoc.Element ae) throws Throwable {
 
         XmlDoc.Element ce = ae.element("content");
         if (ce == null) {
             return;
         }
 
-        w.push("data", new String[] { "id", ce.value("@id"), "stime",
-                ce.value("@stime"), "version", ce.value("@version") });
+        w.push("data",
+                new String[] { "id", ce.value("@id"), "stime", ce.value("@stime"), "version", ce.value("@version") });
         w.add(ce, false);
         w.pop();
     }
@@ -1325,14 +1259,12 @@ public class SvcObjectFind extends PluginService {
      * @param ae
      * @throws Throwable
      */
-    public static void addPssdDataObject(XmlWriter w, XmlDoc.Element ae)
-            throws Throwable {
+    public static void addPssdDataObject(XmlWriter w, XmlDoc.Element ae) throws Throwable {
 
         addPssdDataSetContent(w, ae);
     }
 
-    public static void addPssdMeta(XmlWriter w, XmlDoc.Element ae,
-            PSSDObject.Type type) throws Throwable {
+    public static void addPssdMeta(XmlWriter w, XmlDoc.Element ae, PSSDObject.Type type) throws Throwable {
 
         XmlDoc.Element meta = ae.element("meta");
         if (meta == null) {
@@ -1344,29 +1276,37 @@ public class SvcObjectFind extends PluginService {
             return;
         }
 
-        boolean pushMeta = true;
+        boolean pushedMeta = false;
 
         for (XmlDoc.Element me : mes) {
             if (isPssdObjectMeta(me, type) || isInWhiteList(me)) {
-                if (pushMeta) {
-                    w.push("meta");
-                    pushMeta = false;
+                if ("study".equals(ae.value("meta/daris:pssd-object/type"))) {
+                    String ns = me.value("@ns");
+                    if (ns != null) {
+                        String cid = ae.value("cid");
+                        String exmCid = cid.substring(0, cid.lastIndexOf('.'));
+                        if (ns.startsWith(exmCid + "_")) {
+                            continue; // skip method metadata as it's included
+                                      // in method/meta section.
+                        }
+                    }
                 }
-
+                if (!pushedMeta) {
+                    w.push("meta");
+                    pushedMeta = true;
+                }
                 w.add(me);
             }
         }
 
-        if (!pushMeta) {
+        if (pushedMeta) {
             w.pop();
         }
     }
 
-    public static void addPssdAttachments(XmlWriter w, XmlDoc.Element ae)
-            throws Throwable {
+    public static void addPssdAttachments(XmlWriter w, XmlDoc.Element ae) throws Throwable {
 
-        Collection<XmlDoc.Element> res = ae
-                .elements("related[@type='attachment']/asset");
+        Collection<XmlDoc.Element> res = ae.elements("related[@type='attachment']/asset");
         if (res == null) {
             return;
         }
@@ -1385,8 +1325,7 @@ public class SvcObjectFind extends PluginService {
      * @return
      * @throws Throwable
      */
-    public static boolean isPssdObjectMeta(XmlDoc.Element me,
-            PSSDObject.Type type) throws Throwable {
+    public static boolean isPssdObjectMeta(XmlDoc.Element me, PSSDObject.Type type) throws Throwable {
 
         String tag = me.value("@tag");
         if (tag != null) {
@@ -1406,20 +1345,19 @@ public class SvcObjectFind extends PluginService {
 
         return false;
     }
-    
-    public static boolean isInWhiteList (XmlDoc.Element me) throws Throwable {
-    	String type = me.name();
-    	int n = DocTypeWhiteList.length;
-    	for (int i=0;i<n;i++) {
-    		if (type.equalsIgnoreCase(DocTypeWhiteList[i])) return true;
-    	}
-    	return false;
+
+    public static boolean isInWhiteList(XmlDoc.Element me) throws Throwable {
+        String type = me.name();
+        int n = DocTypeWhiteList.length;
+        for (int i = 0; i < n; i++) {
+            if (type.equalsIgnoreCase(DocTypeWhiteList[i]))
+                return true;
+        }
+        return false;
     }
 
-    public static void addPssdProject(ServiceExecutor executor, String proute,
-            XmlWriter w, XmlDoc.Element ae, String projectId,
-            ModelUserRoleSet selfRoles, MethodSet methods, ProjectMemberMap pmm)
-                    throws Throwable {
+    public static void addPssdProject(ServiceExecutor executor, String proute, XmlWriter w, XmlDoc.Element ae,
+            String projectId, ModelUserRoleSet selfRoles, MethodSet methods, ProjectMemberMap pmm) throws Throwable {
 
         /*
          * Indicate if the user is allowed to create Subject objects for this
@@ -1435,8 +1373,8 @@ public class SvcObjectFind extends PluginService {
         if (pe != null) {
 
             /*
-             * Get, and expand (dereference), the methods that are registered with
-             * this project. Adds a "method" element
+             * Get, and expand (dereference), the methods that are registered
+             * with this project. Adds a "method" element
              */
             Collection<XmlDoc.Element> mes = pe.elements("method");
             if (mes != null) {
@@ -1471,7 +1409,7 @@ public class SvcObjectFind extends PluginService {
                     w.pop();
                 }
             }
-    
+
             /*
              * Data-use
              */
@@ -1480,7 +1418,7 @@ public class SvcObjectFind extends PluginService {
                 w.add("data-use", dataUse);
             }
         }
-        
+
         /*
          * Get the project team members and de-reference role members Now that
          * we have dropped the daris:pssd-project/member meta-data, we should
