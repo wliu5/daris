@@ -505,9 +505,10 @@ public class StudyProxyFactory {
 
         case DicomIngestControls.ID_BY_PATIENT_FULL_NAME: {
             DicomPersonName pn = (DicomPersonName) dem.valueOf(DicomElements.PATIENT_NAME);
-            if (pn == null)
+            if (pn == null) {
                 return null;
-
+            }
+            
             String fullName = pn.fullName();
             DicomLog.info("StudyProxyFactory::extractID:Full Name = " + fullName);
             // Hopefully they don't set both of these...
@@ -593,9 +594,9 @@ public class StudyProxyFactory {
 
         case DicomIngestControls.ID_BY_STUDY_ID: {
             String id = dem.stringValue(DicomElements.STUDY_ID);
-            if (id == null)
+            if (id == null) {
                 return null;
-
+            }
             DicomLog.info("StudyProxyFactory::extractID:Study ID = " + id);
             // Hopefully they don't set both of these...
             if (ignoreAfterLastDelim != null)
@@ -610,9 +611,9 @@ public class StudyProxyFactory {
 
         case DicomIngestControls.ID_BY_REFERRING_PHYSICIAN_NAME: {
             String id = dem.stringValue(DicomElements.REFERRING_PHYSICIANS_NAME);
-            if (id == null)
+            if (id == null) {
                 return null;
-
+            }
             DicomLog.info("StudyProxyFactory::extractID:Referring Physician = " + id);
             // Hopefully they don't set both of these...
             if (ignoreAfterLastDelim != null)
