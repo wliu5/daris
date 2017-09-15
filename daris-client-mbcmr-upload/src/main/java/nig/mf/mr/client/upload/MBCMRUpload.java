@@ -360,7 +360,7 @@ public class MBCMRUpload {
 			if (ops.chksum) {
 				chkSumsMatch = compareCheckSums (cxn, ops, logger, rawDataSetCID, chkSumDisk, false);
 				if (chkSumsMatch) {
-					MBCRawUploadUtil.log (logger, "  Checksums match so skipping");
+					MBCRawUploadUtil.log (logger, "  Checksums match so skipping file");
 				} else {
 					MBCRawUploadUtil.log (logger, "  *** Checksums do not match - you must resolve this discrepancy.");
 					chkSumsMatch = false;     // Make sure source is not destroyed
@@ -369,7 +369,7 @@ public class MBCMRUpload {
 		}
 
 		//
-		// Clean up input file.
+		// Destroy input file.
 		if (ops.delete && chkSumsMatch) MBCRawUploadUtil.deleteFile(file, logger);		
 		//
 		return null;
