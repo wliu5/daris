@@ -272,7 +272,7 @@ public class MBCPETCTUpload {
 
 		// See if we can find the subject.  Null if we didn't find it or multiples
 		String subjectID = MBCRawUploadUtil.findSubjectAsset (cxn, MF_NAMESPACE, ops.id, false,
-				MBCRawUploadUtil.SUBJECT_FIND_METHOD.NAME, pm.getFirstName(), pm.getLastName(), null, logger);
+				MBCRawUploadUtil.SUBJECT_FIND_METHOD.NAME, pm.getFirstName(), pm.getLastName(), null, null, logger);
 
 
 		// Upload
