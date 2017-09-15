@@ -116,12 +116,13 @@ public class MBCMRUpload {
 				ops.logpath = args[++i];
 			} else if (args[i].equalsIgnoreCase(FIND_ARG)) {
 				ops.subjectFindMethod = args[++i];
-				if (!(ops.subjectFindMethod).equals("name")
-						|| !(ops.subjectFindMethod).equals("id")
-						|| !(ops.subjectFindMethod).equals("name+id")) {
-					throw new Exception("Illegal value "
+				if (!(ops.subjectFindMethod.equals("name") ||
+					  ops.subjectFindMethod.equals("id") ||
+					  ops.subjectFindMethod.equals("name+id") ||
+				      ops.subjectFindMethod.equals("name+dob"))) {
+					throw new Exception("Illegal value '"
 							+ ops.subjectFindMethod
-							+ " for argument -find-method");
+							+ "' for argument -find-method");
 				}
 			} else if (args[i].equalsIgnoreCase(SLEEP_ARG)) {
 				ops.sleep = args[++i];
@@ -291,21 +292,20 @@ public class MBCMRUpload {
 		MBCRawUploadUtil.SUBJECT_FIND_METHOD subjectFindMethod = null;
 		if (ops.subjectFindMethod.equals("name")) {
 			subjectFindMethod = MBCRawUploadUtil.SUBJECT_FIND_METHOD.NAME;
+		} else if (ops.subjectFindMethod.equals("name+dob")) {
+			subjectFindMethod = MBCRawUploadUtil.SUBJECT_FIND_METHOD.NAME_DOB;
 		} else if (ops.subjectFindMethod.equals("id")) {
 			subjectFindMethod = MBCRawUploadUtil.SUBJECT_FIND_METHOD.ID;
 		} else if (ops.subjectFindMethod.equals("name+id")) {
 			subjectFindMethod = MBCRawUploadUtil.SUBJECT_FIND_METHOD.NAME_ID;
 		}
 
-
 		// See if we can find the subject.  Null if we didn't find it or multiples
 		String subjectID = MBCRawUploadUtil.findSubjectAsset (cxn, null, ops.id, false,
-				subjectFindMethod, pm.getFirstName(), pm.getLastName(), null, logger);
-
+				subjectFindMethod, pm.getFirstName(), pm.getLastName(), pm.getID(), pm.getDOB(), logger);
 
 		// Upload
 		if (subjectID != null) {
-			MBCRawUploadUtil.log (logger, "  Found Subject with CID = " + subjectID);
 			createPSSDAssets (cxn, path, pm, subjectID, cred, ops, logger);
 		} else {
 			// Skip uploading this one as there is no Subject and this client does not create Subjects
@@ -617,7 +617,7 @@ public class MBCMRUpload {
 		System.out
 		.println("   "
 				+ FIND_ARG
-				+ "   Method to find pre-existing subjects; one of 'name' (default), 'id', or 'name+id'");
+				+ "   Method to find pre-existing subjects; one of 'name' (default), ''name+dob', id', or 'name+id'");
 		System.out.println("   " + NOLOG_ARG + "        Disables writing any log file.");
 		System.out.println("   " + LOGPATH_ARG + "       Specify the directory for log files to be written in. Default is " + DEFAULT_LOGGER_PATH);
 		System.out.println("   " + NOCHKSUM_ARG + "     Disables check sum validation of uploaded file");
@@ -629,10 +629,6 @@ public class MBCMRUpload {
 		System.out.println("");
 		System.out.println("");
 	}
-
-
-
-
 
 }
 
