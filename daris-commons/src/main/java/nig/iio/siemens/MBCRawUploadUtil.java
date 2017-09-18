@@ -9,6 +9,8 @@ import java.util.Date;
 import nig.mf.client.util.AssetUtil;
 import nig.mf.pssd.client.util.PSSDUtil;
 import nig.mf.pssd.CiteableIdUtil;
+import nig.util.DateUtil;
+
 
 import org.apache.commons.io.FileUtils;
 
@@ -19,7 +21,7 @@ import arc.xml.XmlStringWriter;
 
 
 /**
- * SOme functions shared by the PET/CT and MR uploaders for Siemens raw data files.
+ * Some functions shared by the PET/CT and MR uploaders for Siemens raw data files.
  * 
  * @author nebk
  *
@@ -27,7 +29,7 @@ import arc.xml.XmlStringWriter;
 
 public class MBCRawUploadUtil {
 
-	public enum SUBJECT_FIND_METHOD {NAME, ID, NAME_ID};
+	public enum SUBJECT_FIND_METHOD {NAME, ID, NAME_ID, NAME_DOB};
 
 
 	public static PrintWriter createFileLogger (Boolean hasLogger, String logPath, String defLogPath)  throws Throwable {
@@ -81,8 +83,9 @@ public class MBCRawUploadUtil {
 	}
 
 
+
 	public static String findSubjectAsset (ServerClient.Connection cxn, String DICOMNameSpace, String cid, Boolean addNIGSubjectMeta,  
-			SUBJECT_FIND_METHOD method, String firstName, String lastName, String patientID,  PrintWriter logger) throws Throwable {
+			SUBJECT_FIND_METHOD method, String firstName, String lastName, String patientID, Date patientDOB,  PrintWriter logger) throws Throwable {
 
 		// Does an asset exist for the supplied CID ?
 		int depth = CiteableIdUtil.getIdDepth(cid);
@@ -104,8 +107,13 @@ public class MBCRawUploadUtil {
 			// find the Subject pre-existing in some PSSD project.  
 			if (depth==CiteableIdUtil.repositoryDepth()) {
 				// Null if can't find or multiples
-				subjectCID = MBCRawUploadUtil.findPatientAssetFromDICOM(cxn, method, firstName, lastName, patientID, cid, 
+				subjectCID = MBCRawUploadUtil.findPatientAssetFromDICOM(cxn, method, firstName, lastName, patientID, patientDOB, cid, 
 						DICOMNameSpace, logger);
+				if (subjectCID!=null) {
+					MBCRawUploadUtil.log(logger, "  Found Subject with CID = " + subjectCID);
+				} else {
+					MBCRawUploadUtil.log(logger, "  Failed to find Subject in any configured project beneath CID " + cid);
+				}
 			} else {
 				String msg = "The supplied citable ID (with no asset)'" + cid + "' does not represent a Repository (the only allowed CID type with no asset).";
 				throw new Exception (msg);
@@ -118,9 +126,15 @@ public class MBCRawUploadUtil {
 				// The object is a Project, first try to find the Subject pre-existing
 				// from the meta-data. Null if not found or multiples
 				subjectCID = MBCRawUploadUtil.findPatientAssetFromDICOM(cxn, method, firstName, lastName, patientID,
-						cid, DICOMNameSpace, logger);
+						patientDOB, cid, DICOMNameSpace, logger);
+				if (subjectCID!=null) {
+					MBCRawUploadUtil.log(logger, "  Found Subject with CID = " + subjectCID);
+				} else {
+					MBCRawUploadUtil.log(logger, "  Failed to find Subject in the Project " + cid);
+				}
 			} else if (pssdType.equals("subject")) {
-				subjectCID = cid;			
+				subjectCID = cid;		
+				MBCRawUploadUtil.log(logger, "  Using existing Subject with CID = " + subjectCID);
 			} else {
 				throw new Exception ("The object associated with the supplied citable ID '" + cid + "' is neither a Project nor a Subject");
 			}
@@ -134,11 +148,10 @@ public class MBCRawUploadUtil {
 	}
 
 	/**
-	 *  Find the subject in DICOM or PSSD data model from the DICOM meta-data.  Use patient name,
-	 *  patient ID or both
+	 *  Find the subject in DICOM or PSSD data model from the DICOM meta-data.  
 	 *  
 	 * @param cxn
-	 * @param method  find method, name or id or both
+	 * @param method  find method, name, name+id, name+dob, or id
 	 * @param {first,last}Name Patient Name
 	 * @param patientID Patient ID
 	 * @param cid  The citable ID may be a repository (depth 2) or Project (depth 3)
@@ -147,7 +160,7 @@ public class MBCRawUploadUtil {
 	 * @throws Throwable
 	 */
 	public static String findPatientAssetFromDICOM (ServerClient.Connection cxn, SUBJECT_FIND_METHOD method, String firstName, String lastName,
-			String patientID, String cid, String DICOMNameSpace, PrintWriter logger) throws Throwable {
+			String patientID, Date patientDOB, String cid, String DICOMNameSpace, PrintWriter logger) throws Throwable {
 		// Build command
 		XmlStringWriter w = new XmlStringWriter();
 
@@ -165,7 +178,9 @@ public class MBCRawUploadUtil {
 
 		// Populate the rest of the query
 		boolean proceed = false;
-		if (method==SUBJECT_FIND_METHOD.NAME || method==SUBJECT_FIND_METHOD.NAME_ID) {
+		
+		// Name query component
+		if (method==SUBJECT_FIND_METHOD.NAME || method==SUBJECT_FIND_METHOD.NAME_ID || method==SUBJECT_FIND_METHOD.NAME_DOB) {
 			if (lastName!=null) {
 				// The first name may be empty (e.g. the phantom)
                 String lastNameQuery = "(xpath(mf-dicom-patient/name[@type='last'])=ignore-case('"+lastName + "') or " +
@@ -176,19 +191,36 @@ public class MBCRawUploadUtil {
 	                "xpath(mf-dicom-patient-encrypted/name[@type='first'])=ignore-case('"+firstName + "'))";
 					query +=  " and " + firstNameQuery;
 				}
-				proceed = true;
+			} else {
+				// We don't have sufficient meta-data to do the query
+				return null;
 			}
 		}
 
+		// ID query component
 		if (method==SUBJECT_FIND_METHOD.ID || method==SUBJECT_FIND_METHOD.NAME_ID) {
-			// Patient ID is optional
 			if (patientID!=null) {
 				query += " and (xpath(mf-dicom-patient/id)=ignore-case('" + patientID + "') or " +
 				         "      xpath(mf-dicom-patient-encrypted/id)=ignore-case('" + patientID + "'))";
+			} else {
+				// We don't have sufficient meta-data to do the query
+				return null;				
 			}
-			proceed = true;
 		}
-		if (!proceed) return null;    // Insufficent meta-data to query with
+		
+		
+		// DOB query component
+		if (method==SUBJECT_FIND_METHOD.NAME_DOB) {
+			if (patientDOB!=null) {
+				String dob = DateUtil.formatDate(patientDOB, false, false);
+				query += " and (xpath(mf-dicom-patient/dob)='" + dob + "' or " +
+				         "      xpath(mf-dicom-patient-encrypted/dob)='" + dob + "')";
+			} else {
+				// We don't have sufficient meta-data to do the query
+				return null;			
+			}
+		}
+	
 		
 		// Do the query
 		w.add("where", query);

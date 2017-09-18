@@ -66,7 +66,8 @@ public class SubjectHandler {
 			return sid;
 		} catch (Throwable t) {
 			if (projectCid != null) {
-				String msgSubject = "PSSD DICOM Engine - auto Subject creation for project '" + projectCid + "'failed";
+				String msgSubject = "PSSD DICOM Engine - auto Subject creation for project '" + projectCid + "'failed (" +
+			                   t.getMessage() + ")";
 				String msg = null;
 				if (subjectWasNullOnEntry) {
 					msg = "Auto-creation of a Subject with the next available citable identifier " + " \n failed with message: " + t.getMessage() + "\n The process will fall through to the standard Mediaflux DICOM data model engine if configured."; 
