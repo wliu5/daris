@@ -336,9 +336,8 @@ public class MBCMRUpload {
 				throw new Exception ("Failed to create PSSD DataSet");
 			}
 			MBCRawUploadUtil.log (logger, "  Created raw PSSD DataSet = " + rawDataSetCID);
-			long size = file.length();
 			double tSec = (double)(t2-t1) / (double)1000000000;
-			double rBytes = size / tSec;
+			double rBytes = (double)tsize / tSec;
 			double rMBytes = rBytes / 1000000;
 			MBCRawUploadUtil.log (logger, "  Approximate upload rate = " + rMBytes + " MB/sec");
 
