@@ -264,7 +264,7 @@ public class MBCMRUpload {
 			MBCRawUploadUtil.log (logger, "   ***    with error " + t.getMessage() + "'");
 			return;
 		}
-		pm.print();
+		pm.printToWriter(logger);
 
 		// Filter out everything but raw data files
 		String ext = pm.getExtension();
@@ -316,6 +316,11 @@ public class MBCMRUpload {
 		// Look for extant MR raw DataSets
 		String rawDataSetCID = findRawSeries  (cxn, pm, file, rawStudyCID);
 
+		MBCRawUploadUtil.log (logger, "  Uploading file");
+		long tsize = FileUtils.sizeOf(file);
+		MBCRawUploadUtil.log (logger, "     File size = " + FileUtils.byteCountToDisplaySize(tsize));
+
+		
 		String chkSumDisk = null;
 		if (ops.chksum) {
 			// Get chksum from disk
@@ -326,9 +331,6 @@ public class MBCMRUpload {
 		// Create asset for raw PET data file. Skip if pre-exists
 		Boolean chkSumsMatch = false;
 		if (rawDataSetCID==null) {
-			MBCRawUploadUtil.log (logger, "  Uploading file");
-			long tsize = FileUtils.sizeOf(file);
-			MBCRawUploadUtil.log (logger, "     File size = " + FileUtils.byteCountToDisplaySize(tsize));
 			long t1 = System.nanoTime();
 			rawDataSetCID = createRawSeries (cxn, file, pm, null, rawStudyCID, ops.expire, cred);
 			long t2 = System.nanoTime();
