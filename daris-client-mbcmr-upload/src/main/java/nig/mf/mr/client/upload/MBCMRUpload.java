@@ -11,13 +11,10 @@ import org.apache.commons.io.FileUtils;
 
 import nig.compress.ZipUtil;
 import nig.iio.siemens.MBCRawUploadUtil;
-import nig.iio.siemens.MBCRawUploadUtil.SUBJECT_FIND_METHOD;
 import nig.mf.MimeTypes;
 import nig.mf.client.util.ClientConnection;
 import nig.mf.client.util.AssetUtil;
 import nig.mf.client.util.UserCredential;
-import nig.mf.pssd.CiteableIdUtil;
-import nig.mf.pssd.client.util.PSSDUtil;
 import nig.util.DateUtil;
 import arc.mf.client.ServerClient;
 import arc.mf.client.ServerClient.Connection;
@@ -168,18 +165,6 @@ public class MBCMRUpload {
 		//
 		ops.print();
 
-		/*
-		System.out.println("STandard");
-		{
-				MRMetaData pm = new MRMetaData (new File(ops.path));
-				pm.parseNew();
-				pm.print();
-		}
-
-		 */
-
-		/*
-
 		// Have a sleep
 		if (ops.sleep!=null) {
 			MBCRawUploadUtil.log (logger, "\nSleeping for " + ops.sleep + " minutes");
@@ -190,7 +175,7 @@ public class MBCMRUpload {
 			Thread.sleep(s2);
 			MBCRawUploadUtil.log (logger, "   Waking from sleep");
 		}
-		 */
+		 
 		// Upload data
 		MBCRawUploadUtil.log (logger, "");
 		upload(logger, ops);
@@ -344,11 +329,18 @@ public class MBCMRUpload {
 			MBCRawUploadUtil.log (logger, "  Uploading file");
 			long tsize = FileUtils.sizeOf(file);
 			MBCRawUploadUtil.log (logger, "     File size = " + FileUtils.byteCountToDisplaySize(tsize));
+			long t1 = System.nanoTime();
 			rawDataSetCID = createRawSeries (cxn, file, pm, null, rawStudyCID, ops.expire, cred);
+			long t2 = System.nanoTime();
 			if (rawDataSetCID==null) {
 				throw new Exception ("Failed to create PSSD DataSet");
 			}
 			MBCRawUploadUtil.log (logger, "  Created raw PSSD DataSet = " + rawDataSetCID);
+			long size = file.length();
+			double tSec = (double)(t2-t1) / (double)1000000000;
+			double rBytes = size / tSec;
+			double rMBytes = rBytes / 1000000;
+			MBCRawUploadUtil.log (logger, "  Approximate upload rate = " + rMBytes + " MB/sec");
 
 			// Destroy the uploaded file if the check-sum does not match
 			if (ops.chksum) {
@@ -570,8 +562,12 @@ public class MBCMRUpload {
 		w.add("description", "Raw Siemens DataSet");
 		w.add("filename", path.getName()); // Original filename
 		w.add("name", path.getName()); // Original filename
+		try {
 		r = cxn.execute("om.pssd.dataset.primary.create", w.document(), in,
-				null);
+				null);		
+		} finally {
+			in.close();
+		}
 		return r.value("id");
 	}
 
@@ -617,7 +613,7 @@ public class MBCMRUpload {
 		System.out
 		.println("   "
 				+ FIND_ARG
-				+ "   Method to find pre-existing subjects; one of 'name' (default), ''name+dob', id', or 'name+id'");
+				+ "   Method to find pre-existing subjects; one of 'name' (default), ''name+dob', 'id', or 'name+id'");
 		System.out.println("   " + NOLOG_ARG + "        Disables writing any log file.");
 		System.out.println("   " + LOGPATH_ARG + "       Specify the directory for log files to be written in. Default is " + DEFAULT_LOGGER_PATH);
 		System.out.println("   " + NOCHKSUM_ARG + "     Disables check sum validation of uploaded file");
