@@ -81,7 +81,7 @@ asset.doc.type.update :create yes :type daris:siemens-raw-mr-study \
             :restriction -base "date" < \
                 :time "false" > > \
         :element -name frame-of-reference -type string -index true -min-occurs 0 -max-occurs 1 \
-        :element -name "ingest" -type "document" -index "true" -max-occurs "1" < \
+        :element -name "ingest" -type "document" -index "true" -min-occurs 0 -max-occurs "1" < \
             :description "Details for when the data were ingested" \
             :element -name "date" -type "date" -index "true" -max-occurs "1" < \
                 :description "Date of ingestion" > \
