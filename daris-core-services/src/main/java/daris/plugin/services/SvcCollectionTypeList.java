@@ -1,4 +1,4 @@
-package nig.mf.plugin.pssd.services;
+package daris.plugin.services;
 
 import java.util.Collection;
 import java.util.SortedSet;
@@ -20,10 +20,10 @@ public class SvcCollectionTypeList extends PluginService {
 
     public SvcCollectionTypeList() {
         _defn = new Interface();
-        _defn.add(new Interface.Element("cid", CiteableIdType.DEFAULT,
-                "The citeable id of the root/parent object.", 1, 1));
-        _defn.add(new Interface.Element("where", StringType.DEFAULT,
-                "Additional query to find the matching objects.", 0, 1));
+        _defn.add(new Interface.Element("cid", CiteableIdType.DEFAULT, "The citeable id of the root/parent object.", 1,
+                1));
+        _defn.add(new Interface.Element("where", StringType.DEFAULT, "Additional query to find the matching objects.",
+                0, 1));
     }
 
     @Override
@@ -42,8 +42,7 @@ public class SvcCollectionTypeList extends PluginService {
     }
 
     @Override
-    public void execute(Element args, Inputs inputs, Outputs outputs,
-            XmlWriter w) throws Throwable {
+    public void execute(Element args, Inputs inputs, Outputs outputs, XmlWriter w) throws Throwable {
         String cid = args.value("cid");
         String where = args.value("where");
         SortedSet<String> types = listTypes(executor(), cid, where);
@@ -60,8 +59,7 @@ public class SvcCollectionTypeList extends PluginService {
         return SERVICE_NAME;
     }
 
-    public static SortedSet<String> listTypes(ServiceExecutor executor,
-            String cid, String where) throws Throwable {
+    public static SortedSet<String> listTypes(ServiceExecutor executor, String cid, String where) throws Throwable {
         StringBuilder sb = new StringBuilder();
         sb.append("(cid='" + cid + "' or cid starts with '" + cid + "')");
         if (where != null) {
@@ -72,12 +70,10 @@ public class SvcCollectionTypeList extends PluginService {
 
         XmlDocMaker dm = new XmlDocMaker("args");
         dm.add("where", sb.toString());
-        dm.add("action", "get-value");
-        dm.add("size", "infinity");
-        dm.add("xpath", new String[] { "ename", "type" }, "type");
+        dm.add("action", "get-distinct-values");
+        dm.add("xpath", "type");
 
-        Collection<String> types = executor.execute("asset.query", dm.root())
-                .values("asset/type");
+        Collection<String> types = executor.execute("asset.query", dm.root()).values("value");
         if (types == null || types.isEmpty()) {
             return null;
         } else {

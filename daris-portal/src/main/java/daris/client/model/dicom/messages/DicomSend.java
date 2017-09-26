@@ -11,15 +11,10 @@ import daris.client.model.object.DObjectRef;
 public class DicomSend extends BackgroundObjectMessage {
 
     public static enum ElementName {
-        PATIENT_NAME("patient.name", "00100010"), PATIENT_ID("patient.id",
-                "00100020"), STUDY_ID("study.id",
-                        "00200010"), PERFORMING_PHYSICIAN_NAME(
-                                "performing.physician.name",
-                                "00081050"), REFERRING_PHYSICIAN_NAME(
-                                        "referring.physician.name",
-                                        "00080090"), REFERRING_PHYSICIAN_PHONE(
-                                                "referring.physician.phone",
-                                                "00080094");
+        PATIENT_NAME("patient.name", "00100010"), PATIENT_ID("patient.id", "00100020"), STUDY_ID("study.id",
+                "00200010"), PERFORMING_PHYSICIAN_NAME("performing.physician.name",
+                        "00081050"), REFERRING_PHYSICIAN_NAME("referring.physician.name",
+                                "00080090"), REFERRING_PHYSICIAN_PHONE("referring.physician.phone", "00080094");
         private String _stringValue;
         private String _tag;
 
@@ -64,8 +59,7 @@ public class DicomSend extends BackgroundObjectMessage {
     }
 
     public static enum ValueReference {
-        SUBJECT_CID("subject.cid"), STUDY_CID("study.cid"), PATIENT_NAME(
-                "patient.name"), PATIENT_ID("patient.id");
+        SUBJECT_CID("subject.cid"), STUDY_CID("study.cid"), PATIENT_NAME("patient.name"), PATIENT_ID("patient.id");
 
         private String _stringValue;
 
@@ -207,11 +201,19 @@ public class DicomSend extends BackgroundObjectMessage {
     }
 
     public void setCallingAETitle(String title) {
-        _callingAET = title;
+        if (title == null || title.trim().isEmpty()) {
+            _callingAET = null;
+        } else {
+            _callingAET = title.trim();
+        }
     }
 
     public void setCalledAEHost(String host) {
-        _calledHost = host;
+        if (host == null || host.trim().isEmpty()) {
+            _calledHost = null;
+        } else {
+            _calledHost = host.trim();
+        }
     }
 
     public void setCalledAEPort(int port) {
@@ -219,7 +221,11 @@ public class DicomSend extends BackgroundObjectMessage {
     }
 
     public void setCalledAETitle(String title) {
-        _calledAET = title;
+        if (title == null || title.trim().isEmpty()) {
+            _calledAET = null;
+        } else {
+            _calledAET = title.trim();
+        }
     }
 
     public void anonymizeElement(ElementName name) {
@@ -277,8 +283,7 @@ public class DicomSend extends BackgroundObjectMessage {
             for (String tag : _elements.keySet()) {
                 DicomElement de = _elements.get(tag);
                 if (de.anonymize()) {
-                    w.push("element", new String[] { "tag", tag, "anonymize",
-                            Boolean.toString(de.anonymize()) });
+                    w.push("element", new String[] { "tag", tag, "anonymize", Boolean.toString(de.anonymize()) });
                 } else {
                     w.push("element", new String[] { "tag", tag });
                     if (de.value() != null) {

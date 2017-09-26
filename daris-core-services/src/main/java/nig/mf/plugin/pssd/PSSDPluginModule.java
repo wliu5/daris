@@ -9,6 +9,8 @@ import arc.mf.plugin.dicom.DicomAssetEngineRegistry;
 import arc.mf.plugin.event.FilterRegistry;
 import arc.mf.plugin.http.HttpServlet;
 import arc.mf.plugin.http.HttpServletPluginModule;
+import daris.plugin.services.SvcCollectionTranscodeList;
+import daris.plugin.services.SvcCollectionTypeList;
 import nig.mf.plugin.pssd.announcement.events.PSSDAnnouncementEvent;
 import nig.mf.plugin.pssd.announcement.events.PSSDAnnouncementEventFilterFactory;
 import nig.mf.plugin.pssd.dicom.NIGDicomAssetEngineFactory;
@@ -197,6 +199,7 @@ public class PSSDPluginModule implements HttpServletPluginModule {
         _services.add(new SvcCollectionMemberCount());
         _services.add(new daris.plugin.services.SvcCollectionArchiveCreate());
         _services.add(new daris.plugin.services.SvcCollectionContentSizeSum());
+        _services.add(new daris.plugin.services.SvcCollectionSummaryGet());
         _services.add(new SvcCollectionTranscodeList());
         _services.add(new SvcCollectionTypeList());
         _services.add(new SvcObjectCidChange());
@@ -311,10 +314,12 @@ public class PSSDPluginModule implements HttpServletPluginModule {
         _services.add(new SvcDICOMAERegDestroy());
         _services.add(new SvcDICOMAEAccess());
         _services.add(new SvcDicomLocalAETitleList());
+
         _services.add(new SvcDicomSRGet());
         _services.add(new SvcDicomSRExport());
 
         _services.add(new daris.plugin.services.SvcDicomPixelDataChecksumGenerate());
+        _services.add(new daris.plugin.services.SvcDicomOnsendUserList());
         //
         _services.add(new daris.plugin.services.SvcCollectionDatasetCount());
         _services.add(new daris.plugin.services.SvcCollectionDicomDatasetCount());

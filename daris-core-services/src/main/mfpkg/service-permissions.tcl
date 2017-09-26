@@ -335,7 +335,7 @@ actor.grant :role -type role service-user :type plugin:service :name daris.objec
 actor.grant :role -type role service-user :type plugin:service :name daris.object.children.list
 actor.grant :role -type role service-user :type plugin:service :name daris.object.children.count
 actor.grant :role -type role service-user :type plugin:service :name daris.object.child.cursor.get
-
+actor.grant :role -type role service-user :type plugin:service :name daris.dicom.onsend.user.list
 
 actor.grant :perm < :access ADMINISTER :resource -type service server.java.environment > :type plugin:service :name daris.downloader.get
 
