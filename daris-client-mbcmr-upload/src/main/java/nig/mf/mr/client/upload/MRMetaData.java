@@ -283,5 +283,32 @@ public class MRMetaData {
 		}
 	}
 
+	public void printToWriter (PrintWriter writer) throws Throwable {
+		writer.println("  File name           = " + _fileName);
+		if (_firstName!=null) {
+			writer.println("  Patient first name  = " + _firstName);
+		}
+		if (_lastName!=null) {
+			writer.println("  Patient last name   = " + _lastName);
+		}
+		if (_patientID != null) {
+			writer.println("  Patient ID          = " + _patientID);
+		}
+		if (_patientDOB != null) {
+			String tDate = DateUtil.formatDate(_patientDOB, false, false);
+			writer.println("  Patient DOB         = " + tDate);
+		}
+		if (_patientSex != null) {
+			writer.println("  Patient Sex         = " + _patientSex);
+		}
+		if (_date != null) {
+			String tDate = DateUtil.formatDate(_date, false, false);
+			writer.println("  Date                = " + tDate);
+		}
+		if (_FoR!=null) {
+			writer.println("  FrameOfReference     = " + _FoR);
+		}
+	}
+
 
 }
