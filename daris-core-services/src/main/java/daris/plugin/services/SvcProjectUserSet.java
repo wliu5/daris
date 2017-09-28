@@ -122,7 +122,7 @@ public class SvcProjectUserSet extends PluginService {
                  * generate system event
                  */
                 generateSystemEvent(executor, projectCid);
-                
+
                 return false;
             }
         }).execute(executor());
@@ -167,7 +167,7 @@ public class SvcProjectUserSet extends PluginService {
          * to run this service
          */
         if (!(selfHaveRole(executor, ProjectRole.projectAdministratorRoleName(cid))
-                || selfHaveRole(executor, ModelRole.objectAdminRoleName()))) {
+                || selfHaveRole(executor, ModelRole.OBJECT_ADMIN_ROLE))) {
             throw new Exception(
                     "Caller must hold specific project administrator role for this project or the global administrator role.");
         }

@@ -2,63 +2,20 @@ package daris.plugin.model;
 
 public class ModelRole {
 
-    /**
-     * User has access to the model.
-     */
-    public static final String MODEL_USER_ROLE_NAME = "model-user";
+    public static final String MODEL_USER_ROLE = "daris:pssd.model.user";
 
-    /**
-     * User has some extra powers; doc type and dictionary management
-     */
-    public static final String POWER_MODEL_USER_ROLE_NAME = "power-user";
+    public static final String POWER_MODEL_USER_ROLE = "daris:pssd.model.power.user";
 
-    /**
-     * User can create projects.
-     */
-    public static final String PROJECT_CREATOR_ROLE_NAME = "project-creator";
+    public static final String PROJECT_CREATOR_ROLE = "daris:pssd.project.create";
 
-    /**
-     * User can create r-subjects.
-     */
-    public static final String SUBJECT_CREATOR_ROLE_NAME = "subject-creator";
+    public static final String SUBJECT_CREATOR_ROLE = "daris:pssd.subject.create";
 
-    /**
-     * User has admin access to all objects
-     * 
-     * @return
-     */
-    public static final String OBJECT_ADMIN_ROLE_NAME = "object-admin";
+    public static final String OBJECT_ADMIN_ROLE = "daris:pssd.object.admin";
 
-    public static String modelUserRoleName() {
-        return "daris:pssd.model.user";
-    }
+    public static final String OBJECT_GUEST_ROLE = "daris:pssd.object.guest";
 
-    public static String powerModelUserRoleName() {
-        return "daris:pssd.model.power.user";
-    }
+    public static final String R_SUBJECT_ADMIN_ROLE = "daris:pssd.r-subject.admin";
 
-    public static String projectCreatorRoleName() {
-        return "daris:pssd.project.create";
-    }
-
-    public static String subjectCreatorRoleName() {
-        return "daris:pssd.subject.create";
-    }
-
-    public static String objectAdminRoleName() {
-        return "daris:pssd.object.admin";
-    }
-
-    public static String objectGuestRoleName() {
-        return "daris:pssd.object.guest";
-    }
-
-    public static String rSubjectAdminRoleName() {
-        return "daris:pssd.r-subject.admin";
-    }
-
-    public static String rSubjectGuestRoleName() {
-        return "daris:pssd.r-subject.guest";
-    }
+    public static final String R_SUBJECT_GUEST_ROLE = "daris:pssd.r-subject.guest";
 
 }

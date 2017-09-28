@@ -92,7 +92,7 @@ public class AssetRegistry {
             // The asset will have an ACL on it so only the user can find their
             // assets
             String query = "(type='" + registryAssetType
-                    + "') and (created by me) and (asset hasno name)";
+                    + "') and (created by me)" /* and (asset hasno name)*/;
             dm.add("where", query);
             dm.add("pdist", 0); // Force to local query
         }

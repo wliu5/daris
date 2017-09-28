@@ -13,62 +13,59 @@ public class Application {
     public static final String META_NAMESPACE = "daris";
     public static final String DICT_NAMESPACE = "daris";
 
-    public final static String defaultNamespace(ServiceExecutor executor)
-            throws Throwable {
-        XmlDocMaker dm = new XmlDocMaker("args");
-        dm.add("property", new String[] { "app", "daris" }, NAMESPACE_PROPERTY);
-        boolean propertyExists = executor.execute(
-                "application.property.exists",
-                "<args><property app=\"daris\">" + NAMESPACE_PROPERTY
-                        + "</property></args>", null, null).booleanValue(
-                "exists", false);
-        if (propertyExists) {
-            String ns = executor.execute(
-                    "application.property.get",
-                    "<args><property app=\"daris\">" + NAMESPACE_PROPERTY
-                            + "</property></args>", null, null).value(
-                    "property");
-            boolean namespaceExists = executor.execute(
-                    "asset.namespace.exists",
-                    "<args><namespace>" + ns + "</namespace></args>", null,
-                    null).booleanValue("exists", false);
-            if (namespaceExists) {
+    public final static String defaultNamespace(ServiceExecutor executor) throws Throwable {
+        if (propertyExists(executor, "daris", NAMESPACE_PROPERTY)) {
+            String ns = getApplicationProperty(executor, "daris", NAMESPACE_PROPERTY);
+            if (namespaceExists(executor, ns)) {
                 return ns;
             } else {
-                throw new Exception("The default namespace: " + ns
-                        + " does not exist.");
+                throw new Exception("The default namespace: " + ns + " does not exist.");
             }
         } else {
-            if (executor.execute("asset.namespace.exists",
-                    "<args><namespace>daris</namespace></args>", null, null)
-                    .booleanValue("exists", false)) {
-                executor.execute("application.property.create",
-                        "<args><property app=\"daris\" name=\"" + NAMESPACE_PROPERTY
-                                + "\"><value>daris</value></property></args>", null,
-                        null);
+            if (namespaceExists(executor, "daris")) {
+                createApplicationProperty(executor, "daris");
                 return "daris";
-            } else if (executor.execute("asset.namespace.exists",
-                    "<args><namespace>pssd</namespace></args>", null, null)
-                    .booleanValue("exists", false)) {
-                executor.execute("application.property.create",
-                        "<args><property app=\"daris\" name=\"" + NAMESPACE_PROPERTY
-                                + "\"><value>pssd</value></property></args>", null,
-                        null);
+            } else if (namespaceExists(executor, "pssd")) {
+                createApplicationProperty(executor, "pssd");
                 return "pssd";
             } else {
-                throw new Exception(
-                        "The default namespace: daris does not exist.");
+                throw new Exception("The default namespace: 'daris' does not exist.");
             }
         }
     }
 
-    public static String defaultProjectNamespace(ServiceExecutor executor)
-            throws Throwable {
+    public static String defaultProjectNamespace(ServiceExecutor executor) throws Throwable {
         String ns = defaultNamespace(executor);
         if ("pssd".equals(ns) || ns.endsWith("pssd")) {
             return ns;
         } else {
             return ns + "/pssd";
         }
+    }
+
+    private static boolean propertyExists(ServiceExecutor executor, String app, String name) throws Throwable {
+        XmlDocMaker dm = new XmlDocMaker("args");
+        dm.add("property", new String[] { "app", app }, name);
+        return executor.execute("application.property.exists", dm.root()).booleanValue("exists", false);
+    }
+
+    private static boolean namespaceExists(ServiceExecutor executor, String namespace) throws Throwable {
+        XmlDocMaker dm = new XmlDocMaker("args");
+        dm.add("namespace", namespace);
+        return executor.execute("asset.namespace.exists", dm.root()).booleanValue("exists");
+    }
+
+    private static void createApplicationProperty(ServiceExecutor executor, String namespace) throws Throwable {
+        XmlDocMaker dm = new XmlDocMaker("args");
+        dm.push("property", new String[] { "app", "daris", "name", NAMESPACE_PROPERTY });
+        dm.add("value", namespace);
+        dm.pop();
+        executor.execute("application.property.create", dm.root());
+    }
+
+    private static String getApplicationProperty(ServiceExecutor executor, String app, String name) throws Throwable {
+        XmlDocMaker dm = new XmlDocMaker("args");
+        dm.add("property", new String[] { "app", app }, name);
+        return executor.execute("application.property.get", dm.root()).value("property");
     }
 }
