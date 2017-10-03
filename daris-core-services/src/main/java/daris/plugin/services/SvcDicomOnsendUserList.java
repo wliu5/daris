@@ -16,9 +16,13 @@ import nig.mf.plugin.pssd.dicom.Role;
 
 public class SvcDicomOnsendUserList extends PluginService {
 
+    public static final String SERVICE_NAME = "daris.dicom.onsend.user.list";
+
     private static final String DEFAULT_AUTH_DOMAIN = "dicom";
 
     private static final String NAME_SUFFIX = "DARIS_ONSEND";
+
+    private static final String USER_SUFFIX = "_ONSEND";
 
     private static final String DICOM_INGEST_ROLE = Role.dicomIngestRoleName();
 
@@ -54,10 +58,12 @@ public class SvcDicomOnsendUserList extends PluginService {
                 domain = DEFAULT_AUTH_DOMAIN;
             }
         }
-        List<String> users = findDicomOnsendUsers(executor(), domain);
-        if (users != null) {
-            for (String user : users) {
-                w.add("user", new String[] { "domain", domain }, user);
+        if (domainExists(executor(), null, domain)) {
+            List<String> users = findDicomOnsendUsers(executor(), domain);
+            if (users != null) {
+                for (String user : users) {
+                    w.add("user", new String[] { "domain", domain }, user);
+                }
             }
         }
     }
@@ -74,7 +80,9 @@ public class SvcDicomOnsendUserList extends PluginService {
             for (XmlDoc.Element ue : ues) {
                 String name = ue.value("name");
                 String user = ue.value("@user");
-                if (name.endsWith(NAME_SUFFIX)) {
+                if (user.endsWith(USER_SUFFIX)) {
+                    users.add(user);
+                } else if (name.endsWith(NAME_SUFFIX)) {
                     users.add(user);
                 }
             }
@@ -96,9 +104,18 @@ public class SvcDicomOnsendUserList extends PluginService {
         return null;
     }
 
+    private boolean domainExists(ServiceExecutor executor, String authority, String domain) throws Throwable {
+        XmlDocMaker dm = new XmlDocMaker("args");
+        if (authority != null) {
+            dm.add("authority", authority);
+        }
+        dm.add("domain", domain);
+        return executor.execute("authentication.domain.exists", dm.root()).booleanValue("exists");
+    }
+
     @Override
     public String name() {
-        return "daris.dicom.onsend.user.list";
+        return SERVICE_NAME;
     }
 
 }

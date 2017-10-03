@@ -9,13 +9,13 @@ import arc.xml.XmlDoc.Element;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
 
-public class SvcDicomAEList extends PluginService {
+public class SvcDicomSendCalledAEList extends PluginService {
 
-    public static final String SERVICE_NAME = "daris.dicom.ae.list";
+    public static final String SERVICE_NAME = "daris.dicom.send.called-ae.list";
 
     private Interface _defn;
 
-    public SvcDicomAEList() {
+    public SvcDicomSendCalledAEList() {
         _defn = new Interface();
         _defn.add(new Interface.Element("name-prefix", StringType.DEFAULT, "Name prefix filter.", 0, 1));
         _defn.add(new Interface.Element("title-prefix", StringType.DEFAULT, "AE title prefix filter.", 0, 1));
@@ -44,30 +44,30 @@ public class SvcDicomAEList extends PluginService {
         String hostPrefix = args.value("host-prefix");
         Boolean sslFilter = args.booleanValue("ssl", null);
         StringBuilder sb = new StringBuilder();
-        sb.append(SvcDicomAEAdd.DOC_TYPE + " has value");
+        sb.append(SvcDicomSendCalledAEAdd.DOC_TYPE + " has value");
         if (namePrefix != null) {
-            sb.append(" and ").append("xpath(" + SvcDicomAEAdd.DOC_TYPE + "/name) starts with '" + namePrefix + "'");
+            sb.append(" and ").append("xpath(" + SvcDicomSendCalledAEAdd.DOC_TYPE + "/name) starts with '" + namePrefix + "'");
         }
         if (titlePrefix != null) {
-            sb.append(" and ").append("xpath(" + SvcDicomAEAdd.DOC_TYPE + "/title) starts with '" + titlePrefix + "'");
+            sb.append(" and ").append("xpath(" + SvcDicomSendCalledAEAdd.DOC_TYPE + "/title) starts with '" + titlePrefix + "'");
         }
         if (hostPrefix != null) {
-            sb.append(" and ").append("xpath(" + SvcDicomAEAdd.DOC_TYPE + "/host) starts with '" + hostPrefix + "'");
+            sb.append(" and ").append("xpath(" + SvcDicomSendCalledAEAdd.DOC_TYPE + "/host) starts with '" + hostPrefix + "'");
         }
         if (sslFilter != null) {
-            sb.append(" and ").append("xpath(" + SvcDicomAEAdd.DOC_TYPE + "/ssl)=" + sslFilter);
+            sb.append(" and ").append("xpath(" + SvcDicomSendCalledAEAdd.DOC_TYPE + "/ssl)=" + sslFilter);
         }
 
         XmlDocMaker dm = new XmlDocMaker("args");
         dm.add("where", sb.toString());
         dm.add("action", "get-value");
         dm.add("size", "infinity");
-        dm.add("xpath", new String[] { "ename", "name" }, "meta/" + SvcDicomAEAdd.DOC_TYPE + "/name");
-        dm.add("xpath", new String[] { "ename", "title" }, "meta/" + SvcDicomAEAdd.DOC_TYPE + "/title");
-        dm.add("xpath", new String[] { "ename", "host" }, "meta/" + SvcDicomAEAdd.DOC_TYPE + "/host");
-        dm.add("xpath", new String[] { "ename", "port" }, "meta/" + SvcDicomAEAdd.DOC_TYPE + "/port");
-        dm.add("xpath", new String[] { "ename", "ssl" }, "meta/" + SvcDicomAEAdd.DOC_TYPE + "/ssl");
-        dm.add("xpath", new String[] { "ename", "description" }, "meta/" + SvcDicomAEAdd.DOC_TYPE + "/description");
+        dm.add("xpath", new String[] { "ename", "name" }, "meta/" + SvcDicomSendCalledAEAdd.DOC_TYPE + "/name");
+        dm.add("xpath", new String[] { "ename", "title" }, "meta/" + SvcDicomSendCalledAEAdd.DOC_TYPE + "/title");
+        dm.add("xpath", new String[] { "ename", "host" }, "meta/" + SvcDicomSendCalledAEAdd.DOC_TYPE + "/host");
+        dm.add("xpath", new String[] { "ename", "port" }, "meta/" + SvcDicomSendCalledAEAdd.DOC_TYPE + "/port");
+        dm.add("xpath", new String[] { "ename", "ssl" }, "meta/" + SvcDicomSendCalledAEAdd.DOC_TYPE + "/ssl");
+        dm.add("xpath", new String[] { "ename", "description" }, "meta/" + SvcDicomSendCalledAEAdd.DOC_TYPE + "/description");
 
         XmlDoc.Element re = executor().execute("asset.query", dm.root());
         if (re.elementExists("asset")) {
@@ -82,9 +82,9 @@ public class SvcDicomAEList extends PluginService {
             }
         }
 
-        XmlDoc.Element se = SvcUserDicomAEAdd.userSettingsOf(executor(), SvcUserDicomAEAdd.APP).element("settings");
+        XmlDoc.Element se = SvcUserDicomSendSettingsGet.getDicomSendSettings(executor());
         if (se != null) {
-            List<XmlDoc.Element> aes = se.elements("ae");
+            List<XmlDoc.Element> aes = se.elements("called-ae");
             if (aes != null) {
                 for (XmlDoc.Element ae : aes) {
                     String name = ae.value("@name");

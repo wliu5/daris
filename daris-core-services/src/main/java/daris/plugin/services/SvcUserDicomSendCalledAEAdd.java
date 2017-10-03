@@ -7,17 +7,15 @@ import arc.xml.XmlDoc.Element;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
 
-public class SvcUserDicomAEAdd extends PluginService {
+public class SvcUserDicomSendCalledAEAdd extends PluginService {
 
-    public static final String APP = "daris.dicom.application.entities";
-
-    public static final String SERVICE_NAME = "daris.user.dicom.ae.add";
+    public static final String SERVICE_NAME = "daris.user.dicom.send.called-ae.add";
 
     private Interface _defn;
 
-    public SvcUserDicomAEAdd() {
+    public SvcUserDicomSendCalledAEAdd() {
         _defn = new Interface();
-        SvcDicomAEAdd.addToDefn(_defn);
+        SvcDicomSendCalledAEAdd.addToDefn(_defn);
     }
 
     @Override
@@ -38,20 +36,20 @@ public class SvcUserDicomAEAdd extends PluginService {
     @Override
     public void execute(Element args, Inputs arg1, Outputs arg2, XmlWriter w) throws Throwable {
         String name = args.value("name");
-        XmlDoc.Element se = userSettingsOf(executor(), APP).element("settings");
-        if (SvcDicomAEAdd.aeAssetExists(executor(), name)) {
+        XmlDoc.Element se = SvcUserDicomSendSettingsGet.getDicomSendSettings(executor());
+        if (SvcDicomSendCalledAEAdd.aeAssetExists(executor(), name)) {
             throw new IllegalArgumentException("DICOM application entity with name: '" + name + "' already exists.");
         }
-        if (se != null && se.elementExists("ae[@name='" + name + "']")) {
+        if (se != null && se.elementExists("called-ae[@name='" + name + "']")) {
             throw new IllegalArgumentException("DICOM application entity with name: '" + name + "' already exists.");
         }
         XmlDocMaker dm = new XmlDocMaker("args");
-        dm.add("app", APP);
+        dm.add("app", SvcUserDicomSendSettingsSet.APP);
         dm.push("settings");
         if (se != null) {
             dm.add(se, false);
         }
-        dm.push("ae", new String[] { "name", name });
+        dm.push("called-ae", new String[] { "name", name });
         dm.add(args.element("title"));
         dm.add(args.element("host"));
         dm.add(args.element("port"));
@@ -72,14 +70,8 @@ public class SvcUserDicomAEAdd extends PluginService {
     }
 
     static boolean aeSettingsExists(ServiceExecutor executor, String name) throws Throwable {
-        XmlDoc.Element se = userSettingsOf(executor, APP).element("settings");
-        return se != null && se.elementExists("ae[@name='" + name + "']");
-    }
-
-    static XmlDoc.Element userSettingsOf(ServiceExecutor executor, String app) throws Throwable {
-        XmlDocMaker dm = new XmlDocMaker("args");
-        dm.add("app", app);
-        return executor.execute("user.self.settings.get", dm.root());
+        XmlDoc.Element se = SvcUserDicomSendSettingsGet.getDicomSendSettings(executor);
+        return se != null && se.elementExists("called-ae[@name='" + name + "']");
     }
 
 }

@@ -823,9 +823,15 @@ public class SvcDicomSend extends PluginService {
 
     private static void addByCiteableId(ServiceExecutor executor, String citeableId, Set<String> datasetAssetIds)
             throws Throwable {
-        XmlDoc.Element ae = executor.execute("asset.get", "<args><cid>" + citeableId + "</cid></args>", null, null)
-                .element("asset");
-        addByAssetMeta(executor, ae, datasetAssetIds);
+        XmlDocMaker dm = new XmlDocMaker("args");
+        dm.add("where", "(cid='" + citeableId + "' or cid starts with '" + citeableId
+                + "') and mf-dicom-series has value and asset has content");
+        dm.add("action", "get-id");
+        dm.add("size", "infinity");
+        Collection<String> ids = executor.execute("asset.query", dm.root()).values("id");
+        if (ids != null && !ids.isEmpty()) {
+            datasetAssetIds.addAll(ids);
+        }
     }
 
     private static void addByQuery(ServiceExecutor executor, String where, Set<String> datasetAssetIds)

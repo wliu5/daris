@@ -12,15 +12,15 @@ import arc.xml.XmlWriter;
 import daris.plugin.model.ModelRole;
 import nig.mf.plugin.pssd.Application;
 
-public class SvcDicomAEAdd extends PluginService {
+public class SvcDicomSendCalledAEAdd extends PluginService {
 
-    public static final String SERVICE_NAME = "daris.dicom.ae.add";
+    public static final String SERVICE_NAME = "daris.dicom.send.called-ae.add";
 
     public static final String DOC_TYPE = "daris:dicom-application-entity";
 
     private Interface _defn;
 
-    public SvcDicomAEAdd() {
+    public SvcDicomSendCalledAEAdd() {
         _defn = new Interface();
         addToDefn(_defn);
     }
@@ -55,7 +55,7 @@ public class SvcDicomAEAdd extends PluginService {
     @Override
     public void execute(Element args, Inputs inputs, Outputs outputs, XmlWriter w) throws Throwable {
         String name = args.value("name");
-        if (aeAssetExists(executor(), name) || SvcUserDicomAEAdd.aeSettingsExists(executor(), name)) {
+        if (aeAssetExists(executor(), name) || SvcUserDicomSendCalledAEAdd.aeSettingsExists(executor(), name)) {
             throw new IllegalArgumentException("DICOM application entity with name: '" + name + "' already exists.");
         }
         String assetId = createDicomApplicationEntityAsset(executor(), args);
@@ -64,7 +64,7 @@ public class SvcDicomAEAdd extends PluginService {
 
     private static String createDicomApplicationEntityAsset(ServiceExecutor executor, XmlDoc.Element args)
             throws Throwable {
-        String namespace = Application.defaultNamespace(executor) + "/dicom-application-entities";
+        String namespace = Application.defaultNamespace(executor) + "/dicom.send/called.application.entities";
         XmlDocMaker dm = new XmlDocMaker("args");
         dm.add("namespace", new String[] { "create", "true" }, namespace);
         dm.push("meta");
