@@ -20,8 +20,8 @@ import arc.xml.XmlStringWriter;
 
 public class MBCPETCTDownload {
 
-	private static final String MF_NAMESPACE = "MBIC-Archive";
-	private static final String MF_PSSD_NAMESPACE = "MBIC-PSSD-Archive";
+	private static final String MF_NAMESPACE = "MBIC-PETCT-dicom";
+	private static final String MF_PSSD_NAMESPACE = "mbic.pssd";
 	//
 	private static final String RAW_STUDY_DOC_TYPE = "daris:siemens-raw-petct-study";
 	private static final String RAW_SERIES_DOC_TYPE = "daris:siemens-raw-petct-series ";
