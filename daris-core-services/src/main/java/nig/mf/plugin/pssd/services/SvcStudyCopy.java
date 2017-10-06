@@ -23,13 +23,10 @@ public class SvcStudyCopy extends PluginService {
 
     public SvcStudyCopy() {
         _defn = new Interface();
-        _defn.add(new Interface.Element("cid", CiteableIdType.DEFAULT,
-                "The citeable id of study.", 1, 1));
+        _defn.add(new Interface.Element("cid", CiteableIdType.DEFAULT, "The citeable id of study.", 1, 1));
 
-        Interface.Element to = new Interface.Element("to",
-                CiteableIdType.DEFAULT,
-                "The citeable id of the destination subject or ex-method.", 1,
-                1);
+        Interface.Element to = new Interface.Element("to", CiteableIdType.DEFAULT,
+                "The citeable id of the destination subject or ex-method.", 1, 1);
         to.add(new Interface.Attribute("step", CiteableIdType.DEFAULT,
                 "The ex-method step of the destination ex-method.", 0));
         _defn.add(to);
@@ -51,49 +48,41 @@ public class SvcStudyCopy extends PluginService {
     }
 
     @Override
-    public void execute(Element args, Inputs inputs, Outputs outputs,
-            final XmlWriter w) throws Throwable {
+    public void execute(Element args, Inputs inputs, Outputs outputs, final XmlWriter w) throws Throwable {
         final String srcStudyCid = args.value("cid");
         if (!CiteableIdUtil.isStudyId(srcStudyCid)) {
-            throw new Exception(srcStudyCid
-                    + " is not a valid citeable id for study.");
+            throw new Exception(srcStudyCid + " is not a valid citeable id for study.");
         }
-        final XmlDoc.Element srcStudyAE = executor().execute("asset.get",
-                "<args><cid>" + srcStudyCid + "</cid></args>", null, null)
-                .element("asset");
+        final XmlDoc.Element srcStudyAE = executor()
+                .execute("asset.get", "<args><cid>" + srcStudyCid + "</cid></args>", null, null).element("asset");
         String srcMethodCid = srcStudyAE.value("meta/daris:pssd-study/method");
-        String srcExMethodStep = srcStudyAE
-                .value("meta/daris:pssd-study/method/@id");
+        String srcExMethodStep = srcStudyAE.value("meta/daris:pssd-study/method/@id");
         String to = args.value("to");
         String dstSubjectCid = null;
         String dstExMethodCid = null;
         String dstExMethodStep = args.value("to/@step");
         if (CiteableIdUtil.isSubjectId(to)) {
             dstSubjectCid = to;
-            dstExMethodCid = findDstExMethod(executor(), dstSubjectCid,
-                    srcMethodCid);
+            dstExMethodCid = findDstExMethod(executor(), dstSubjectCid, srcMethodCid);
             if (dstExMethodCid == null) {
-                throw new Exception("No ex-method found in subject "
-                        + dstSubjectCid);
+                throw new Exception("No ex-method found in subject " + dstSubjectCid);
             }
         } else if (CiteableIdUtil.isExMethodId(to)) {
             dstSubjectCid = CiteableIdUtil.getParentId(to);
             dstExMethodCid = to;
         } else {
-            throw new Exception("Invalid destination citeable id: " + to
-                    + ". Must be the id of a subject or ex-method.");
+            throw new Exception(
+                    "Invalid destination citeable id: " + to + ". Must be the id of a subject or ex-method.");
         }
         if (srcStudyCid.startsWith(dstSubjectCid + ".")) {
-            throw new Exception("Cannot send to the same subject: "
-                    + dstSubjectCid);
+            throw new Exception("Cannot send to the same subject: " + dstSubjectCid);
         }
-        String dstMethodCid = executor().execute("asset.get",
-                "<args><cid>" + dstExMethodCid + "</cid></args>", null, null)
+        String dstMethodCid = executor()
+                .execute("asset.get", "<args><cid>" + dstExMethodCid + "</cid></args>", null, null)
                 .value("asset/meta/daris:pssd-ex-method/method/id");
         boolean methodMatch = srcMethodCid.equals(dstMethodCid);
         if (dstExMethodStep == null && methodMatch) {
-            dstExMethodStep = findDstExMethodStep(executor(), dstExMethodCid,
-                    srcExMethodStep);
+            dstExMethodStep = findDstExMethodStep(executor(), dstExMethodCid, srcExMethodStep);
         }
         final String dstExMethod = dstExMethodCid;
         final String dstStep = dstExMethodStep;
@@ -101,25 +90,18 @@ public class SvcStudyCopy extends PluginService {
 
             @Override
             public boolean execute(ServiceExecutor executor) throws Throwable {
-                String dstStudyCid = createDstStudy(executor, dstExMethod,
-                        dstStep, srcStudyAE);
+                String dstStudyCid = createDstStudy(executor, dstExMethod, dstStep, srcStudyAE);
                 w.push("study", new String[] { "cid", dstStudyCid });
-                copyAttachments(executor, srcStudyAE.value("cid"), dstStudyCid,
-                        w);
-                Collection<String> srcDataSetCids = executor
-                        .execute(
-                                "asset.query",
-                                "<args><where>cid in '"
-                                        + srcStudyCid
-                                        + "' and model='om.pssd.dataset'</where><size>infinity</size><action>get-cid</action></args>",
-                                null, null).values("cid");
+                copyAttachments(executor, srcStudyAE.value("cid"), dstStudyCid, w);
+                Collection<String> srcDataSetCids = executor.execute("asset.query",
+                        "<args><where>cid in '" + srcStudyCid
+                                + "' and model='om.pssd.dataset'</where><size>infinity</size><action>get-cid</action></args>",
+                        null, null).values("cid");
                 if (srcDataSetCids != null) {
                     for (String srcDataSetCid : srcDataSetCids) {
-                        String dstDataSetCid = createDstDataSet(executor,
-                                dstStudyCid, srcDataSetCid);
+                        String dstDataSetCid = createDstDataSet(executor, dstStudyCid, srcDataSetCid);
                         w.push("dataset", new String[] { "cid", dstDataSetCid });
-                        copyAttachments(executor, srcDataSetCid, dstDataSetCid,
-                                w);
+                        copyAttachments(executor, srcDataSetCid, dstDataSetCid, w);
                         w.pop();
                     }
                 }
@@ -129,13 +111,12 @@ public class SvcStudyCopy extends PluginService {
         }).execute(executor());
     }
 
-    private static String createDstDataSet(ServiceExecutor executor,
-            String dstStudyCid, String srcDataSetCid) throws Throwable {
-        XmlDoc.Element srcDataSetAE = executor.execute("asset.get",
-                "<args><cid>" + srcDataSetCid + "</cid></args>", null, null)
-                .element("asset");
-        String type = srcDataSetAE.stringValue("meta/daris:pssd-dataset/type",
-                "derivation");
+    private static String createDstDataSet(ServiceExecutor executor, String dstStudyCid, String srcDataSetCid)
+            throws Throwable {
+        PluginService.Outputs outputs = new PluginService.Outputs(1);
+        XmlDoc.Element srcDataSetAE = executor
+                .execute("asset.get", "<args><cid>" + srcDataSetCid + "</cid></args>", null, outputs).element("asset");
+        String type = srcDataSetAE.stringValue("meta/daris:pssd-dataset/type", "derivation");
         XmlDocMaker dm = new XmlDocMaker("args");
         dm.add("fillin", true);
         dm.add("pid", dstStudyCid);
@@ -152,27 +133,20 @@ public class SvcStudyCopy extends PluginService {
             dm.add("name", srcDataSetAE.value("meta/daris:pssd-object/name"));
         }
         if (srcDataSetAE.elementExists("meta/daris:pssd-object/description")) {
-            dm.add("description",
-                    srcDataSetAE.value("meta/daris:pssd-object/description"));
+            dm.add("description", srcDataSetAE.value("meta/daris:pssd-object/description"));
         }
         if (srcDataSetAE.elementExists("meta/daris:pssd-filename/original")) {
             dm.add("filename",
-                    new String[] {
-                            "private",
-                            srcDataSetAE
-                                    .value("meta/daris:pssd-filename/original/@private") },
+                    new String[] { "private", srcDataSetAE.value("meta/daris:pssd-filename/original/@private") },
                     srcDataSetAE.value("meta/daris:pssd-filename/original"));
         }
         boolean derived = type.equals("derivation");
         if (derived) {
-            if (srcDataSetAE
-                    .elementExists("meta/daris:pssd-derivation/processed")) {
-                dm.add("processed", srcDataSetAE
-                        .value("meta/daris:pssd-derivation/processed"));
+            if (srcDataSetAE.elementExists("meta/daris:pssd-derivation/processed")) {
+                dm.add("processed", srcDataSetAE.value("meta/daris:pssd-derivation/processed"));
             }
             if (srcDataSetAE.elementExists("meta/daris:pssd-derivation/input")) {
-                List<XmlDoc.Element> ies = srcDataSetAE
-                        .elements("meta/daris:pssd-derivation/input");
+                List<XmlDoc.Element> ies = srcDataSetAE.elements("meta/daris:pssd-derivation/input");
                 dm.addAll(ies);
             }
         }
@@ -188,30 +162,25 @@ public class SvcStudyCopy extends PluginService {
             }
         }
         dm.push("mf-note");
-        dm.add("note", "Copied from dataset " + srcDataSetAE.value("cid")
-                + "(asset_id=" + srcDataSetAE.value("@id") + ")");
+        dm.add("note",
+                "Copied from dataset " + srcDataSetAE.value("cid") + "(asset_id=" + srcDataSetAE.value("@id") + ")");
         dm.pop();
         dm.pop();
-        dm.add("url", srcDataSetAE.value("content/url"));
-        return executor.execute(
-                derived ? "om.pssd.dataset.derivation.create"
-                        : "om.pssd.dataset.primary.create", dm.root()).value(
-                "id");
+        // plugin service output -> plugin service input
+        PluginService.Output output = outputs.output(0);
+        PluginService.Input input = new PluginService.Input(output.stream(), output.length(), output.mimeType(), null);
+        return executor.execute(derived ? "om.pssd.dataset.derivation.create" : "om.pssd.dataset.primary.create",
+                dm.root(), new PluginService.Inputs(input), null).value("id");
     }
 
-    private static String createDstStudy(ServiceExecutor executor,
-            String dstExMethodCid, String dstExMethodStep,
+    private static String createDstStudy(ServiceExecutor executor, String dstExMethodCid, String dstExMethodStep,
             XmlDoc.Element srcStudyAE) throws Throwable {
         String srcStudyType = srcStudyAE.value("meta/daris:pssd-study/type");
-        boolean srcStudyProcessed = srcStudyAE.booleanValue(
-                "meta/daris:pssd-study/processed", false);
-        Collection<String> dstStudyTypes = executor.execute(
-                "om.pssd.ex-method.study.type.list",
-                "<args><id>" + dstExMethodCid + "</id></args>", null, null)
-                .values("type");
+        boolean srcStudyProcessed = srcStudyAE.booleanValue("meta/daris:pssd-study/processed", false);
+        Collection<String> dstStudyTypes = executor.execute("om.pssd.ex-method.study.type.list",
+                "<args><id>" + dstExMethodCid + "</id></args>", null, null).values("type");
         if (dstStudyTypes == null || !dstStudyTypes.contains(srcStudyType)) {
-            throw new Exception("The destination ex-method " + dstExMethodCid
-                    + " does not support study type: ");
+            throw new Exception("The destination ex-method " + dstExMethodCid + " does not support study type: ");
         }
         XmlDocMaker dm = new XmlDocMaker("args");
         dm.add("fillin", true);
@@ -228,8 +197,7 @@ public class SvcStudyCopy extends PluginService {
             dm.add("name", srcStudyAE.value("meta/daris:pssd-object/name"));
         }
         if (srcStudyAE.elementExists("meta/daris:pssd-object/description")) {
-            dm.add("description",
-                    srcStudyAE.value("meta/daris:pssd-object/description"));
+            dm.add("description", srcStudyAE.value("meta/daris:pssd-object/description"));
         }
         List<XmlDoc.Element> mes = srcStudyAE.element("meta").elements();
         dm.push("meta");
@@ -244,19 +212,16 @@ public class SvcStudyCopy extends PluginService {
             }
         }
         dm.push("mf-note");
-        dm.add("note", "Copied from study " + srcStudyAE.value("cid")
-                + "(asset_id=" + srcStudyAE.value("@id") + ")");
+        dm.add("note", "Copied from study " + srcStudyAE.value("cid") + "(asset_id=" + srcStudyAE.value("@id") + ")");
         dm.pop();
         dm.pop();
         return executor.execute("om.pssd.study.create", dm.root()).value("id");
     }
 
-    private static String findDstExMethodStep(ServiceExecutor executor,
-            String dstExMethodCid, String srcExMethodStep) throws Throwable {
-        Collection<String> steps = executor.execute(
-                "om.pssd.ex-method.study.step.find",
-                "<args><id>" + dstExMethodCid + "</id></args>", null, null)
-                .values("ex-method/step");
+    private static String findDstExMethodStep(ServiceExecutor executor, String dstExMethodCid, String srcExMethodStep)
+            throws Throwable {
+        Collection<String> steps = executor.execute("om.pssd.ex-method.study.step.find",
+                "<args><id>" + dstExMethodCid + "</id></args>", null, null).values("ex-method/step");
         if (steps == null || steps.isEmpty()) {
             return null;
         }
@@ -267,19 +232,16 @@ public class SvcStudyCopy extends PluginService {
         }
     }
 
-    private static String findDstExMethod(ServiceExecutor executor,
-            String dstSubjectCid, String srcMethodCid) throws Throwable {
-        String query1 = "cid in '" + dstSubjectCid
-                + "' and model='om.pssd.ex-method'";
+    private static String findDstExMethod(ServiceExecutor executor, String dstSubjectCid, String srcMethodCid)
+            throws Throwable {
+        String query1 = "cid in '" + dstSubjectCid + "' and model='om.pssd.ex-method'";
         String query2 = srcMethodCid == null ? query1
-                : (query1 + " and xpath(daris:pssd-ex-method/method/id)='"
-                        + srcMethodCid + "'");
+                : (query1 + " and xpath(daris:pssd-ex-method/method/id)='" + srcMethodCid + "'");
         XmlDocMaker dm = new XmlDocMaker("args");
         dm.add("where", srcMethodCid == null ? query1 : query2);
         dm.add("size", 1);
         dm.add("action", "get-cid");
-        String dstExMethodCid = executor.execute("asset.query", dm.root())
-                .value("cid");
+        String dstExMethodCid = executor.execute("asset.query", dm.root()).value("cid");
         if (srcMethodCid == null) {
             return dstExMethodCid;
         }
@@ -289,28 +251,27 @@ public class SvcStudyCopy extends PluginService {
             dm.add("where", query1);
             dm.add("size", 1);
             dm.add("action", "get-cid");
-            dstExMethodCid = executor.execute("asset.query", dm.root()).value(
-                    "cid");
+            dstExMethodCid = executor.execute("asset.query", dm.root()).value("cid");
         }
         return dstExMethodCid;
     }
 
-    private static void copyAttachments(ServiceExecutor executor,
-            String srcObjCid, String dstObjCid, XmlWriter w) throws Throwable {
-        Collection<String> srcAttachmentAssetIds = executor.execute(
-                "asset.get", "<args><cid>" + srcObjCid + "</cid></args>", null,
-                null).values("asset/related[@type='attachment']/to");
+    private static void copyAttachments(ServiceExecutor executor, String srcObjCid, String dstObjCid, XmlWriter w)
+            throws Throwable {
+        Collection<String> srcAttachmentAssetIds = executor
+                .execute("asset.get", "<args><cid>" + srcObjCid + "</cid></args>", null, null)
+                .values("asset/related[@type='attachment']/to");
         if (srcAttachmentAssetIds == null || srcAttachmentAssetIds.isEmpty()) {
             return;
         }
-        XmlDoc.Element dstObjAE = executor.execute("asset.get",
-                "<args><cid>" + dstObjCid + "</cid></args>", null, null)
+        XmlDoc.Element dstObjAE = executor.execute("asset.get", "<args><cid>" + dstObjCid + "</cid></args>", null, null)
                 .element("asset");
         String dstObjId = dstObjAE.value("@id");
         for (String srcAttachmentAssetId : srcAttachmentAssetIds) {
-            XmlDoc.Element ae = executor.execute("asset.get",
-                    "<args><id>" + srcAttachmentAssetId + "</id></args>", null,
-                    null).element("asset");
+            PluginService.Outputs outputs = new PluginService.Outputs(1);
+            XmlDoc.Element ae = executor
+                    .execute("asset.get", "<args><id>" + srcAttachmentAssetId + "</id></args>", null, outputs)
+                    .element("asset");
             XmlDocMaker dm = new XmlDocMaker("args");
             dm.add("name", ae.value("name"));
             dm.add("namespace", dstObjAE.value("namespace"));
@@ -326,10 +287,8 @@ public class SvcStudyCopy extends PluginService {
             if (ae.elementExists("content/ltype")) {
                 dm.add("lctype", ae.value("content/ltype"));
             }
-            dm.add("url", ae.value("content/url"));
             dm.push("related");
-            dm.add("from", new String[] { "relationship", "attachment" },
-                    dstObjId);
+            dm.add("from", new String[] { "relationship", "attachment" }, dstObjId);
             dm.pop();
             List<XmlDoc.Element> acls = dstObjAE.elements("acl");
             if (acls != null) {
@@ -343,9 +302,12 @@ public class SvcStudyCopy extends PluginService {
                     System.out.println(acl);
                 }
             }
-            System.out.println(dm.root());
-            String dstAttachmentAssetId = executor.execute("asset.create",
-                    dm.root()).value("id");
+            // plugin service output -> plugin service input
+            PluginService.Output output = outputs.output(0);
+            PluginService.Input input = new PluginService.Input(output.stream(), output.length(), output.mimeType(),
+                    null);
+            String dstAttachmentAssetId = executor
+                    .execute("asset.create", dm.root(), new PluginService.Inputs(input), null).value("id");
             w.add("attachment", new String[] { "id", dstAttachmentAssetId });
         }
     }
