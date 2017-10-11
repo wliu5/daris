@@ -33,9 +33,9 @@ public class SvcAssetDocCopy extends PluginService {
 		e.add(new Attribute("tag", StringType.DEFAULT, "Tag of the document on the target asset. (only used when action is 'add')", 0));
 		_defn.add(e);
 		
-		e = new Element("doc", StringType.DEFAULT, "The document to be copied from the source asset.", 1, Integer.MAX_VALUE);
-		e.add(new Attribute("tag", StringType.DEFAULT, "Tag of the document.", 0));
-		e.add(new Attribute("ns", StringType.DEFAULT, "Namespace of the document.", 0));
+		e = new Element("doc", StringType.DEFAULT, "The document (include any document namespace with the name) to be copied from the source asset.", 1, Integer.MAX_VALUE);
+		e.add(new Attribute("tag", StringType.DEFAULT, "Value of the 'tag' attribute on the document. If not suppliued, 'tag' is ignored in matching the input.", 0));
+		e.add(new Attribute("ns", StringType.DEFAULT, "Value of the 'ns' attribute on the document. If not supplied, 'ns' is ignored in matching the input.", 0));
 		_defn.add(e);
 
 		_defn.add(new Element("action", new EnumType(new String[] { "add", "replace", "merge" }, true),
@@ -81,12 +81,14 @@ public class SvcAssetDocCopy extends PluginService {
 		XmlDocMaker dm = new XmlDocMaker("args");
 		dm.add("id", from);
 		XmlDoc.Element asset = executor().execute(new ServerRoute(fromRoute), "asset.get", dm.root());
+		if (asset==null) {
+			throw new Exception("Input asset not found");
+		}
 
 		// Fetch the documents from the source asset
 		List<XmlDoc.Element> docs = findDocs(asset, docNames);
 		if (docs == null) {
-			// No docs found.
-			return;
+			throw new Exception("No input document found");
 		}
 		
 		// Override the namespace and tag attributes if the action is add.
@@ -95,6 +97,12 @@ public class SvcAssetDocCopy extends PluginService {
 		} else {
 			setDocAttributes(docs, null, null);
 		}
+		
+		// Show some information
+		for (XmlDoc.Element doc : docs) {
+			w.add("doc", new String[] { "from", from, "to", to }, doc.qname());
+		}
+
 		
 		// Set the target asset
 		dm = new XmlDocMaker("args");
@@ -106,10 +114,6 @@ public class SvcAssetDocCopy extends PluginService {
 		dm.pop();
 		executor().execute("asset.set", dm.root());
 
-		// Show some information
-		for (XmlDoc.Element doc : docs) {
-			w.add("doc", new String[] { "from", from, "to", to }, doc.qname());
-		}
 
 	}
 
@@ -158,11 +162,12 @@ public class SvcAssetDocCopy extends PluginService {
 			return null;
 		}
 		Collection<XmlDoc.Element> docs = ae.elements("asset/meta/" + docName);
+		
 		if (docs != null) {
 			for (XmlDoc.Element doc : docs) {
 				XmlDoc.Attribute nsAttr = doc.attribute("ns");
 				XmlDoc.Attribute tagAttr = doc.attribute("tag");
-
+				
 				boolean nsMatch = false;
 				if (ns == null) {
 					// if (nsAttr == null) {
@@ -191,7 +196,7 @@ public class SvcAssetDocCopy extends PluginService {
 					return doc;
 				}
 			}
-		}
+		} 
 		return null;
 	}
 
