@@ -355,14 +355,14 @@ public class MBCMRUpload {
 				if (chkSumsMatch) {
 					MBCRawUploadUtil.log (logger, "  Checksums match so skipping file");
 				} else {
-					MBCRawUploadUtil.log (logger, "  *** Checksums do not match - you must resolve this discrepancy.");
+					MBCRawUploadUtil.log (logger, "  *** Checksums do not match - the source file will not be destroyed - you must resolve this discrepancy.");
 					chkSumsMatch = false;     // Make sure source is not destroyed
 				}
 			}
 		}
 
 		//
-		// Destroy input file.
+		// Destroy input file only if checksums have been checked and matched
 		if (ops.delete && chkSumsMatch) MBCRawUploadUtil.deleteFile(file, logger);		
 		//
 		return null;
@@ -618,7 +618,7 @@ public class MBCMRUpload {
 		System.out.println("   " + NOLOG_ARG + "        Disables writing any log file.");
 		System.out.println("   " + LOGPATH_ARG + "       Specify the directory for log files to be written in. Default is " + DEFAULT_LOGGER_PATH);
 		System.out.println("   " + NOCHKSUM_ARG + "     Disables check sum validation of uploaded file");
-		System.out.println("   " + NODELETE_ARG + "     Disables the deletion of the input file after check sum validation");
+		System.out.println("   " + NODELETE_ARG + "     Disables the deletion of the input file after check sum validation. Files will only be deleted if the option to compare checksums is enabled.");
 		System.out.println("   " + EXPIRE_ARG + "        Specifies that meta-data is to be attached to the file with an expiry data of 1 year after acquisition");
 		System.out.println("   " + ID_ARG + "            Specifies the PSSD data model (DaRIS) should be used and that this is the citeable ID that the Study should be associated with. Can be depth 2 (the repository), 3 (a Project) or 4 (a Subject).");
 		System.out.println("   " + DECRYPT_ARG + "    Specifies the password should not be decrypted.");
