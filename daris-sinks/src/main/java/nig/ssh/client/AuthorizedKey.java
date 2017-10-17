@@ -70,8 +70,10 @@ public class AuthorizedKey {
     }
 
     public static void main(String[] args) throws Throwable {
-        String key = "AAAAB3NzaC1yc2EAAAABIwAAAQEAnUJvDjghQdse74q53HdaCnKlynk5FMf9AA0U3IoDvDuHilrkcjAXSI3dF+Ttrpijxdan/cWoWtLdqzZMyP+8reoa3usb5xCnxix38D4tysRrgGC3v3XObteTkqpeKQdz5MBxNHSy7Q7a22jycQOO3svf338l8siLLGq3ruZuIKWchAQolwXBFyfiW/NNEUVanvMIg6GIoIvA9tAeEokgTA571qEJFqtuS8pHKFyzkK9PaGMGpAkCyfc0XQCokE/zbE3bbovPsYFyS7xTXqA0xA85jCqu8fEEBK5KPfLnt26rCeX/rnGx6pOEfp9lLNTdR1Jnvr3p/L+Pjanop7UdbQ==";
-        AuthorizedKey ak = new AuthorizedKey(key);
-        System.out.print(ak.algorithm());
+        // @formatter:off
+//        String key = "AAAAB3NzaC1yc2EAAAABIwAAAQEAnUJvDjghQdse74q53HdaCnKlynk5FMf9AA0U3IoDvDuHilrkcjAXSI3dF+Ttrpijxdan/cWoWtLdqzZMyP+8reoa3usb5xCnxix38D4tysRrgGC3v3XObteTkqpeKQdz5MBxNHSy7Q7a22jycQOO3svf338l8siLLGq3ruZuIKWchAQolwXBFyfiW/NNEUVanvMIg6GIoIvA9tAeEokgTA571qEJFqtuS8pHKFyzkK9PaGMGpAkCyfc0XQCokE/zbE3bbovPsYFyS7xTXqA0xA85jCqu8fEEBK5KPfLnt26rCeX/rnGx6pOEfp9lLNTdR1Jnvr3p/L+Pjanop7UdbQ==";
+//        AuthorizedKey ak = new AuthorizedKey(key);
+//        System.out.print(ak.algorithm());
+        // @formatter:on
     }
 }

@@ -20,7 +20,9 @@ public class ByteUtil {
     }
 
     public static void main(String[] args) {
-        System.out.println(decodeUInt32(new byte[] { 0, 0, 0, 7 }, 0));
+        // @formatter:off
+//        System.out.println(decodeUInt32(new byte[] { 0, 0, 0, 7 }, 0));
+        // @formatter:on
     }
 
 }

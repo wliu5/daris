@@ -40,22 +40,22 @@ public class StreamUtil {
             in.close();
         }
     }
+//    @formatter:off
+//    public static String toString(InputStream in) throws Throwable {
+//        Scanner scanner = null;
+//        String s = "";
+//        try {
+//            scanner = new Scanner(in, "UTF-8").useDelimiter("\\A");
+//            s = scanner.hasNext() ? scanner.next() : "";
+//        } finally {
+//            scanner.close();
+//        }
+//        return s;
+//    }
+//    @formatter:on
 
-    public static String toString(InputStream in) throws Throwable {
-        Scanner scanner = null;
-        String s = "";
-        try {
-            scanner = new Scanner(in, "UTF-8").useDelimiter("\\A");
-            s = scanner.hasNext() ? scanner.next() : "";
-        } finally {
-            scanner.close();
-        }
-        return s;
-    }
-    
     public static void main(String[] args) throws Throwable {
-        
-        System.out.println(toString(new FileInputStream(new File("/tmp/1.txt"))));
+
     }
 
 }
