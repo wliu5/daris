@@ -1,4 +1,4 @@
-package io.github.xtman.ssh.client.utils;
+package io.github.xtman.io.util;
 
 import java.io.BufferedReader;
 import java.io.File;

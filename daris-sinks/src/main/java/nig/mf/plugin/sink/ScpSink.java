@@ -19,7 +19,7 @@ import arc.streams.LongInputStream;
 import arc.xml.XmlDoc;
 import io.github.xtman.ssh.client.ScpPutClient;
 import io.github.xtman.ssh.client.SshConnection;
-import io.github.xtman.ssh.client.utils.PathUtils;
+import io.github.xtman.util.PathUtils;
 import nig.ssh.client.Ssh;
 
 public class ScpSink implements DataSinkImpl {

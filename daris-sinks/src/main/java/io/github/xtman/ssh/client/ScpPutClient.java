@@ -15,8 +15,8 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
 import ch.ethz.ssh2.Session;
-import io.github.xtman.ssh.client.utils.PathUtils;
-import io.github.xtman.ssh.client.utils.StreamUtils;
+import io.github.xtman.io.util.StreamUtils;
+import io.github.xtman.util.PathUtils;
 
 public class ScpPutClient implements Closeable {
 

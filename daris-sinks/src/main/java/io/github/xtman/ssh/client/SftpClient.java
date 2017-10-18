@@ -18,8 +18,8 @@ import ch.ethz.ssh2.SFTPOutputStream;
 import ch.ethz.ssh2.SFTPv3Client;
 import ch.ethz.ssh2.SFTPv3FileAttributes;
 import ch.ethz.ssh2.SFTPv3FileHandle;
-import io.github.xtman.ssh.client.utils.PathUtils;
-import io.github.xtman.ssh.client.utils.StreamUtils;
+import io.github.xtman.io.util.StreamUtils;
+import io.github.xtman.util.PathUtils;
 
 public class SftpClient implements Closeable {
 
