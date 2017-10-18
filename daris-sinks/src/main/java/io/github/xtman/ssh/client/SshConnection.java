@@ -14,6 +14,7 @@ import java.util.List;
 
 import ch.ethz.ssh2.ChannelCondition;
 import ch.ethz.ssh2.Connection;
+import ch.ethz.ssh2.ConnectionInfo;
 import ch.ethz.ssh2.SFTPv3Client;
 import ch.ethz.ssh2.ServerHostKeyVerifier;
 import ch.ethz.ssh2.Session;
@@ -24,7 +25,12 @@ public class SshConnection implements Closeable {
 
     public static final int DEFAULT_MAX_SESSIONS = 0;
 
-    public static final int TIMEOUT_MILLISECS = 5000;
+    public static final int CONNECT_TIMEOUT_MILLISECS = 60000; // 60 seconds
+
+    public static final int KEY_EXCHANGE_TIMEOUT_MILLISECS = 60000; // 60
+                                                                    // seconds
+
+    public static final int EXEC_TIMEOUT_MILLISECS = 5000; // 5 seconds
 
     private String _host;
     private int _port;
@@ -35,6 +41,7 @@ public class SshConnection implements Closeable {
     private String _userPrivateKeyPassphrase;
 
     private Connection _cxn;
+    private ConnectionInfo _cxnInfo;
 
     private int _maxSessions;
     private List<Session> _sessions;
@@ -80,25 +87,38 @@ public class SshConnection implements Closeable {
                 }
             }
         };
-        _cxn.connect(_hostPublicKey == null ? null : new ServerHostKeyVerifier() {
+        _cxn.setServerHostKeyAlgorithms(new String[] { "ssh-rsa" });
+        _cxnInfo = _cxn.connect(_hostPublicKey == null ? null : new ServerHostKeyVerifier() {
 
-            public boolean verifyServerHostKey(String hostname, int port, String serverHostKeyAlgorithm,
+            @Override
+            public boolean verifyServerHostKey(String hostname, int port, String serverHostKeyType,
                     byte[] serverHostKey) throws Exception {
                 if (_hostPublicKey == null) {
-                    // no host key is stored locally.
                     return true;
+                } else {
+                    byte[] hostKey = SshKeyTools.getPublicKeyBytes(_hostPublicKey);
+                    String hostKeyType = SshKeyTools.getPublicKeyType(hostKey);
+                    if (!serverHostKeyType.equals(hostKeyType)) {
+                        return false;
+                    }
+                    return Arrays.equals(hostKey, serverHostKey);
                 }
-                byte[] hostKey = java.util.Base64.getDecoder().decode(_hostPublicKey.getBytes());
-                return Arrays.equals(hostKey, serverHostKey);
             }
-        });
+        }, CONNECT_TIMEOUT_MILLISECS, KEY_EXCHANGE_TIMEOUT_MILLISECS);
         try {
-            if (_userPrivateKey != null) {
-                _cxn.authenticateWithPublicKey(_username, _userPrivateKey.toCharArray(), _userPrivateKeyPassphrase);
-            } else if (_password != null) {
-                _cxn.authenticateWithPassword(_username, _password);
-            } else {
+            if (_password == null && _userPrivateKey == null) {
                 throw new IllegalArgumentException("Missing user's password or private key.");
+            }
+            boolean authenticated = false;
+            if (_password != null) {
+                authenticated = _cxn.authenticateWithPassword(_username, _password);
+            }
+            if (!authenticated && _userPrivateKey != null) {
+                authenticated = _cxn.authenticateWithPublicKey(_username, _userPrivateKey.toCharArray(),
+                        _userPrivateKeyPassphrase);
+            }
+            if (!authenticated) {
+                throw new Exception("Failed to authenticate user: " + _username);
             }
         } catch (Throwable e) {
             if (_cxn != null) {
@@ -194,7 +214,7 @@ public class SshConnection implements Closeable {
                          */
                         int conditions = session.waitForCondition(
                                 ChannelCondition.STDOUT_DATA | ChannelCondition.STDERR_DATA | ChannelCondition.EOF,
-                                TIMEOUT_MILLISECS);
+                                EXEC_TIMEOUT_MILLISECS);
 
                         /*
                          * Wait no longer than 5 seconds (= 5000 milliseconds)
@@ -318,6 +338,10 @@ public class SshConnection implements Closeable {
                 }
             }
         }
+    }
+
+    protected ConnectionInfo connectionInfo() {
+        return _cxnInfo;
     }
 
     public void close() throws IOException {

@@ -26,7 +26,7 @@ public class ScpSink implements DataSinkImpl {
 
     public static final String SINK_TYPE = "scp";
 
-    public static final int DEFAULT_FILE_MODE = 0664;
+    public static final int DEFAULT_FILE_MODE = 0640;
 
     public static final int DEFAULT_DIR_MODE = 0755;
 
@@ -42,8 +42,8 @@ public class ScpSink implements DataSinkImpl {
         PASSPHRASE("passphrase", PasswordType.DEFAULT, "The passphrase for the private-key. It is only required when the private-key argument is given and it is encrypted."),
         DIRECTORY("directory",StringType.DEFAULT, "The base directory on the remote SSH server. If not set, the user's home direcotry will be used."),
         DECOMPRESS("decompress", BooleanType.DEFAULT, "Indicate whether to decompress the archive. Defaults to false. Note: it can only decompress the recognized archive types, zip, tar, gzip, bzip2 and aar. Also if the calling service e.g. shopping cart services already decompress the archive, turning off the decompress for the sink can do nothing but just transfer the decompressed data."),
-        FILE_MODE("file-mode", new StringType(Pattern.compile("\\d{4}")),"The remote file mode. Defaults to "+ DEFAULT_FILE_MODE +"." ),
-        DIR_MODE("dir-mode", new StringType(Pattern.compile("\\d{4}")),"The remote directory mode. Defaults to "+ DEFAULT_DIR_MODE +"." );
+        FILE_MODE("file-mode", new StringType(Pattern.compile("^[0-7]{4}$")),"The remote file mode. Defaults to "+ String.format("%04o", DEFAULT_FILE_MODE) +"." ),
+        DIR_MODE("dir-mode", new StringType(Pattern.compile("^[0-7]{4}$")),"The remote directory mode. Defaults to "+ String.format("%04o", DEFAULT_DIR_MODE) +"." );
         // @formatter:on
 
         private String _paramName;
