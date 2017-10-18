@@ -342,7 +342,7 @@ public class JSchSession extends AbstractSession {
                     break;
                 }
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(100);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
