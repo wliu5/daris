@@ -26,9 +26,9 @@ public class ScpSink implements DataSinkImpl {
 
     public static final String SINK_TYPE = "scp";
 
-    public static final String DEFAULT_FILE_MODE = "0664";
+    public static final int DEFAULT_FILE_MODE = 0664;
 
-    public static final String DEFAULT_DIR_MODE = "0755";
+    public static final int DEFAULT_DIR_MODE = 0755;
 
     public static enum ParamDefn {
 
@@ -91,11 +91,11 @@ public class ScpSink implements DataSinkImpl {
         public final String passphrase;
         public final String directory;
         public final boolean decompress;
-        public final String fileMode;
-        public final String dirMode;
+        public final int fileMode;
+        public final int dirMode;
 
         Params(String host, int port, String hostKey, String user, String password, String privateKey,
-                String passphrase, String directory, boolean decompress, String fileMode, String dirMode) {
+                String passphrase, String directory, boolean decompress, int fileMode, int dirMode) {
             this.host = host;
             this.port = port;
             this.hostKey = hostKey;
@@ -152,14 +152,16 @@ public class ScpSink implements DataSinkImpl {
             String d = params.get(ParamDefn.DECOMPRESS.paramName());
             boolean decompress = d == null ? false : Boolean.parseBoolean(d);
 
-            String fileMode = params.get(ParamDefn.FILE_MODE.paramName());
-            if (fileMode == null) {
-                fileMode = DEFAULT_FILE_MODE;
+            int fileMode = DEFAULT_FILE_MODE;
+            String fileModeStr = params.get(ParamDefn.FILE_MODE.paramName());
+            if (fileModeStr != null) {
+                fileMode = Integer.parseInt(fileModeStr, 8);
             }
 
-            String dirMode = params.get(ParamDefn.DIR_MODE.paramName());
-            if (dirMode == null) {
-                dirMode = DEFAULT_DIR_MODE;
+            int dirMode = DEFAULT_DIR_MODE;
+            String dirModeStr = params.get(ParamDefn.DIR_MODE.paramName());
+            if (dirModeStr != null) {
+                dirMode = Integer.parseInt(dirModeStr, 8);
             }
 
             return new Params(host, port, hostKey, user, password, privateKey, passphrase, directory, decompress,

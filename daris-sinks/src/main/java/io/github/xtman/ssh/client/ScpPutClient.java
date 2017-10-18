@@ -21,8 +21,8 @@ import io.github.xtman.ssh.client.utils.StreamUtils;
 public class ScpPutClient implements Closeable {
 
     public static final String DEFAULT_ENCODING = "UTF-8";
-    public static final String DEFAULT_DIRECTORY_MODE = "0755";
-    public static final String DEFAULT_FILE_MODE = "0644";
+    public static final int DEFAULT_DIRECTORY_MODE = 0755;
+    public static final int DEFAULT_FILE_MODE = 0644;
     public static final String DEFAULT_BASE_DIRECTORY = ".";
 
     private SshConnection _connection;
@@ -32,29 +32,39 @@ public class ScpPutClient implements Closeable {
     private boolean _preserveMtime;
     private boolean _compress;
     private boolean _verbose;
-    private String _dirMode;
-    private String _fileMode;
+    private int _dirMode;
+    private int _fileMode;
 
     private boolean _initialized = false;
 
     private InputStream _cin;
     private OutputStream _cout;
 
+    ScpPutClient(SshConnection connection, Session session) {
+        this(connection, session, DEFAULT_ENCODING, DEFAULT_BASE_DIRECTORY, false, false, DEFAULT_DIRECTORY_MODE,
+                DEFAULT_FILE_MODE, false);
+    }
+
+    ScpPutClient(SshConnection connection, Session session, String baseDir) {
+        this(connection, session, DEFAULT_ENCODING, baseDir, false, false, DEFAULT_DIRECTORY_MODE, DEFAULT_FILE_MODE,
+                false);
+    }
+
     ScpPutClient(SshConnection connection, Session session, String encoding, String baseDir, boolean preserveMtime,
-            boolean compress, String dirMode, String fileMode) {
+            boolean compress, int dirMode, int fileMode) {
         this(connection, session, encoding, baseDir, preserveMtime, compress, dirMode, fileMode, false);
     }
 
     ScpPutClient(SshConnection connection, Session session, String encoding, String baseDir, boolean preserveMtime,
-            boolean compress, String dirMode, String fileMode, boolean verbose) {
+            boolean compress, int dirMode, int fileMode, boolean verbose) {
         _connection = connection;
         _session = session;
         _encoding = encoding == null ? DEFAULT_ENCODING : encoding;
         setBaseDirectory(baseDir);
         _preserveMtime = preserveMtime;
         _compress = compress;
-        _dirMode = dirMode == null ? DEFAULT_DIRECTORY_MODE : dirMode;
-        _fileMode = fileMode == null ? DEFAULT_FILE_MODE : fileMode;
+        _dirMode = dirMode < 0 ? DEFAULT_DIRECTORY_MODE : dirMode;
+        _fileMode = fileMode < 0 ? DEFAULT_FILE_MODE : fileMode;
         _verbose = verbose;
 
         _initialized = false;
@@ -89,12 +99,20 @@ public class ScpPutClient implements Closeable {
         return _compress;
     }
 
-    public String directoryMode() {
+    public int directoryMode() {
         return _dirMode;
     }
 
-    public String fileMode() {
+    public String directoryModeToString() {
+        return String.format("%04o", _dirMode);
+    }
+
+    public int fileMode() {
         return _fileMode;
+    }
+
+    public String fileModeToString() {
+        return String.format("%04o", _fileMode);
     }
 
     public boolean verbose() {
@@ -201,7 +219,7 @@ public class ScpPutClient implements Closeable {
         // send file mode, length and name
         String fileName = PathUtils.getLastComponent(dstPath);
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("C%s %d %s\n", fileMode(), length, fileName));
+        sb.append(String.format("C%04o %d %s\n", fileMode(), length, fileName));
         String cmd = sb.toString();
 
         // System.out.println("Sending command: " + cmd);
@@ -298,7 +316,7 @@ public class ScpPutClient implements Closeable {
      * @throws IOException
      */
     private void pushDir(String dirName) throws IOException {
-        String cmd = String.format("D%s 0 %s\n", directoryMode(), dirName);
+        String cmd = String.format("D%04o 0 %s\n", directoryMode(), dirName);
         // System.out.println("Sending command: " + cmd);
         _cout.write(cmd.getBytes(encoding()));
         _cout.flush();

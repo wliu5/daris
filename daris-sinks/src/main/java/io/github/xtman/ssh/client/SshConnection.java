@@ -9,12 +9,15 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import ch.ethz.ssh2.ChannelCondition;
 import ch.ethz.ssh2.Connection;
+import ch.ethz.ssh2.SFTPv3Client;
 import ch.ethz.ssh2.ServerHostKeyVerifier;
 import ch.ethz.ssh2.Session;
+import ch.ethz.ssh2.channel.Channel;
 import io.github.xtman.ssh.client.utils.AbortCheck;
 
 public class SshConnection implements Closeable {
@@ -132,24 +135,34 @@ public class SshConnection implements Closeable {
         }
     }
 
+    void removeClosedSessions() {
+        synchronized (_sessions) {
+            for (Iterator<Session> it = _sessions.iterator(); it.hasNext();) {
+                Session session = it.next();
+                if (session.getState() == Channel.STATE_CLOSED) {
+                    it.remove();
+                    _sessions.notifyAll();
+                }
+            }
+        }
+    }
+
     public SshSession createSession() throws Throwable {
         return new SshSession(this, _cxn.openSession());
     }
 
     public ScpPutClient createScpPutClient(String encoding, String baseDir, boolean preserveMtime, boolean compress,
-            String dirMode, String fileMode) throws Throwable {
+            int dirMode, int fileMode) throws Throwable {
         return new ScpPutClient(this, _cxn.openSession(), encoding, baseDir, preserveMtime, compress, dirMode, fileMode,
                 false);
     }
 
     public ScpPutClient createScpPutClient(String baseDir) throws Throwable {
-        return createScpPutClient(ScpPutClient.DEFAULT_ENCODING, baseDir, false, false,
-                ScpPutClient.DEFAULT_DIRECTORY_MODE, ScpPutClient.DEFAULT_FILE_MODE);
+        return new ScpPutClient(this, _cxn.openSession(), baseDir);
     }
 
     public ScpPutClient createScpPutClient() throws Throwable {
-        return createScpPutClient(ScpPutClient.DEFAULT_ENCODING, ScpPutClient.DEFAULT_BASE_DIRECTORY, false, false,
-                ScpPutClient.DEFAULT_DIRECTORY_MODE, ScpPutClient.DEFAULT_FILE_MODE);
+        return new ScpPutClient(this, _cxn.openSession());
     }
 
     public int exec(String command, String charsetName, OutputStream stdout, OutputStream stderr, AbortCheck abortCheck)
@@ -278,20 +291,38 @@ public class SshConnection implements Closeable {
         return exec(command, null, null, null, null);
     }
 
-    public void close() throws IOException {
-        try {
-            synchronized (_sessions) {
-                for (Session session : _sessions) {
-                    try {
-                        session.close();
-                    } catch (Throwable e) {
+    public SftpClient createSftpClient() throws IOException {
+        return new SftpClient(this, new SFTPv3Client(_cxn));
+    }
 
-                    } finally {
-                        _sessions.remove(session);
-                        _sessions.notifyAll();
+    public SftpClient createSftpClient(String baseDir) throws IOException {
+        return new SftpClient(this, new SFTPv3Client(_cxn), baseDir);
+    }
+
+    public SftpClient createSftpClient(String baseDir, int dirMode, int fileMode) throws Throwable {
+        return new SftpClient(this, new SFTPv3Client(_cxn), baseDir, dirMode, fileMode);
+    }
+
+    private void clearSessions() {
+        synchronized (_sessions) {
+            for (Session session : _sessions) {
+                try {
+                    if (session.getState() != Channel.STATE_CLOSED) {
+                        session.close();
                     }
+                } catch (Throwable e) {
+
+                } finally {
+                    _sessions.remove(session);
+                    _sessions.notifyAll();
                 }
             }
+        }
+    }
+
+    public void close() throws IOException {
+        try {
+            clearSessions();
         } finally {
             if (_cxn != null) {
                 _cxn.close();
