@@ -20,12 +20,7 @@ public class NIGDicomAssetEngineFactory implements DicomAssetEngineFactory {
     public Map<String, String> arguments() {
         Map<String, String> args = new TreeMap<String, String>();
 
-        // The control nig.dicom.id.citable; however, it's purpose is to specify
-        // the destination CID and so
-        // it's not appropriate to put it in the DICOM server controls. It can
-        // be supplied directly to the dicom.ingest
-        // service which in turn calls the StudyProxyFactory
-
+        args.put("nig.dicom.id.citable", "The citeable ID (using the P.S[.EM[.S]] notation) of the DaRIS object to locate the data in. Using this will deactivate all other controls looking for this ID in other DICOM meta-data");
         args.put("nig.dicom.id.by",
                 "The method of identifying studies using P.S[.EM[.S]] (project, subject, ex-method, study) notation. If specified, one of [patient.id, patient.name, patient.name.first, patient.name.last, study.id, performing.physician.name, referring.physician.name, referring.physician.phone, requesting.physician].");
         args.put("nig.dicom.id.ignore-non-digits",

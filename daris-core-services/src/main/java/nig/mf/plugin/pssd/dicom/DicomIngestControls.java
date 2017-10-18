@@ -16,7 +16,8 @@ public class DicomIngestControls {
      * Don't identify.
      */
     public static final int ID_NONE = 0;
-
+    
+ 
     /**
      * Uniquely identify patient by DICOM element (0x0010,0x0020).
      */
@@ -66,6 +67,8 @@ public class DicomIngestControls {
      */
     public static final int ID_BY_REQUESTING_PHYSICIAN = 9;
 
+
+    
     public static class ExInvalidSetting extends Throwable {
         public ExInvalidSetting(String setting, String error) {
             super("NIG.DICOM: invalid argument [" + setting + "]: " + error);
@@ -232,10 +235,8 @@ public class DicomIngestControls {
         // Root namespace for storing data.
         // _ns = (String)args.get("nig.dicom.asset.namespace.root");
 
-        // Either the Citable ID is directly specified by the caller or it is
-        // extracted from the DICOM metadata. This control is not passed on to
-        // the
-        // DICOM server when using a DICOM client.
+        // Either the Citable ID is directly specified (can be on the CLI or in a DICOM server config) or it is
+        // extracted from the DICOM metadata. 
         _citableID = (String) args.get("nig.dicom.id.citable");
 
         if (_citableID == null) {
