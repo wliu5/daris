@@ -1,5 +1,9 @@
 package nig.mf.plugin.sink;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -8,6 +12,7 @@ import java.util.regex.Pattern;
 import arc.archive.ArchiveInput;
 import arc.archive.ArchiveRegistry;
 import arc.mf.plugin.DataSinkImpl;
+import arc.mf.plugin.PluginTask;
 import arc.mf.plugin.dtype.BooleanType;
 import arc.mf.plugin.dtype.DataType;
 import arc.mf.plugin.dtype.IntegerType;
@@ -16,6 +21,7 @@ import arc.mf.plugin.dtype.StringType;
 import arc.mf.plugin.sink.ParameterDefinition;
 import arc.mime.NamedMimeType;
 import arc.streams.LongInputStream;
+import arc.streams.StreamCopy;
 import arc.xml.XmlDoc;
 import io.github.xtman.ssh.client.ScpPutClient;
 import io.github.xtman.ssh.client.SshConnection;
@@ -278,7 +284,23 @@ public class ScpSink implements DataSinkImpl {
                     if (entry.isDirectory()) {
                         scp.mkdirs(dstPath);
                     } else {
-                        scp.put(entry.stream(), entry.size(), -1, dstPath);
+                        long size = entry.size();
+                        if (size >= 0) {
+                            scp.put(entry.stream(), size, dstPath);
+                        } else {
+                            File tf = PluginTask.createTemporaryFile();
+                            try {
+                                StreamCopy.copy(entry.stream(), tf);
+                                InputStream ti = new BufferedInputStream(new FileInputStream(tf));
+                                try {
+                                    scp.put(ti, tf.length(), dstPath);
+                                } finally {
+                                    ti.close();
+                                }
+                            } finally {
+                                PluginTask.deleteTemporaryFile(tf);
+                            }
+                        }
                     }
                 } finally {
                     ai.closeEntry();
