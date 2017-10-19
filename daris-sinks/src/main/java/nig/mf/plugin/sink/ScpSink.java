@@ -1,5 +1,9 @@
 package nig.mf.plugin.sink;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -8,6 +12,7 @@ import java.util.regex.Pattern;
 import arc.archive.ArchiveInput;
 import arc.archive.ArchiveRegistry;
 import arc.mf.plugin.DataSinkImpl;
+import arc.mf.plugin.PluginTask;
 import arc.mf.plugin.dtype.BooleanType;
 import arc.mf.plugin.dtype.DataType;
 import arc.mf.plugin.dtype.IntegerType;
@@ -16,17 +21,18 @@ import arc.mf.plugin.dtype.StringType;
 import arc.mf.plugin.sink.ParameterDefinition;
 import arc.mime.NamedMimeType;
 import arc.streams.LongInputStream;
+import arc.streams.StreamCopy;
 import arc.xml.XmlDoc;
 import io.github.xtman.ssh.client.ScpPutClient;
 import io.github.xtman.ssh.client.SshConnection;
-import io.github.xtman.ssh.client.utils.PathUtils;
+import io.github.xtman.util.PathUtils;
 import nig.ssh.client.Ssh;
 
 public class ScpSink implements DataSinkImpl {
 
     public static final String SINK_TYPE = "scp";
 
-    public static final int DEFAULT_FILE_MODE = 0664;
+    public static final int DEFAULT_FILE_MODE = 0640;
 
     public static final int DEFAULT_DIR_MODE = 0755;
 
@@ -42,8 +48,8 @@ public class ScpSink implements DataSinkImpl {
         PASSPHRASE("passphrase", PasswordType.DEFAULT, "The passphrase for the private-key. It is only required when the private-key argument is given and it is encrypted."),
         DIRECTORY("directory",StringType.DEFAULT, "The base directory on the remote SSH server. If not set, the user's home direcotry will be used."),
         DECOMPRESS("decompress", BooleanType.DEFAULT, "Indicate whether to decompress the archive. Defaults to false. Note: it can only decompress the recognized archive types, zip, tar, gzip, bzip2 and aar. Also if the calling service e.g. shopping cart services already decompress the archive, turning off the decompress for the sink can do nothing but just transfer the decompressed data."),
-        FILE_MODE("file-mode", new StringType(Pattern.compile("\\d{4}")),"The remote file mode. Defaults to "+ DEFAULT_FILE_MODE +"." ),
-        DIR_MODE("dir-mode", new StringType(Pattern.compile("\\d{4}")),"The remote directory mode. Defaults to "+ DEFAULT_DIR_MODE +"." );
+        FILE_MODE("file-mode", new StringType(Pattern.compile("^[0-7]{4}$")),"The remote file mode. Defaults to "+ String.format("%04o", DEFAULT_FILE_MODE) +"." ),
+        DIR_MODE("dir-mode", new StringType(Pattern.compile("^[0-7]{4}$")),"The remote directory mode. Defaults to "+ String.format("%04o", DEFAULT_DIR_MODE) +"." );
         // @formatter:on
 
         private String _paramName;
@@ -278,7 +284,23 @@ public class ScpSink implements DataSinkImpl {
                     if (entry.isDirectory()) {
                         scp.mkdirs(dstPath);
                     } else {
-                        scp.put(entry.stream(), entry.size(), -1, dstPath);
+                        long size = entry.size();
+                        if (size >= 0) {
+                            scp.put(entry.stream(), size, dstPath);
+                        } else {
+                            File tf = PluginTask.createTemporaryFile();
+                            try {
+                                StreamCopy.copy(entry.stream(), tf);
+                                InputStream ti = new BufferedInputStream(new FileInputStream(tf));
+                                try {
+                                    scp.put(ti, tf.length(), dstPath);
+                                } finally {
+                                    ti.close();
+                                }
+                            } finally {
+                                PluginTask.deleteTemporaryFile(tf);
+                            }
+                        }
                     }
                 } finally {
                     ai.closeEntry();

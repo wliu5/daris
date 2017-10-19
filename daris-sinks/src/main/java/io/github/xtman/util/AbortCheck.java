@@ -1,4 +1,4 @@
-package io.github.xtman.ssh.client.utils;
+package io.github.xtman.util;
 
 public interface AbortCheck {
 
