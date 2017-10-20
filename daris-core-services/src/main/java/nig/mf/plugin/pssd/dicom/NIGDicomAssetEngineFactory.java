@@ -20,7 +20,7 @@ public class NIGDicomAssetEngineFactory implements DicomAssetEngineFactory {
     public Map<String, String> arguments() {
         Map<String, String> args = new TreeMap<String, String>();
 
-        args.put("nig.dicom.id.citable", "The citeable ID (using the P.S[.EM[.S]] notation) of the DaRIS object to locate the data in. Using this will deactivate all other controls looking for this ID in other DICOM meta-data");
+        args.put("nig.dicom.id.citable", "The citeable ID (using the P.S.EM.S notation) of the DaRIS object to locate the data in. Using this will deactivate all other controls looking for this ID in other DICOM meta-data");
         args.put("nig.dicom.id.by",
                 "The method of identifying studies using P.S[.EM[.S]] (project, subject, ex-method, study) notation. If specified, one of [patient.id, patient.name, patient.name.first, patient.name.last, study.id, performing.physician.name, referring.physician.name, referring.physician.phone, requesting.physician].");
         args.put("nig.dicom.id.ignore-non-digits",
@@ -61,6 +61,12 @@ public class NIGDicomAssetEngineFactory implements DicomAssetEngineFactory {
                 "Drop Structured dose reports (modality SR) if the Method specifies is not for humans (see service om.pssd.method.for.subject.create and document daris:pssd-method-subject). Repors will not be dropped for human or unspecified Methods.");
         args.put("nig.dicom.project.selector",
                 "Specifies Projects that specific proxy DICOM users are allowed to write to.");
+        
+        /*
+         * TBD: Not enabled because the DICOM engine framework does not yet support this process (null StudyProxy returns are seen as errors)
+        args.put("nig.dicom.study.discard", "Specify a DICOM element name and value <name>:<value> so that any Study for which the DICOM element value matches the value specified here is discarded." 
+        		+ "Allowed values for <name> are : 'patient_first_name', 'patient_last_name', 'patient_id', 'referring_physicans_name', 'requesting_physicans_name', 'performing_physicans_name', 'modality' and 'protocol_name'");
+        */
         return args;
     }
 

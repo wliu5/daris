@@ -106,6 +106,9 @@ public class DicomIngestControls {
     private String _projectSelector;
     private Boolean _writeDICOMPatient;
     private Boolean _dropDoseReports; // Not needed for non-humans
+    //
+    private String _discardElementName;   // Some DICOM element to test whether this Study should be kept or discarded
+    private String _discardElementValue;
 
     public DicomIngestControls() {
         _cidElements = null;
@@ -132,6 +135,9 @@ public class DicomIngestControls {
         _writeDICOMPatient = false;
         _dropDoseReports = false;
         _useEncryptedPatient = false;
+        //
+        _discardElementName = null;
+        _discardElementValue = null;
     }
 
     public String cidPrefix() {
@@ -220,6 +226,14 @@ public class DicomIngestControls {
 
     public Boolean useEncryptedPatient() {
         return _useEncryptedPatient;
+    }
+    
+    public String discardElementName () {
+    	return _discardElementName;
+    }
+    
+    public String discardElementValue () {
+    	return _discardElementValue;
     }
 
     /**
@@ -455,5 +469,19 @@ public class DicomIngestControls {
                         "expected one of [true,false] - found: " + dropDoseReports);
             }
         }
+        
+        
+        // Discard the Study  when this meta-data is matched
+        // Use pattern <element name>-<element value>
+        String dropElement = (String) args.get("nig.dicom.study.discard");
+        if (dropElement != null) {
+        	String[] t = dropElement.split(":");
+        	if (t.length!=2) {
+        		throw new Exception ("Failed to parse DICOM control nig.dicom.study.discard = '" + dropElement + "'");
+        	}
+        	_discardElementName = t[0];
+        	_discardElementValue = t[1];
+        }
+
     }
 }
