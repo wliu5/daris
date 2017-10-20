@@ -499,16 +499,29 @@ public class StudyProxyFactory {
 		//
 		String[] v = d.split(";");
 		int len = v.length;
-		if (len==0) return null;
+		if (len<2) return null;
+		
+		// The pattern is <default CID>;<CID>:<element name>:<element value>; <repeat group>
+		// So we must have at least the default and one group
+		
+		// Extract the default CID. This is the CID used when the other conditikons are not met.
+		String dCID = v[0];
+		if (!CiteableIdUtil.isCiteableId(dCID)) {
+			throw new Exception ("Failed to parse DICOM control 'nig.dicom.id.citable.director: " + d + " - illegal default CID");
 
+		}
 		// Return the first match
-		for (int i=0; i<len; i++) {
+		for (int i=1; i<len; i++) {
 			// Pattern is <cid>:<name>:<value>
 			String[] v2 = v[i].split(":");
 			if (v2.length!=3) {
 				throw new Exception ("Failed to parse DICOM control 'nig.dicom.id.citable.director: " + d);
 			}
 			String cid = v2[0];
+			if (!CiteableIdUtil.isCiteableId(cid)) {
+				throw new Exception ("Failed to parse DICOM control 'nig.dicom.id.citable.director: " + d + " - could not extarct legal CID from group " + (i-1));
+			}
+
 			String name = v2[1];
 			String val = v2[2];
 			if (name.equals("patient_first_name")) {
@@ -535,7 +548,7 @@ public class StudyProxyFactory {
 			}
 		}
 		//
-		return null;
+		return dCID;
 	}
 
 
