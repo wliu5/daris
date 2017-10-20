@@ -101,6 +101,7 @@ public class DicomIngestControls {
                                                   // range of indices (a start
                                                   // and end pair such as
                                                   // "0,11")
+    private String _cidDirector;         // Allows us to direct the Study to the desired CID based on meta-data elements
 
     //
     private String _projectSelector;
@@ -138,6 +139,8 @@ public class DicomIngestControls {
         //
         _discardElementName = null;
         _discardElementValue = null;
+        //
+        _cidDirector = null;
     }
 
     public String cidPrefix() {
@@ -235,6 +238,10 @@ public class DicomIngestControls {
     public String discardElementValue () {
     	return _discardElementValue;
     }
+    
+    public String cidDirector () {
+    	return _cidDirector;
+    }
 
     /**
      * Configure controls by reading either directly from the command line (e.g.
@@ -252,6 +259,9 @@ public class DicomIngestControls {
         // Either the Citable ID is directly specified (can be on the CLI or in a DICOM server config) or it is
         // extracted from the DICOM metadata. 
         _citableID = (String) args.get("nig.dicom.id.citable");
+
+        // Directs data to the write CID from meta-data configuration.  nig.dicom.id.citable over-rides this
+        _cidDirector = (String)args.get("nig.dicom.id.citable.director");
 
         if (_citableID == null) {
             String idBy = (String) args.get("nig.dicom.id.by");
@@ -425,6 +435,7 @@ public class DicomIngestControls {
         // Place constraints on certain users so that they can only access
         // certain projects
         _projectSelector = (String) args.get("nig.dicom.project.selector");
+        
 
         // Tell the server to write mf-dicom-patient or
         // mf-dicom-patient-encrypted on the Subject

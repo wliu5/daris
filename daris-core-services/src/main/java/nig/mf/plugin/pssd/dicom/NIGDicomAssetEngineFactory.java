@@ -21,6 +21,8 @@ public class NIGDicomAssetEngineFactory implements DicomAssetEngineFactory {
         Map<String, String> args = new TreeMap<String, String>();
 
         args.put("nig.dicom.id.citable", "The citeable ID (using the P.S.EM.S notation) of the DaRIS object to locate the data in. Using this will deactivate all other controls looking for this ID in other DICOM meta-data");
+        args.put("nig.dicom.id.citable.director", "Direct data to a citable ID ((using the P.S.EM.S notation) based on DICOM meta-data values. The pattern is <CID>:<Element name>:<Element value>.  "
+        		+ " Multiple groups (<cid>:<name>:<value>)  can be separated by a semicolon.  Values for <element name> are : 'patient_first_name, patient_last_name, patient_id'.");
         args.put("nig.dicom.id.by",
                 "The method of identifying studies using P.S[.EM[.S]] (project, subject, ex-method, study) notation. If specified, one of [patient.id, patient.name, patient.name.first, patient.name.last, study.id, performing.physician.name, referring.physician.name, referring.physician.phone, requesting.physician].");
         args.put("nig.dicom.id.ignore-non-digits",

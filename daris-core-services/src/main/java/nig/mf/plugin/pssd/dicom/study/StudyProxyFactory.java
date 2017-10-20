@@ -53,7 +53,7 @@ public class StudyProxyFactory {
 			}
 		} 
 
-		
+
 		// We had a null return. Continue on and see if any
 		// any more engines are configured to fall through to
 		String nextType = ec.nextEngineTypeAfter(NIGDicomAssetEngine.TYPE_NAME);
@@ -417,10 +417,12 @@ public class StudyProxyFactory {
 
 		// Container for output (CID and Method step)
 		CIDAndMethodStep cms = new CIDAndMethodStep();
+		String sid = null;
 
-		// If CID is specified directly by configuration we are done...
+		// If CID is specified directly by configuration (nig.dicom.id.citable) we are done...
+		// This over-rides all other specification
 		if (ic.citableID() != null) {
-			String sid = ic.citableID();
+			sid = ic.citableID();
 			if (ic.cidPrefix() != null) {
 				sid = ic.cidPrefix() + "." + sid; // Stick on the
 				// server.namespace prefix
@@ -435,6 +437,14 @@ public class StudyProxyFactory {
 			} else {
 				return null;
 			}
+		}
+
+		// The next control. we look at is the CID Director (nig.dicom.id.citable.director).
+		// It directs data to a particular CID based on DICOM element values.
+		sid = extractCIDFromDirector (dem, ic);
+		if (sid!=null) {
+			cms.setCID(sid);
+			return cms;
 		}
 
 		// Continue and see if can extract from DICOM meta-data
@@ -454,7 +464,7 @@ public class StudyProxyFactory {
 			// project.subject.ex-method[.study]
 			//
 			if (cms != null) {
-				String sid = cms.cid();
+				sid = cms.cid();
 				String step = cms.methodStep(); // Usually null
 				//
 				if (sid != null) {
@@ -480,6 +490,54 @@ public class StudyProxyFactory {
 
 		return null;
 	}
+
+
+	private static String extractCIDFromDirector(DataElementMap dem,
+			DicomIngestControls ic) throws Throwable {
+		String d = ic.cidDirector();
+		if (d==null) return null;
+		//
+		String[] v = d.split(";");
+		int len = v.length;
+		if (len==0) return null;
+
+		// Return the first match
+		for (int i=0; i<len; i++) {
+			// Pattern is <cid>:<name>:<value>
+			String[] v2 = v[i].split(":");
+			if (v2.length!=3) {
+				throw new Exception ("Failed to parse DICOM control 'nig.dicom.id.citable.director: " + d);
+			}
+			String cid = v2[0];
+			String name = v2[1];
+			String val = v2[2];
+			if (name.equals("patient_first_name")) {
+				DicomPersonName pn = (DicomPersonName) dem.valueOf(DicomElements.PATIENT_NAME);
+				if (pn!=null) {
+					String n = pn.first();
+					if (n!=null && val.equalsIgnoreCase(n)) {
+						return cid;
+					}
+				}
+			} else if (name.equals("patient_last_name")) {
+				DicomPersonName pn = (DicomPersonName) dem.valueOf(DicomElements.PATIENT_NAME);
+				if (pn!=null) {
+					String n = pn.last();
+					if (n!=null && val.equalsIgnoreCase(n)) {
+						return cid;
+					}
+				}
+			} else if (name.equals("patient_id")) {
+				String n = dem.stringValue(DicomElements.PATIENT_ID);
+				if (n!=null && val.equalsIgnoreCase(n)) {
+					return cid;
+				}
+			}
+		}
+		//
+		return null;
+	}
+
 
 	/**
 	 * Identifies whether the given string is a valid step path STep paths look
