@@ -20,12 +20,12 @@ import arc.xml.XmlDoc;
  */
 public class DICOMPatient {
 
-    private String firstName;
-    private String lastName;
-    private String fullName;
-    private String sex;
-    private Date dob;
-    private String id;
+    private String _firstName;
+    private String _lastName;
+    private String _fullName;
+    private String _sex;
+    private Date _dob;
+    private String _id;
 
     public DICOMPatient(XmlDoc.Element r) throws Throwable {
         if (r != null)
@@ -33,27 +33,27 @@ public class DICOMPatient {
     }
 
     public String getFirstName() {
-        return firstName;
+        return _firstName;
     };
 
     public String getLastName() {
-        return lastName;
+        return _lastName;
     };
 
     public String getFullName() {
-        return fullName;
+        return _fullName;
     };
 
     public String getSex() {
-        return sex;
+        return _sex;
     };
 
     public Date getDOB() {
-        return dob;
+        return _dob;
     };
 
     public String getID() {
-        return id;
+        return _id;
     };
 
     /**
@@ -62,36 +62,36 @@ public class DICOMPatient {
      * @return
      */
     public String nameForDICOMFile() {
-        if (firstName != null && lastName != null) {
-            return lastName + "^" + firstName;
-        } else if (lastName != null) {
-            return lastName;
-        } else if (firstName != null) {
-            return "^" + firstName;
+        if (_firstName != null && _lastName != null) {
+            return _lastName + "^" + _firstName;
+        } else if (_lastName != null) {
+            return _lastName;
+        } else if (_firstName != null) {
+            return "^" + _firstName;
         } else {
             return null;
         }
     }
 
     public String toString() {
-        String t = "Name = " + firstName + " " + lastName + "\n" + "Sex  = "
-                + sex + "\n" + "DOB  = " + dob + "\n" + "ID   = " + id;
+        String t = "Name = " + _firstName + " " + _lastName + "\n" + "Sex  = "
+                + _sex + "\n" + "DOB  = " + _dob + "\n" + "ID   = " + _id;
         return t;
     }
 
     public Boolean hasBothNames() {
-        return (firstName != null && lastName != null);
+        return (_firstName != null && _lastName != null);
     }
 
     /**
-     * Need at least lastName to match First name is optional (can be null in
+     * Need at least _lastName to match First name is optional (can be null in
      * both)
      * 
      * @param findSubectMethod
      *            'id', 'name', 'name+' (name + sex + dob), or 'all' (id, name,
      *            dob, sex)
      * @param oldPatientMeta
-     * @param newFirstName
+     * @param new_firstName
      * @param newLastName
      * @param newSex
      * @param newDateOfBirth
@@ -182,8 +182,8 @@ public class DICOMPatient {
         String oldFullName = null;
         if (oldPatientMeta != null) {
             String oldLastName = oldPatientMeta.value("name[@type='last']");
-            String oldFirstName = oldPatientMeta.value("name[@type='first']");
-            oldFullName = makeFullName(oldFirstName, oldLastName);
+            String old_firstName = oldPatientMeta.value("name[@type='first']");
+            oldFullName = makeFullName(old_firstName, oldLastName);
             if (CiteableIdUtil.isCiteableId(oldFullName))
                 oldFullName = null;
 
@@ -211,33 +211,33 @@ public class DICOMPatient {
             for (XmlDoc.Element name : names) {
                 String type = name.value("@type");
                 if (type.equals("first")) {
-                    firstName = name.value().trim();
+                    _firstName = name.value().trim();
                 } else if (type.equals("last")) {
-                    lastName = name.value().trim();
+                    _lastName = name.value().trim();
                 } else if (type.equals("full")) {
-                    fullName = name.value().trim();
+                    _fullName = name.value().trim();
                 }
             }
 
             // Construct a full name if not native
-            if (fullName == null) {
-                if (firstName != null)
-                    fullName = firstName;
-                if (lastName != null) {
-                    if (fullName == null) {
-                        fullName = lastName;
+            if (_fullName == null) {
+                if (_firstName != null)
+                    _fullName = _firstName;
+                if (_lastName != null) {
+                    if (_fullName == null) {
+                        _fullName = _lastName;
                     } else {
-                        fullName += " " + lastName;
+                        _fullName += " " + _lastName;
                     }
                 }
             }
             //
-            dob = r.dateValue("dob");
-            String sex = r.value("sex");
-            if (sex != null) {
-                sex = sex.trim();
+            _dob = r.dateValue("dob");
+            _sex = r.value("sex");
+            if (_sex != null) {
+            	_sex = _sex.trim();
             }
-            id = r.value("id");
+            _id = r.value("id");
         }
     }
 
