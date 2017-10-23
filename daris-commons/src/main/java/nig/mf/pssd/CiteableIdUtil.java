@@ -129,7 +129,7 @@ public class CiteableIdUtil {
 			return false;
 		}
 
-		return s.matches("^\\d+(\\d*.)*\\d+$");
+		return s.matches("^\\d+(\\.\\d+)*$");
 
 	}
 
