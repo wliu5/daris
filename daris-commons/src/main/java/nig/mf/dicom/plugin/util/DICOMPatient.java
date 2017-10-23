@@ -219,18 +219,35 @@ public class DICOMPatient {
                 }
             }
 
-            // Construct a full name if not native
-            if (_fullName == null) {
-                if (_firstName != null)
-                    _fullName = _firstName;
-                if (_lastName != null) {
-                    if (_fullName == null) {
-                        _fullName = _lastName;
-                    } else {
-                        _fullName += " " + _lastName;
-                    }
-                }
-            }
+			 // Construct a full name if not native
+			 if (_fullName == null) {
+				 if (_firstName != null)
+					 _fullName = _firstName;
+				 if (_lastName != null) {
+					 if (_fullName == null) {
+						 _fullName = _lastName;
+					 } else {
+						 _fullName += " " + _lastName;
+					 }
+				 }
+			 } else {
+
+				 // If it's  missing Construct a first/last name if possible from  fullname
+				 if (_firstName==null) {
+					 String[] t = _fullName.split(" ");
+					 if (t.length==2) {
+						 _firstName = t[0];
+					 }
+				 }
+				 if (_lastName==null) {
+					 String[] t = _fullName.split(" ");
+					 if (t.length==2) {
+						 _lastName = t[1];
+					 }
+				 }
+			 }
+			 
+
             //
             _dob = r.dateValue("dob");
             _sex = r.value("sex");
