@@ -3,6 +3,8 @@ package nig.mf.plugin.pssd.dicom;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import nig.mf.pssd.CiteableIdUtil;
+
 /**
  * Ingestion controls for the NIG.DICOM engine These controls needs to match
  * what is in the DicomAssetHandlerFactory
@@ -324,6 +326,11 @@ public class DicomIngestControls {
         
         // Default CID if other CID extraction methods fail
         _cidDefault = (String)args.get("nig.dicom.id.citable.default");
+        if (_cidDefault!=null) {
+        	if (!CiteableIdUtil.isCiteableId(_cidDefault)) {
+        		throw new Exception ("The value for DICOM server control nig.dicom.id.citable.default '" + _cidDefault + "' is not a valid CID");
+        	}
+        }
 
         // Add CID prefix 
         _cidPrefix = (String) args.get("nig.dicom.id.prefix");
