@@ -486,9 +486,11 @@ public class StudyProxyFactory {
 			}
 		}
 		
-		// Finall see if we have a default CID
+		// Finally see if we have a default CID
 		sid = ic.cidDefault();
 		if (sid!=null) {
+			// The above extraction from DICOM element process may have set to null
+			cms = new CIDAndMethodStep();
 			cms.setCID(sid);
 			return cms;
 		}	
