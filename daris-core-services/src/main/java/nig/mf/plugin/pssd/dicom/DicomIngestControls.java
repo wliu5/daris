@@ -102,6 +102,7 @@ public class DicomIngestControls {
                                                   // and end pair such as
                                                   // "0,11")
     private String _cidDirector;         // Allows us to direct the Study to the desired CID based on meta-data elements
+    private String _cidDefault;          // A default CID to direct the data to if all other extraction methods fail.
 
     //
     private String _projectSelector;
@@ -242,6 +243,10 @@ public class DicomIngestControls {
     public String cidDirector () {
     	return _cidDirector;
     }
+    
+    public String cidDefault () {
+    	return _cidDefault;
+    }
 
     /**
      * Configure controls by reading either directly from the command line (e.g.
@@ -316,7 +321,11 @@ public class DicomIngestControls {
             _ignoreBeforeLastDelim = (String) args.get("nig.dicom.id.ignore-before-last-delim");
             _ignoreAfterLastDelim = (String) args.get("nig.dicom.id.ignore-after-last-delim");
         }
+        
+        // Default CID if other CID extraction methods fail
+        _cidDefault = (String)args.get("nig.dicom.id.citable.default");
 
+        // Add CID prefix 
         _cidPrefix = (String) args.get("nig.dicom.id.prefix");
 
         // Method for finding Subjects

@@ -448,46 +448,52 @@ public class StudyProxyFactory {
 		}
 
 		// Continue and see if can extract from DICOM meta-data
-		if (ic.cidElements() == null) {
-			return null;
-		}
-
 		// Loop over the configured DICOM ingest controls
 		// and try to extract a <cid>_<step path> from the DICOM meta-data
 		// The <step path> is usually null
-		for (int i = 0; i < ic.cidElements().length; i++) {
-			cms = extractID(ic.cidElements()[i], dem, ic.ignoreNonDigits(), ic.ignoreBeforeLastDelim(),
-					ic.ignoreAfterLastDelim());
+		if (ic.cidElements()!=null) {
+			for (int i = 0; i < ic.cidElements().length; i++) {
+				cms = extractID(ic.cidElements()[i], dem, ic.ignoreNonDigits(), ic.ignoreBeforeLastDelim(),
+						ic.ignoreAfterLastDelim());
 
-			// The study part is optional:
-			//
-			// project.subject.ex-method[.study]
-			//
-			if (cms != null) {
-				sid = cms.cid();
-				String step = cms.methodStep(); // Usually null
+				// The study part is optional:
 				//
-				if (sid != null) {
+				// project.subject.ex-method[.study]
+				//
+				if (cms != null) {
+					sid = cms.cid();
+					String step = cms.methodStep(); // Usually null
+					//
+					if (sid != null) {
 
-					// Stick on the server.namespace prefix. Do this first
-					// else a bare integer (e.g. CID = subject) won't be valid
-					if (ic.cidPrefix() != null) {
-						sid = ic.cidPrefix() + "." + sid;
-						cms.setCID(sid);
+						// Stick on the server.namespace prefix. Do this first
+						// else a bare integer (e.g. CID = subject) won't be valid
+						if (ic.cidPrefix() != null) {
+							sid = ic.cidPrefix() + "." + sid;
+							cms.setCID(sid);
+						}
+						boolean sidOK = CiteableIdUtil.isCiteableId(sid)
+								&& CiteableIdUtil.getIdDepth(sid) >= CiteableIdUtil.projectDepth();
+								boolean stepOK = true; // Null is ok
+								if (step != null) {
+									stepOK = isValidStepPath(step);
+								}
+								if (sidOK && stepOK) {
+									return cms;
+								}
 					}
-					boolean sidOK = CiteableIdUtil.isCiteableId(sid)
-							&& CiteableIdUtil.getIdDepth(sid) >= CiteableIdUtil.projectDepth();
-							boolean stepOK = true; // Null is ok
-							if (step != null) {
-								stepOK = isValidStepPath(step);
-							}
-							if (sidOK && stepOK) {
-								return cms;
-							}
 				}
 			}
 		}
+		
+		// Finall see if we have a default CID
+		sid = ic.cidDefault();
+		if (sid!=null) {
+			cms.setCID(sid);
+			return cms;
+		}	
 
+		// No CID extracted
 		return null;
 	}
 
