@@ -307,7 +307,7 @@ public class MBCMRUpload {
 
 		// Create Study if needed
 		if (rawStudyCID==null) {
-			rawStudyCID = createRawStudy (cxn, pm, null, subjectCID);
+			rawStudyCID = createRawStudy (cxn, pm, null, subjectCID, cred);
 			MBCRawUploadUtil.log (logger, "  Created raw PSSD Study = " + rawStudyCID);
 		} else {
 			MBCRawUploadUtil.log (logger, "  Found raw PSSD Study = " + rawStudyCID);
@@ -431,7 +431,7 @@ public class MBCMRUpload {
 	 * @throws Throwable
 	 */
 	private static String createRawStudy(ServerClient.Connection cxn,
-			MRMetaData pm, String patientAssetID, String subjectCID) throws Throwable {
+			MRMetaData pm, String patientAssetID, String subjectCID, UserCredential cred) throws Throwable {
 
 		// Create a study with siemens doc attached
 		XmlStringWriter w = new XmlStringWriter();
@@ -457,6 +457,13 @@ public class MBCMRUpload {
 		String date = DateUtil.formatDate(pm.getDate(), false, false);
 		w.add("date",date);
 		w.add("frame-of-reference", pm.getFoR());
+		w.push("ingest");
+		w.add("date", "now");
+		w.add("domain", cred.domain());
+		w.add("user", cred.user());
+		w.add("from-token", cred.fromToken());
+		w.pop();
+
 		//
 		w.pop();
 		w.pop();
