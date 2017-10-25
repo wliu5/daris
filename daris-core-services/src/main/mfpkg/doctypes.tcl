@@ -158,6 +158,9 @@ asset.doc.type.update :create true :type daris:pssd-study \
 	    :element -name "processed" -type "boolean" -min-occurs "0" -max-occurs "1" < \
            :description "Set to true, if the Study is a container for processed data only." \
         > \
+        :element -name "other-id" -type "string" -min-occurs "0" -max-occurs "1" < \
+           :description "An arbitrary identifier for the Study supplied by some other authority" \
+        > \
 	>
 
 

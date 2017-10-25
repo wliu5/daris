@@ -93,7 +93,7 @@ public class Study {
      */
     public static String create(ServiceExecutor executor,
             DistributedAsset dExMethod, long studyNumber, String type,
-            String name, String description, Boolean processed, String step,
+            String name, String description, String otherID, Boolean processed, String step,
             boolean allowIncompleteMeta, XmlDoc.Element meta,
             DistributedAsset dProject, boolean fillIn) throws Throwable {
 
@@ -130,8 +130,7 @@ public class Study {
 
         dm.push("daris:pssd-study");
         dm.add("type", type);
-        // TBD: nebk: Should method and step should be mandatory? Is a Study
-        // always
+        // TBD: nebk: Should method and step should be mandatory? Is a Study always
         // created from a Method and step.
         if (dExMethod != null && step != null) {
             dm.add("method", new String[] { "step", step },
@@ -139,6 +138,9 @@ public class Study {
         }
         if (processed != null) {
             dm.add("processed", processed);
+        }
+        if (otherID!=null) {
+        	dm.add("other-id", otherID);
         }
 
         dm.pop();

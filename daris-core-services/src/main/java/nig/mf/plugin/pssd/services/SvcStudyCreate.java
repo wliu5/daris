@@ -50,6 +50,7 @@ public class SvcStudyCreate extends PluginService {
                 CiteableIdType.DEFAULT,
                 "The step within the method that resulted in this study.  If the type is given but the step not, the step is filled in with the first matching the given study type.",
                 0, 1));
+        _defn.add(new Interface.Element("other-id", StringType.DEFAULT, "An arbitrary identifier for the Study supplied by some other authority.", 0, 1));
 
         addInterfaceDefn(_defn);
     }
@@ -59,8 +60,7 @@ public class SvcStudyCreate extends PluginService {
                 "The type of the study. If not specified, then method step must be specified.", 0, 1));
         defn.add(new Interface.Element("name", StringType.DEFAULT,
                 "The name of this study. If not specified, then method must be specified.", 0, 1));
-        defn.add(new Interface.Element("description", StringType.DEFAULT, "An arbitrary description for the study.", 0,
-                1));
+        defn.add(new Interface.Element("description", StringType.DEFAULT, "An arbitrary description for the study.", 0, 1));
         defn.add(new Interface.Element(
                 "processed",
                 BooleanType.DEFAULT,
@@ -138,6 +138,7 @@ public class SvcStudyCreate extends PluginService {
         // Handle step/type
         String studyType = args.value("type");
         String step = args.value("step");
+        String otherID = args.value("other-id");
         // We need both type and step but can source from each other.
         if (studyType == null && step == null) {
             throw new Exception("You must give at least one of step and/or type");
@@ -177,14 +178,13 @@ public class SvcStudyCreate extends PluginService {
             // create multiple Studies
             // with the same CID. Therefore we lock the process. But if after
             // 1s, we are still waiting,
-            // just give up the fillin request and proceed to allocate the next
-            // CID
+            // just give up the fillin request and proceed to allocate the next CID
             if (!lock_.tryLock(1L, TimeUnit.SECONDS))
                 fillIn = false;
         }
 
         try {
-            String cid = Study.create(executor(), dEID, studyNumber, studyType, name, description, processed, step,
+            String cid = Study.create(executor(), dEID, studyNumber, studyType, name, description, otherID, processed, step,
                     args.booleanValue("allow-incomplete-meta", false), args.element("meta"), dPID, fillIn);
             w.add("id", cid);
         } finally {
