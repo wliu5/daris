@@ -500,10 +500,10 @@ public class StudyProxyFactory {
 		String[] v = d.split(";");
 		int len = v.length;
 		if (len<2) return null;
-		
+
 		// The pattern is <default CID>;<CID>:<element name>:<element value>; <repeat group>
 		// So we must have at least the default and one group
-		
+
 		// Extract the default CID. This is the CID used when the other conditikons are not met.
 		String dCID = v[0];
 		if (!CiteableIdUtil.isCiteableId(dCID)) {
@@ -523,27 +523,30 @@ public class StudyProxyFactory {
 			}
 
 			String name = v2[1];
-			String val = v2[2];
+			String val = v2[2].toUpperCase();
 			if (name.equals("patient_first_name")) {
 				DicomPersonName pn = (DicomPersonName) dem.valueOf(DicomElements.PATIENT_NAME);
 				if (pn!=null) {
-					String n = pn.first();
-					if (n!=null && val.equalsIgnoreCase(n)) {
+					String n = pn.first().toUpperCase();
+					if (n!=null && val.contains(n)) {
 						return cid;
 					}
 				}
 			} else if (name.equals("patient_last_name")) {
 				DicomPersonName pn = (DicomPersonName) dem.valueOf(DicomElements.PATIENT_NAME);
 				if (pn!=null) {
-					String n = pn.last();
-					if (n!=null && val.equalsIgnoreCase(n)) {
+					String n = pn.last().toUpperCase();
+					if (n!=null && val.contains(n)) {
 						return cid;
 					}
 				}
 			} else if (name.equals("patient_id")) {
 				String n = dem.stringValue(DicomElements.PATIENT_ID);
-				if (n!=null && val.equalsIgnoreCase(n)) {
-					return cid;
+				if (n!=null) {
+					String n2 = n.toUpperCase();
+					if (val.contains(n2)) {
+						return cid;
+					}
 				}
 			}
 		}

@@ -22,7 +22,7 @@ public class NIGDicomAssetEngineFactory implements DicomAssetEngineFactory {
 
         args.put("nig.dicom.id.citable", "The citeable ID (using the P.S.EM.S notation) of the DaRIS object to locate the data in. Using this will deactivate all other controls looking for this ID in other DICOM meta-data");
         args.put("nig.dicom.id.citable.director", "Direct data to a citable ID ((using the P.S.EM.S notation) based on DICOM meta-data values. The pattern is <Default CID>;<CID>:<DICOM Element name>:<DICOM Element value>.  "
-        		+ " Multiple groups (<cid>:<name>:<value>)  can be separated by a semicolon.  Values for <element name> are : 'patient_first_name, patient_last_name, patient_id'.  When the value of the named element matches the value, the CID in that group is used. There is a default CID at the start when there are no matches.");
+        		+ " Multiple groups (<cid>:<name>:<value>)  can be separated by a semicolon.  Values for <element name> are : 'patient_first_name, patient_last_name, patient_id'.  When the value of the named element matches (actually, CONTAINS [case insensitive]) the value, the CID in that group is used. There is a default CID at the start when there are no matches.");
         args.put("nig.dicom.id.by",
                 "The method of identifying studies using P.S[.EM[.S]] (project, subject, ex-method, study) notation. If specified, one of [patient.id, patient.name, patient.name.first, patient.name.last, study.id, performing.physician.name, referring.physician.name, referring.physician.phone, requesting.physician].");
         args.put("nig.dicom.id.ignore-non-digits",
