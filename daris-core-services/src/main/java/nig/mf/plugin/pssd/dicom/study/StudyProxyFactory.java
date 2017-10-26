@@ -356,36 +356,36 @@ public class StudyProxyFactory {
 		String discardElementValue = ic.discardElementValue();
 		if (discardElementValue==null) return false;
 
-		if (discardElementName.equals("patient_first_name")) {
+		if (discardElementName.equals("patient.name.first")) {
 			DicomPersonName pn = (DicomPersonName) dem.valueOf(DicomElements.PATIENT_NAME);
 			if (pn==null) return false;
 			String firstName = pn.first();
 			if (firstName!=null) {
 				return (firstName.equals(discardElementValue));
 			}			
-		} else if (discardElementName.equals("patient_last_name")) {
+		} else if (discardElementName.equals("patient.name.last")) {
 			DicomPersonName pn = (DicomPersonName) dem.valueOf(DicomElements.PATIENT_NAME);
 			if (pn==null) return false;
 			String lastName = pn.last();
 			if (lastName!=null) {
 				return (lastName.equals(discardElementValue));
 			}			
-		} else if (discardElementName.equals("patient_id")) {
+		} else if (discardElementName.equals("patient.id")) {
 			String t = dem.stringValue(DicomElements.PATIENT_ID);
 			if (t!=null) {
 				return (t.equals(discardElementValue));
 			}
-		} else if (discardElementName.equals("referring_physicians_name")) {
+		} else if (discardElementName.equals("referring.physician.name")) {
 			String t = dem.stringValue(DicomElements.REFERRING_PHYSICIANS_NAME);
 			if (t!=null) {
 				return (t.equals(discardElementValue));
 			}
-		} else if (discardElementName.equals("requesting_physicians_name")) {
+		} else if (discardElementName.equals("requesting.physician.name")) {
 			String t = dem.stringValue(DicomElements.REQUESTING_PHYSICIAN);
 			if (t!=null) {
 				return (t.equals(discardElementValue));
 			}
-		} else if (discardElementName.equals("performing_physicians_name")) {
+		} else if (discardElementName.equals("performing.physician.name")) {
 			String t = dem.stringValue(DicomElements.PERFORMING_PHYSICIANS_NAME);
 			if (t!=null) {
 				return (t.equals(discardElementValue));
@@ -395,7 +395,7 @@ public class StudyProxyFactory {
 			if (t!=null) {
 				return (t.equals(discardElementValue));
 			}
-		} else if (discardElementName.equals("protocol_name")) {
+		} else if (discardElementName.equals("protocol.name")) {
 			String t = dem.stringValue(DicomElements.PROTOCOL_NAME);
 			if (t!=null) {
 				return (t.equals(discardElementValue));
@@ -532,7 +532,7 @@ public class StudyProxyFactory {
 
 			String name = v2[1];
 			String val = v2[2].toUpperCase();
-			if (name.equals("patient_first_name")) {
+			if (name.equals("patient.name.first")) {
 				DicomPersonName pn = (DicomPersonName) dem.valueOf(DicomElements.PATIENT_NAME);
 				if (pn!=null) {
 					String n = pn.first().toUpperCase();
@@ -540,7 +540,7 @@ public class StudyProxyFactory {
 						return cid;
 					}
 				}
-			} else if (name.equals("patient_last_name")) {
+			} else if (name.equals("patient.name.last")) {
 				DicomPersonName pn = (DicomPersonName) dem.valueOf(DicomElements.PATIENT_NAME);
 				if (pn!=null) {
 					String n = pn.last().toUpperCase();
@@ -548,7 +548,7 @@ public class StudyProxyFactory {
 						return cid;
 					}
 				}
-			} else if (name.equals("patient_id")) {
+			} else if (name.equals("patient.id")) {
 				String n = dem.stringValue(DicomElements.PATIENT_ID);
 				if (n!=null) {
 					String n2 = n.toUpperCase();

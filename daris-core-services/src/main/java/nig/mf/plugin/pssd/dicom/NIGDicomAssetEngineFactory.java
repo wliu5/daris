@@ -22,7 +22,7 @@ public class NIGDicomAssetEngineFactory implements DicomAssetEngineFactory {
 
         args.put("nig.dicom.id.citable", "The citeable ID (using the P.S.EM.S notation) of the DaRIS object to locate the data in. Using this will deactivate all other controls looking for this ID in other DICOM meta-data");
         args.put("nig.dicom.id.citable.director", "Direct data to a citable ID ((using the P.S.EM.S notation) based on DICOM meta-data values. The pattern is <Default CID>;<CID>:<DICOM Element name>:<DICOM Element value>.  "
-        		+ " Multiple groups (<cid>:<name>:<value>)  can be separated by a semicolon.  Values for <element name> are : 'patient_first_name, patient_last_name, patient_id'.  When the value of the named element matches (actually, CONTAINS [case insensitive]) the value, the CID in that group is used. There is a default CID at the start when there are no matches.");
+        		+ " Multiple groups (<cid>:<name>:<value>)  can be separated by a semicolon.  Values for <element name> are : 'patient.name.first, patient.name.last, patient.id'.  When the value of the named element matches (actually, CONTAINS [case insensitive]) the value, the CID in that group is used. There is a default CID at the start when there are no matches.");
         args.put("nig.dicom.id.citable.default", "If all other methods to extract a citeable ID (using the P.S.EM.S notation) fail, then use this value. This provides a means of sending data to a default CID (usually Project).");
         args.put("nig.dicom.id.by",
                 "The method of identifying studies using P.S[.EM[.S]] (project, subject, ex-method, study) notation. If specified, one of [patient.id, patient.name, patient.name.first, patient.name.last, study.id, performing.physician.name, referring.physician.name, referring.physician.phone, requesting.physician].");
@@ -41,13 +41,13 @@ public class NIGDicomAssetEngineFactory implements DicomAssetEngineFactory {
         args.put("nig.dicom.subject.clone_first",
                 "If auto-creating subjects, make new ones by cloning the first one if it exists. If it does not exist, just generate new subject as per normal");
         args.put("nig.dicom.subject.name.from.last",
-                "When auto-creating Subjects, set the Subject name to the DICOM patient last name");
+        		"When auto-creating Subjects, set the Subject name to the DICOM patient last name");
         args.put("nig.dicom.subject.name.from.first",
-                "When auto-creating Subjects, set the Subject name to the DICOM patient first name");
+        		"When auto-creating Subjects, set the Subject name to the DICOM patient first name");
         args.put("nig.dicom.subject.name.from.full",
-                "When auto-creating Subjects, set the Subject name to the DICOM patient full name");
+        		"When auto-creating Subjects, set the Subject name to the DICOM patient full name");
         args.put("nig.dicom.subject.name.from.id",
-                "When auto-creating Subjects, name the Subject from the DICOM PatientID.");
+        		"When auto-creating Subjects, name the Subject from the DICOM PatientID.");
         args.put("nig.dicom.subject.name.from.index.range",
                 "When auto-creating Subjects, and utilising a control nig.dicom.subject.name.from.{full,last,full,id} to set the Subject name, select characters from the given index range pair. E.g. 0,11 would select the String starting at index 0 and finishing at index 11.  This control is applied before control nig.dicom.subject.name.from.ignore-after-last-delim");
         args.put("nig.dicom.subject.name.from.ignore-after-last-delim",
@@ -68,7 +68,7 @@ public class NIGDicomAssetEngineFactory implements DicomAssetEngineFactory {
         /*
          * TBD: Not enabled because the DICOM engine framework does not yet support this process (null StudyProxy returns are seen as errors)
         args.put("nig.dicom.study.discard", "Specify a DICOM element name and value <name>:<value> so that any Study for which the DICOM element value matches the value specified here is discarded." 
-        		+ "Allowed values for <name> are : 'patient_first_name', 'patient_last_name', 'patient_id', 'referring_physicans_name', 'requesting_physicans_name', 'performing_physicans_name', 'modality' and 'protocol_name'");
+        		+ "Allowed values for <name> are : 'patient.name.first', 'patient.name.last', 'patient.id', 'referring_physicans_name', 'requesting.physican.name', 'performing.physicans.name', 'modality' and 'protocol.name'");
         */
         return args;
     }
