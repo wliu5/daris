@@ -105,7 +105,18 @@ public class SvcDICOMUploadNotify extends PluginService {
 					bodyString = "Project : " + projectCid  + "\n Study   :  " + studyCid + " has no Series\n You may wish to destroy. \n regards \n Mediaflux";
 				}
 			} else {
-				bodyString = "Project : " + projectCid  + "\n Study   :  " + studyCid + " \n \n regards \n Mediaflux";
+				bodyString = "Project      : " + projectCid  + "\n Study        :  " + studyCid;
+				
+				// Now describe the DataSets
+				String where = "cid starts with '" + studyCid + "'";
+				XmlDocMaker dm2 = new XmlDocMaker("args");
+				dm2.add("where", where);
+				dm2.add("action", "sum");
+				dm2.add("xpath", "content/size");
+				XmlDoc.Element r = executor().execute("asset.query", dm2.root());
+				String nDataSets = r.value("value/@nbe");
+				bodyString += "\n DataSets  : " + nDataSets + " DataSets totalling " + r.value("value") + " bytes";
+				bodyString += "\n\n regards Mediaflux";
 			}
 			
 			// Add nicely formatted copy of the meta-data
@@ -113,6 +124,7 @@ public class SvcDICOMUploadNotify extends PluginService {
 				XmlDoc.Element r = objectMeta.element("object");
 				if (r!=null) {
 					bodyString += "\n\n\n Meta-data \n\n " + XMLUtil.toText(r);
+					
 				}
 			}
 			dm.add("message", bodyString);
