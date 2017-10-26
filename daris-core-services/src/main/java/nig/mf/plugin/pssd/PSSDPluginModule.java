@@ -318,8 +318,9 @@ public class PSSDPluginModule implements HttpServletPluginModule {
         _services.add(new SvcDicomSRGet());
         _services.add(new SvcDicomSRExport());
 
-        _services.add(new daris.plugin.services.SvcDicomPixelDataChecksumGenerate());
+        _services.add(new daris.plugin.services.SvcDicomMetadataSet());
         _services.add(new daris.plugin.services.SvcDicomOnsendUserList());
+        _services.add(new daris.plugin.services.SvcDicomPixelDataChecksumGenerate());
         _services.add(new daris.plugin.services.SvcDicomSendCalledAEAdd());
         _services.add(new daris.plugin.services.SvcDicomSendCalledAEExists());
         _services.add(new daris.plugin.services.SvcDicomSendCalledAERemove());
