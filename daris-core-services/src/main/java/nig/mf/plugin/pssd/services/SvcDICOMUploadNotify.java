@@ -100,12 +100,12 @@ public class SvcDICOMUploadNotify extends PluginService {
 			String bodyString = null;
 			if (nChildren==0) {
 				if (destroyIfEmpty) {     
-					bodyString = "Project : " + projectCid  + "\n Study   :  " + studyCid + " has no Series\n Destroying.\n regards \n Mediaflux";
+					bodyString = "Project : " + projectCid  + "\n Study   : " + studyCid + " has no Series\n Destroying.\n regards \n Mediaflux";
 				} else {
-					bodyString = "Project : " + projectCid  + "\n Study   :  " + studyCid + " has no Series\n You may wish to destroy. \n regards \n Mediaflux";
+					bodyString = "Project : " + projectCid  + "\n Study   : " + studyCid + " has no Series\n You may wish to destroy. \n regards \n Mediaflux";
 				}
 			} else {
-				bodyString = "Project      : " + projectCid  + "\n Study        :  " + studyCid;
+				bodyString = "Project      : " + projectCid  + "\n Study        : " + studyCid;
 				
 				// Now describe the DataSets
 				String where = "cid starts with '" + studyCid + "'";
