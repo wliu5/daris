@@ -68,7 +68,7 @@ public class NIGDicomAssetEngineFactory implements DicomAssetEngineFactory {
         /*
          * TBD: Not enabled because the DICOM engine framework does not yet support this process (null StudyProxy returns are seen as errors)
         args.put("nig.dicom.study.discard", "Specify a DICOM element name and value <name>:<value> so that any Study for which the DICOM element value matches the value specified here is discarded." 
-        		+ "Allowed values for <name> are : 'patient.name.first', 'patient.name.last', 'patient.id', 'referring_physicans_name', 'requesting.physican.name', 'performing.physicans.name', 'modality' and 'protocol.name'");
+        		+ "Allowed values for <name> are : 'patient.name.first', 'patient.name.last', 'patient.id', 'referring.physicans.name', 'requesting.physican.name', 'performing.physicans.name', 'modality' and 'protocol.name'");
         */
         return args;
     }
