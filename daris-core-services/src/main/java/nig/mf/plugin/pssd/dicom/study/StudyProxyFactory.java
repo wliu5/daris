@@ -485,12 +485,24 @@ public class StudyProxyFactory {
 				}
 			}
 		}
-		
+
+
+		// The above extraction from DICOM element process may have set cms to null
+		if (cms==null) {
+			cms = new CIDAndMethodStep();
+		}
+
+
+		// Now attempt to extract via the project name
+		sid = extractCIDFromProject (executor, dem, ic);	
+		if (sid!=null) {
+			cms.setCID(sid);
+			return cms;
+		}	
+
 		// Finally see if we have a default CID
 		sid = ic.cidDefault();
 		if (sid!=null) {
-			// The above extraction from DICOM element process may have set to null
-			cms = new CIDAndMethodStep();
 			cms.setCID(sid);
 			return cms;
 		}	
@@ -499,6 +511,45 @@ public class StudyProxyFactory {
 		return null;
 	}
 
+
+	private static String extractCIDFromProject (ServiceExecutor executor, DataElementMap dem, DicomIngestControls ic) throws Throwable {
+		String dicomElName = ic.cidFromProjectName();
+		if (dicomElName==null) return null;
+
+		String projectName = null;
+		if (dicomElName.equals("patient.name.first")) {
+			DicomPersonName pn = (DicomPersonName) dem.valueOf(DicomElements.PATIENT_NAME);
+			if (pn!=null) {
+				projectName = pn.first();
+			}
+		} else if (dicomElName.equals("patient.name.last")) {
+			DicomPersonName pn = (DicomPersonName) dem.valueOf(DicomElements.PATIENT_NAME);
+			if (pn!=null) {
+				projectName = pn.last();
+			}
+		} else if (dicomElName.equals("patient.id")) {
+			projectName = dem.stringValue(DicomElements.PATIENT_ID);
+		} else if (dicomElName.equals("referring.physician.name")) {
+			projectName = dem.stringValue(DicomElements.REFERRING_PHYSICIANS_NAME);
+		} else if (dicomElName.equals("requesting.physician.name")) {
+			projectName = dem.stringValue(DicomElements.REQUESTING_PHYSICIAN);
+		} else if (dicomElName.equals("performing.physician.name")) {
+			projectName = dem.stringValue(DicomElements.PERFORMING_PHYSICIANS_NAME);
+		}
+		if (projectName==null) return null;
+		
+		// Now try to find the project
+		XmlDocMaker dm = new XmlDocMaker("args");
+		String where = "model='om.pssd.project' and xpath(daris:pssd-object/name)='" + projectName + "'";
+		dm.add("where", where);
+		XmlDoc.Element r = executor.execute("asset.query", dm.root());
+		Collection<String> ids = r.values("id");
+		if (ids==null) return null;
+		if (ids.size()>1) {
+			throw new Exception ("Found " + ids.size() + " projects via DICOM control nig.dicom.id.citable.project.from - expected only 1.");
+		}
+		return nig.mf.pssd.plugin.util.CiteableIdUtil.idToCid(executor, r.value("id"));
+	}
 
 	private static String extractCIDFromDirector(DataElementMap dem,
 			DicomIngestControls ic) throws Throwable {

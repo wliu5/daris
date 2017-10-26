@@ -105,7 +105,7 @@ public class DicomIngestControls {
                                                   // "0,11")
     private String _cidDirector;         // Allows us to direct the Study to the desired CID based on meta-data elements
     private String _cidDefault;          // A default CID to direct the data to if all other extraction methods fail.
-
+    private String _cidIDFromProject;    // Look up the project by name via this DICOM element
     //
     private String _projectSelector;
     private Boolean _writeDICOMPatient;
@@ -144,6 +144,7 @@ public class DicomIngestControls {
         _discardElementValue = null;
         //
         _cidDirector = null;
+        _cidIDFromProject = null;
     }
 
     public String cidPrefix() {
@@ -250,6 +251,10 @@ public class DicomIngestControls {
     	return _cidDefault;
     }
 
+    public String cidFromProjectName () {
+    	return _cidIDFromProject;
+    }
+    
     /**
      * Configure controls by reading either directly from the command line (e.g.
      * dicom.ingest :arg -name nig.dicom.id.citable 1.2.3.4) or from the network
@@ -269,6 +274,10 @@ public class DicomIngestControls {
 
         // Directs data to the write CID from meta-data configuration.  nig.dicom.id.citable over-rides this
         _cidDirector = (String)args.get("nig.dicom.id.citable.director");
+        
+        // Fetch the rpoject name from this DICOM element and look it up
+        _cidIDFromProject = (String)args.get("nig.dicom.id.citable.project.from");
+ 
 
         if (_citableID == null) {
             String idBy = (String) args.get("nig.dicom.id.by");

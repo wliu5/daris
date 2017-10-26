@@ -20,9 +20,16 @@ public class NIGDicomAssetEngineFactory implements DicomAssetEngineFactory {
     public Map<String, String> arguments() {
         Map<String, String> args = new TreeMap<String, String>();
 
-        args.put("nig.dicom.id.citable", "The citeable ID (using the P.S.EM.S notation) of the DaRIS object to locate the data in. Using this will deactivate all other controls looking for this ID in other DICOM meta-data");
-        args.put("nig.dicom.id.citable.director", "Direct data to a citable ID ((using the P.S.EM.S notation) based on DICOM meta-data values. The pattern is <Default CID>;<CID>:<DICOM Element name>:<DICOM Element value>.  "
-        		+ " Multiple groups (<cid>:<name>:<value>)  can be separated by a semicolon.  Values for <element name> are : 'patient.name.first, patient.name.last, patient.id'.  When the value of the named element matches (actually, CONTAINS [case insensitive]) the value, the CID in that group is used. There is a default CID at the start when there are no matches.");
+        args.put("nig.dicom.id.citable.project.from", 
+        		"Specifies a DICOM element from which the name of the Project is extracted. Allowed values for the DICOM element are one of " +
+        		"[patient.name.first, patient.name.last, patient.id, referring.physician.name, requesting.physician.name, performing.physician.name]." +
+        	    " A query is then done to find the Project by name and direct the data to it. " +
+                "An exception will arise if there are multiple Projects with the same name. You should enable auto-subject creation with this control.");
+        args.put("nig.dicom.id.citable", 
+        		"The citeable ID (using the P.S.EM.S notation) of the DaRIS object to locate the data in. Using this will deactivate all other controls looking for this ID in other DICOM meta-data");
+        args.put("nig.dicom.id.citable.director", 
+        		"Direct data to a citable ID ((using the P.S.EM.S notation) based on DICOM meta-data values. The pattern is <Default CID>;<CID>:<DICOM Element name>:<DICOM Element value>.  "
+        		+ " Multiple groups (<cid>:<name>:<value>)  can be separated by a semicolon.  Values for <element name> are one of [patient.name.first, patient.name.last, patient.id].  When the value of the named element matches (actually, CONTAINS [case insensitive]) the value, the CID in that group is used. There is a default CID at the start when there are no matches.");
         args.put("nig.dicom.id.citable.default", "If all other methods to extract a citeable ID (using the P.S.EM.S notation) fail, then use this value. This provides a means of sending data to a default CID (usually Project).");
         args.put("nig.dicom.id.by",
                 "The method of identifying studies using P.S[.EM[.S]] (project, subject, ex-method, study) notation. If specified, one of [patient.id, patient.name, patient.name.first, patient.name.last, study.id, performing.physician.name, referring.physician.name, referring.physician.phone, requesting.physician].");
