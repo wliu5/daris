@@ -192,46 +192,6 @@ public class SvcDataSetClone extends PluginService {
 
 	}
 
-	/*
-	String proxySeriesAssetContentUrl = r2.value("asset/content/url");
-	String proxySeriesAssetContentType = r2.value("asset/content/type");
-	String proxySeriesAssetType = r2.value("asset/type");
-	 */
-
-	private void setAssetContentUrlAndType(String cid, String contentUrl, String contentType) throws Throwable {
-
-		// asset.set :cid $cid :url -by reference $url
-		XmlDocMaker doc = new XmlDocMaker("args");
-		doc.add("cid", cid);
-		doc.add("url", new String[] { "by", "reference" }, contentUrl);
-		doc.add("ctype", contentType);
-		executor().execute("asset.set", doc.root());
-	}
-
-
-	private void internalizeAssets(String cid, String method) throws Throwable {
-
-		XmlDocMaker doc = new XmlDocMaker("args");
-		doc.add("cid", cid);
-		doc.add("pdist", 0);       // FOrce local
-		XmlDoc.Element r = executor().execute("asset.get", doc.root());
-		if (r.value("asset/meta/daris:pssd-object/type") == null) {
-			throw new Exception("asset(cid=" + cid + ") is not a PSSD object.");
-		}
-
-		doc = new XmlDocMaker("args");
-		doc.add("where", "cid starts with '" + cid + "' and content is external");
-		doc.add("size", "infinity");
-		doc.add("action", "pipe");
-		doc.push("service", new String[] { "name", "asset.internalize" });
-		doc.add("method", method);
-		doc.pop();
-		doc.add("pdist", 0);       // FOrce local
-		doc.add("stoponerror", true);
-		System.out.println(doc.root());
-		executor().execute("asset.query", doc.root());
-	}
-
 
 
 
