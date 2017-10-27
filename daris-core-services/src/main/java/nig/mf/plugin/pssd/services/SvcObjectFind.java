@@ -1061,6 +1061,11 @@ public class SvcObjectFind extends PluginService {
         if (pc != null) {
             w.add("processed", pc.booleanValue());
         }
+        
+        String otherID = se.value("other-id");
+        if (otherID!=null) {
+        	w.add("other-id", otherID);
+        }
 
         /*
          * XmlDoc.Element we = se.element("workflow"); if ( we != null ) {
