@@ -4,6 +4,7 @@ import nig.mf.plugin.pssd.PSSDObject;
 import nig.mf.plugin.pssd.Study;
 import nig.mf.pssd.plugin.util.DistributedAsset;
 import arc.mf.plugin.PluginService;
+import arc.mf.plugin.PluginService.Interface;
 import arc.mf.plugin.PluginService.Interface.Element;
 import arc.mf.plugin.dtype.BooleanType;
 import arc.mf.plugin.dtype.CiteableIdType;
@@ -39,6 +40,7 @@ public class SvcStudyUpdate extends PluginService {
                 BooleanType.DEFAULT,
                 "Set to [true,false] to indicate the Study is a container for [processed,not-processed] data only.  If not set (default), then the Study can hold any kind of data, processed or not processed.",
                 0, 1));
+        _defn.add(new Interface.Element("other-id", StringType.DEFAULT, "An arbitrary identifier for the Study supplied by some other authority.", 0, 1));
 
         _defn.add(new Interface.Element("allow-incomplete-meta", BooleanType.DEFAULT,
                 "Should the metadata be accepted if incomplete? Defaults to false.", 0, 1));
@@ -105,11 +107,13 @@ public class SvcStudyUpdate extends PluginService {
         // to false
         XmlDoc.Element t = args.element("processed");
         Boolean processed = null;
-        if (t != null)
+        if (t != null) {
             processed = t.booleanValue();
+        }
+        String otherID = args.value("other-id");
 
         // Update local Study object.
-        Study.update(executor(), id, studyType, name, description, processed, exMethod, step,
+        Study.update(executor(), id, studyType, name, description, processed, otherID, exMethod, step,
                 args.booleanValue("allow-incomplete-meta", false), args.element("meta"));
 
     }

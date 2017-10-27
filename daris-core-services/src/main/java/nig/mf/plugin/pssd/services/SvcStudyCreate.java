@@ -50,7 +50,6 @@ public class SvcStudyCreate extends PluginService {
                 CiteableIdType.DEFAULT,
                 "The step within the method that resulted in this study.  If the type is given but the step not, the step is filled in with the first matching the given study type.",
                 0, 1));
-        _defn.add(new Interface.Element("other-id", StringType.DEFAULT, "An arbitrary identifier for the Study supplied by some other authority.", 0, 1));
 
         addInterfaceDefn(_defn);
     }
@@ -66,6 +65,7 @@ public class SvcStudyCreate extends PluginService {
                 BooleanType.DEFAULT,
                 "Set to [true,false] to indicate the Study is a container for [processed,not-processed] data only.  If not set (default), then the Study can hold any kind of data, processed or not processed.",
                 0, 1));
+        defn.add(new Interface.Element("other-id", StringType.DEFAULT, "An arbitrary identifier for the Study supplied by some other authority.", 0, 1));
 
         defn.add(new Interface.Element("allow-incomplete-meta", BooleanType.DEFAULT,
                 "Should the metadata be accepted if incomplete? Defaults to false.", 0, 1));

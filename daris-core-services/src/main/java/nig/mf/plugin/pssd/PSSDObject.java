@@ -287,7 +287,7 @@ public class PSSDObject extends Asset {
             // This assumes that the new ExMethod is the correct ExMethod to
             // put in the Study (in principle a Study may be the child of an
             // ExMethod that did not create it).
-            Study.update(executor, objectCidOut, null, null, null, null,
+            Study.update(executor, objectCidOut, null, null, null, null, null,
                     parentCidOut, null, false, null);
 
             // Studies also hold template meta-data that reflect the parent

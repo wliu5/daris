@@ -346,7 +346,7 @@ public class Study {
      */
     public static String update(ServiceExecutor executor, String id,
             String type, String name, String description, Boolean processed,
-            String exMethod, String step, boolean allowIncompleteMeta,
+            String otherID, String exMethod, String step, boolean allowIncompleteMeta,
             XmlDoc.Element meta) throws Throwable {
 
         // See if we can safely update the exmethod/step (only if no template
@@ -412,10 +412,19 @@ public class Study {
             }
 
             if (processed == null) {
-                if (oldEl.value("processed") != null)
+                if (oldEl.value("processed") != null) {
                     dm.add("processed", oldEl.value("processed"));
+                }
             } else {
                 dm.add("processed", processed);
+            }
+            if (otherID==null) {
+                if (oldEl.value("other-id") != null) {
+                    dm.add("other-id", oldEl.value("other-id"));
+                }    	
+            } else {
+                dm.add("other-id", otherID);
+
             }
 
             // Set new Method/step. SOme or all of old/current may be null.
