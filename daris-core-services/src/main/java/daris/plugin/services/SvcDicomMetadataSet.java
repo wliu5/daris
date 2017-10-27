@@ -346,8 +346,7 @@ public class SvcDicomMetadataSet extends PluginService {
         _defn.add(new Interface.Element("cid", AssetType.DEFAULT, "Citeable id of the DICOM series.", 0, 1));
         Interface.Element ele = new Interface.Element("element", XmlDocType.DEFAULT, "DICOM element to edit.", 1,
                 Integer.MAX_VALUE);
-        ele.add(new Interface.Attribute("tag", new StringType(Pattern.compile("^[a-fA-F0-9]{8}$")), "The element tag",
-                1));
+        ele.add(new Interface.Attribute("tag", new StringType(Pattern.compile("^[a-fA-F0-9]{8}$")), "The element tag. E.g. '00100020' for Patient ID", 1));
         ele.add(new Interface.Attribute("action", new EnumType(new String[] { "merge", "anonymize", "remove" }),
                 "The action to take. Defaults to merge. If set to remove, element value will be ignored.", 0));
         ele.add(new Interface.Element("value", StringType.DEFAULT,
