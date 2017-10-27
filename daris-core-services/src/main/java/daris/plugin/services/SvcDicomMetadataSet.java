@@ -26,6 +26,7 @@ import arc.mf.plugin.PluginService;
 import arc.mf.plugin.PluginTask;
 import arc.mf.plugin.PluginThread;
 import arc.mf.plugin.dtype.AssetType;
+import arc.mf.plugin.dtype.CiteableIdType;
 import arc.mf.plugin.dtype.EnumType;
 import arc.mf.plugin.dtype.IntegerType;
 import arc.mf.plugin.dtype.StringType;
@@ -343,7 +344,7 @@ public class SvcDicomMetadataSet extends PluginService {
     public SvcDicomMetadataSet() {
         _defn = new Interface();
         _defn.add(new Interface.Element("id", AssetType.DEFAULT, "Asset id of the DICOM series.", 0, 1));
-        _defn.add(new Interface.Element("cid", AssetType.DEFAULT, "Citeable id of the DICOM series.", 0, 1));
+        _defn.add(new Interface.Element("cid", CiteableIdType.DEFAULT, "Citeable id of the DICOM series.", 0, 1));
         Interface.Element ele = new Interface.Element("element", XmlDocType.DEFAULT, "DICOM element to edit.", 1,
                 Integer.MAX_VALUE);
         ele.add(new Interface.Attribute("tag", new StringType(Pattern.compile("^[a-fA-F0-9]{8}$")), "The element tag. E.g. '00100020' for Patient ID", 1));
