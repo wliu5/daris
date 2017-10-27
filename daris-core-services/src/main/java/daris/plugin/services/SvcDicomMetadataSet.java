@@ -480,7 +480,7 @@ public class SvcDicomMetadataSet extends PluginService {
             }
             Attribute pixelData = al.getPixelData();
             long pixelDataValueLength = pixelData == null ? 0 : pixelData.getVL();
-            if (pixelDataValueLength <= MAX_PIXEL_DATA_VALUE_LENGTH_USE_MEMORY_STREAM) {
+            if (pixelDataValueLength >= 0 && pixelDataValueLength <= MAX_PIXEL_DATA_VALUE_LENGTH_USE_MEMORY_STREAM) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 try {
                     al.write(baos, TransferSyntax.ExplicitVRLittleEndian, true, true);
