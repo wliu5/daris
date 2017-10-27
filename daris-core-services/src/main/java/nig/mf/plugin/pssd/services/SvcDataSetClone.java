@@ -38,6 +38,7 @@ public class SvcDataSetClone extends PluginService {
 				"Specifies the data-set number for the new DataSet's identifier. If not given, the next available DataSet is created. If specified, then there cannot be any other asset/object with this identity assigned.",
 				0, 1));
 		_defn.add(new Element("fillin", BooleanType.DEFAULT, "If the dataset-number is not given, fill in the DataSet allocator space (re-use allocated CIDs with no assets), otherwise create the next available CID at the end of the CID pool. Defaults to true; use with care in federated envionment.", 0, 1));
+		_defn.add(new Element("content", BooleanType.DEFAULT, "If true (default) clone the content as well as the meta-data. If false, just clone the meta-data.", 0, 1));
 	}
 
 
@@ -71,9 +72,11 @@ public class SvcDataSetClone extends PluginService {
 		if ( !type.equals(DataSet.TYPE) ) {
 			throw new Exception("Object " + dID.getCiteableID() + " [type=" + type + "] is not a " + DataSet.TYPE);
 		}
+		/*
 		if (dID.isReplica()) {
 			throw new Exception ("The supplied DataSet is a replica and this service cannot clone it.");
 		}
+		 */
 		if (!dID.isLocal()) {
 			throw new Exception("The supplied DataSet is hosted by a remote server, cannot clone it");
 		}
@@ -81,9 +84,10 @@ public class SvcDataSetClone extends PluginService {
 		//
 		XmlDoc.Element datasetNumber = args.element("dataset-number");		
 		XmlDoc.Element fillIn = args.element("fillin");
+		Boolean cloneContent = args.booleanValue("content", true);
 
 		// Get Parent Project
-		DistributedAsset dPID = dID.getParentProject (false);
+		DistributedAsset dPID = dID.getParentProject (true);
 		if (!dPID.isLocal()) {
 			throw new Exception("The supplied DataSet's parent Project is hosted by a remote server; cannot clone it");
 		}
@@ -112,11 +116,11 @@ public class SvcDataSetClone extends PluginService {
 
 
 		// CLone it
-		clone (executor(), pid, dID.getCiteableID(), fillIn, datasetNumber,  w);
+		clone (executor(), pid, dID.getCiteableID(), fillIn, datasetNumber, cloneContent,  w);
 	}
 
 
-	private void clone (ServiceExecutor executor, String pid, String oldID, XmlDoc.Element fillIn, XmlDoc.Element datasetNumber, XmlWriter w) throws Throwable {
+	private void clone (ServiceExecutor executor, String pid, String oldID, XmlDoc.Element fillIn, XmlDoc.Element datasetNumber, Boolean cloneContent, XmlWriter w) throws Throwable {
 
 		// Fetch the meta-data from the existing data-set
 		XmlDocMaker dm = new XmlDocMaker("args");
@@ -147,18 +151,22 @@ public class SvcDataSetClone extends PluginService {
 		String  methodStep = meta.value("asset/meta/daris:pssd-derivation/method/@step");
 		String methodId = meta.value("asset/meta/daris:pssd-derivation/method");
 
-	
+
 		// Clone meta-data and content from old to new
 		dm = new XmlDocMaker("args");
 		dm.add ("cid", newID);
-		dm.add("clone", nig.mf.pssd.plugin.util.CiteableIdUtil.cidToId(executor, oldID));
+		if (cloneContent) {
+			dm.add("clone", new String[]{"content", "true"}, nig.mf.pssd.plugin.util.CiteableIdUtil.cidToId(executor, oldID));
+		} else {
+			dm.add("clone", new String[]{"content", "false"}, nig.mf.pssd.plugin.util.CiteableIdUtil.cidToId(executor, oldID));
+		}
 		executor.execute("asset.set", dm.root());
 
 		// Re-fetch meta-data after cloning
 		meta = AssetUtil.getAsset(executor, newID, null);
 		XmlDoc.Element meta2 = meta.element("asset/meta");
-	
-		
+
+
 		// Clean up the duplicated doc types (caused by empty create and then clone)
 		removeLastVersion (executor, meta2, newID, "daris:pssd-dataset");
 
@@ -183,6 +191,50 @@ public class SvcDataSetClone extends PluginService {
 		w.add("id", newID);
 
 	}
+
+	/*
+	String proxySeriesAssetContentUrl = r2.value("asset/content/url");
+	String proxySeriesAssetContentType = r2.value("asset/content/type");
+	String proxySeriesAssetType = r2.value("asset/type");
+	 */
+
+	private void setAssetContentUrlAndType(String cid, String contentUrl, String contentType) throws Throwable {
+
+		// asset.set :cid $cid :url -by reference $url
+		XmlDocMaker doc = new XmlDocMaker("args");
+		doc.add("cid", cid);
+		doc.add("url", new String[] { "by", "reference" }, contentUrl);
+		doc.add("ctype", contentType);
+		executor().execute("asset.set", doc.root());
+	}
+
+
+	private void internalizeAssets(String cid, String method) throws Throwable {
+
+		XmlDocMaker doc = new XmlDocMaker("args");
+		doc.add("cid", cid);
+		doc.add("pdist", 0);       // FOrce local
+		XmlDoc.Element r = executor().execute("asset.get", doc.root());
+		if (r.value("asset/meta/daris:pssd-object/type") == null) {
+			throw new Exception("asset(cid=" + cid + ") is not a PSSD object.");
+		}
+
+		doc = new XmlDocMaker("args");
+		doc.add("where", "cid starts with '" + cid + "' and content is external");
+		doc.add("size", "infinity");
+		doc.add("action", "pipe");
+		doc.push("service", new String[] { "name", "asset.internalize" });
+		doc.add("method", method);
+		doc.pop();
+		doc.add("pdist", 0);       // FOrce local
+		doc.add("stoponerror", true);
+		System.out.println(doc.root());
+		executor().execute("asset.query", doc.root());
+	}
+
+
+
+
 
 	private void removeLastVersion (ServiceExecutor executor, XmlDoc.Element meta, String id, String docType) throws Throwable {
 
