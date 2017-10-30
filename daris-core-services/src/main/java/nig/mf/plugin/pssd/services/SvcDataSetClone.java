@@ -137,6 +137,7 @@ public class SvcDataSetClone extends PluginService {
 		if (fillIn!=null) dm.add(fillIn);
 		if (datasetNumber != null) dm.add(datasetNumber);
 
+		// We don't really clone the ACLs - we just set the standard ones.
 		if (isPrimary) {
 			r = executor.execute("om.pssd.dataset.primary.create", dm.root());
 		} else {
@@ -153,6 +154,7 @@ public class SvcDataSetClone extends PluginService {
 
 
 		// Clone meta-data and content from old to new
+		// DOes not clone ACLs
 		dm = new XmlDocMaker("args");
 		dm.add ("cid", newID);
 		if (cloneContent) {
