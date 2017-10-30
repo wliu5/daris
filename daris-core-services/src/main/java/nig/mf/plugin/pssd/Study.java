@@ -394,7 +394,7 @@ public class Study {
         // if we change method/step we should insist on the :meta being replaced
         // with correct namespaces refelcting the new ex method/step
         if (exMethod != null || step != null || type != null
-                || processed != null) {
+                || processed != null || otherID!=null) {
 
             // Remove old (only way to update the step)
             dm.push("meta", new String[] { "action", "remove" });
@@ -424,7 +424,6 @@ public class Study {
                 }    	
             } else {
                 dm.add("other-id", otherID);
-
             }
 
             // Set new Method/step. SOme or all of old/current may be null.
@@ -464,6 +463,7 @@ public class Study {
         }
 
         // Do it
+        System.out.println("dm="+dm.root());
         executor.execute("asset.set", dm.root());
 
         // Generate system event
