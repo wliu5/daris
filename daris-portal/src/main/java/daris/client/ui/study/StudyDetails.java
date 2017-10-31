@@ -6,6 +6,7 @@ import arc.gui.form.FieldGroup;
 import arc.gui.form.Form;
 import arc.gui.form.FormEditMode;
 import arc.gui.form.FormItem;
+import arc.gui.form.FormItem.Property;
 import arc.gui.form.FormItemListener;
 import arc.gui.gwt.widget.scroll.ScrollPanel;
 import arc.gui.gwt.widget.scroll.ScrollPolicy;
@@ -15,6 +16,7 @@ import arc.mf.client.util.StateChangeListener;
 import arc.mf.client.xml.XmlStringWriter;
 import arc.mf.dtype.ConstantType;
 import arc.mf.dtype.EnumerationType;
+import arc.mf.dtype.StringType;
 import daris.client.model.exmethod.StepEnum;
 import daris.client.model.exmethod.StepItem;
 import daris.client.model.object.DObjectRef;
@@ -41,9 +43,9 @@ public class StudyDetails extends DObjectDetails {
 
         setActiveTab();
     }
-    
-    protected void allowIncompleteMetaChanged(boolean allowIncompleteMeta){
-        if(_methodMetaFormGroup!=null){
+
+    protected void allowIncompleteMetaChanged(boolean allowIncompleteMeta) {
+        if (_methodMetaFormGroup != null) {
             _methodMetaFormGroup.setAllowMissingMandatory(allowIncompleteMeta);
         }
     }
@@ -61,8 +63,8 @@ public class StudyDetails extends DObjectDetails {
                 return;
             }
             _methodMetaFormGroup = new MethodMetaFormGroup(so.methodMeta(), mode(), so.allowIncompleteMeta());
-            setTab(TAB_NAME_METHOD_METADATA, TAB_DESC_METHOD_METADATA, new ScrollPanel(_methodMetaFormGroup.gui(),
-                    ScrollPolicy.AUTO));
+            setTab(TAB_NAME_METHOD_METADATA, TAB_DESC_METHOD_METADATA,
+                    new ScrollPanel(_methodMetaFormGroup.gui(), ScrollPolicy.AUTO));
         } else {
             if (_methodMetaFormGroup != null) {
                 removeMustBeValid(_methodMetaFormGroup);
@@ -75,8 +77,8 @@ public class StudyDetails extends DObjectDetails {
                         removeTab(TAB_NAME_METHOD_METADATA);
                         return;
                     }
-                    _methodMetaFormGroup = new MethodMetaFormGroup(so.methodMetaForEdit(), mode(), so
-                            .allowIncompleteMeta());
+                    _methodMetaFormGroup = new MethodMetaFormGroup(so.methodMetaForEdit(), mode(),
+                            so.allowIncompleteMeta());
                     addMustBeValid(_methodMetaFormGroup);
                     saveMethodMeta(_methodMetaFormGroup);
                     _methodMetaFormGroup.addChangeListener(new StateChangeListener() {
@@ -119,12 +121,13 @@ public class StudyDetails extends DObjectDetails {
          * study type
          */
         if (FormEditMode.READ_ONLY == mode() || FormEditMode.UPDATE == mode()) {
-            _studyTypeField = new Field<String>(new FieldDefinition("type", ConstantType.DEFAULT, "Study Type", null,
-                    1, 1));
+            _studyTypeField = new Field<String>(
+                    new FieldDefinition("type", ConstantType.DEFAULT, "Study Type", null, 1, 1));
             _studyTypeField.setInitialValue(so.studyType());
         } else {
-            _studyTypeField = new Field<String>(new FieldDefinition("type", new EnumerationType<String>(
-                    new StudyTypeEnumDataSource(so.exMethodId())), "Study Type", null, 1, 1));
+            _studyTypeField = new Field<String>(new FieldDefinition("type",
+                    new EnumerationType<String>(new StudyTypeEnumDataSource(so.exMethodId())), "Study Type", null, 1,
+                    1));
             _studyTypeField.setInitialValue(so.studyType());
             _studyTypeField.addListener(new FormItemListener<String>() {
 
@@ -151,6 +154,30 @@ public class StudyDetails extends DObjectDetails {
         }
         interfaceForm.add(_studyTypeField);
 
+        if (FormEditMode.READ_ONLY != mode() || so.otherId() != null) {
+            Field<String> otherIdField = new Field<String>(new FieldDefinition("other-id",
+                    FormEditMode.READ_ONLY == mode() ? ConstantType.DEFAULT : StringType.DEFAULT,
+                    "An arbitrary identifier for the Study supplied by some other authority.", null, 0, 1));
+            if (so.otherId() != null) {
+                otherIdField.setInitialValue(so.otherId());
+            }
+            if (FormEditMode.READ_ONLY != mode()) {
+                otherIdField.addListener(new FormItemListener<String>() {
+
+                    @Override
+                    public void itemValueChanged(FormItem<String> f) {
+                        so.setOtherId(f.value());
+                    }
+
+                    @Override
+                    public void itemPropertyChanged(FormItem<String> f, Property property) {
+
+                    }
+                });
+            }
+            interfaceForm.add(otherIdField);
+        }
+
         /*
          * processed
          * 
@@ -159,12 +186,9 @@ public class StudyDetails extends DObjectDetails {
          * editable.
          */
         if (FormEditMode.READ_ONLY == mode() || FormEditMode.UPDATE == mode()) {
-            _processedField = new Field<BooleanEnum>(
-                    new FieldDefinition(
-                            "processed",
-                            ConstantType.DEFAULT,
-                            "Processed: is the Study intended to hold processed DataSets (true), non-processed DataSets (false) or unknown/mix (don't set).",
-                            null, 0, 1));
+            _processedField = new Field<BooleanEnum>(new FieldDefinition("processed", ConstantType.DEFAULT,
+                    "Processed: is the Study intended to hold processed DataSets (true), non-processed DataSets (false) or unknown/mix (don't set).",
+                    null, 0, 1));
             Boolean t = so.processed();
             if (t != null) {
                 if (t) {
@@ -174,12 +198,9 @@ public class StudyDetails extends DObjectDetails {
                 }
             }
         } else {
-            _processedField = new Field<BooleanEnum>(
-                    new FieldDefinition(
-                            "processed",
-                            BooleanEnum.asEnumerationType(),
-                            "Processed: is the Study intended to hold processed DataSets (true), non-processed DataSets (false) or unknown/mix (don't set).",
-                            null, 0, 1));
+            _processedField = new Field<BooleanEnum>(new FieldDefinition("processed", BooleanEnum.asEnumerationType(),
+                    "Processed: is the Study intended to hold processed DataSets (true), non-processed DataSets (false) or unknown/mix (don't set).",
+                    null, 0, 1));
             Boolean t = so.processed();
             if (t != null) {
                 if (t) {
@@ -211,10 +232,10 @@ public class StudyDetails extends DObjectDetails {
         /*
          * method { id, step }
          */
-        FieldGroup methodFieldGroup = new FieldGroup(new FieldDefinition("method", ConstantType.DEFAULT, "method",
-                null, 1, 1));
-        Field<String> methodIdField = new Field<String>(new FieldDefinition("id", ConstantType.DEFAULT, "id", null, 1,
-                1));
+        FieldGroup methodFieldGroup = new FieldGroup(
+                new FieldDefinition("method", ConstantType.DEFAULT, "method", null, 1, 1));
+        Field<String> methodIdField = new Field<String>(
+                new FieldDefinition("id", ConstantType.DEFAULT, "id", null, 1, 1));
         methodIdField.setValue(so.exMethodId());
         methodFieldGroup.add(methodIdField);
 
@@ -223,8 +244,8 @@ public class StudyDetails extends DObjectDetails {
                     new FieldDefinition("step", ConstantType.DEFAULT, "step", null, 1, 1));
             _methodStepField.setInitialValue(StepItem.fromStudy(so));
         } else {
-            _methodStepField = new Field<StepItem>(new FieldDefinition("step", new EnumerationType<StepItem>(
-                    new StepEnum(so)), "step", null, 1, 1));
+            _methodStepField = new Field<StepItem>(
+                    new FieldDefinition("step", new EnumerationType<StepItem>(new StepEnum(so)), "step", null, 1, 1));
             _methodStepField.setInitialValue(StepItem.fromStudy(so));
             _methodStepField.addListener(new FormItemListener<StepItem>() {
 

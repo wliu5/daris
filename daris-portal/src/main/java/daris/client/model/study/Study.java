@@ -26,6 +26,7 @@ public class Study extends DObject {
     private XmlElement _methodMeta;
     private XmlElement _methodMetaForEdit;
     private Boolean _processed;
+    private String _otherId;
 
     public Study(String exMethodId) {
 
@@ -40,7 +41,8 @@ public class Study extends DObject {
         // processed is optional
         _processed = null;
         XmlElement t = xe.element("processed");
-        if (t!=null) _processed = t.booleanValue();
+        if (t != null)
+            _processed = t.booleanValue();
         //
         _exMethodId = xe.value("method/id");
         _stepPath = xe.value("method/step");
@@ -52,6 +54,7 @@ public class Study extends DObject {
                 _methodMeta = mme;
             }
         }
+        _otherId = xe.value("other-id");
     }
 
     public Study(String id, String proute, String name, String description) {
@@ -87,13 +90,13 @@ public class Study extends DObject {
 
         return _methodMeta;
     }
-    
+
     public Boolean processed() {
-    	return _processed;
+        return _processed;
     }
-    
-    public void setProcessed (Boolean processed) {
-    	_processed = processed;
+
+    public void setProcessed(Boolean processed) {
+        _processed = processed;
     }
 
     public void setMethodMeta(XmlStringWriter w) {
@@ -167,6 +170,14 @@ public class Study extends DObject {
         _methodMetaForEdit = methodMetaForEdit;
     }
 
+    public String otherId() {
+        return _otherId;
+    }
+
+    public void setOtherId(String otherId) {
+        _otherId = otherId;
+    }
+
     @Override
     public DObject.Type type() {
 
@@ -190,8 +201,12 @@ public class Study extends DObject {
             w.add("description", description());
         }
         w.add("type", _studyType);
-        if (_processed!=null) w.add("processed", _processed);
-        //
+        if (_processed != null) {
+            w.add("processed", _processed);
+        }
+        if (_otherId != null) {
+            w.add("other-id", _otherId);
+        }
         if (_stepPath != null) {
             w.add("step", _stepPath);
         }
@@ -245,8 +260,11 @@ public class Study extends DObject {
         if (_studyType != null) {
             w.add("type", _studyType);
         }
-        if (_processed!=null) {
-        	w.add("processed", _processed);
+        if (_processed != null) {
+            w.add("processed", _processed);
+        }
+        if (_otherId != null) {
+            w.add("other-id", _otherId);
         }
         if (_stepPath != null) {
             w.push("method");

@@ -12,6 +12,7 @@ public class SvcSinkSend extends PluginService {
 
     public SvcSinkSend() {
         _defn = new Interface();
+        
     }
 
     @Override
@@ -26,20 +27,18 @@ public class SvcSinkSend extends PluginService {
 
     @Override
     public String description() {
-        // TODO Auto-generated method stub
-        return null;
+        return "Send to specified sink.";
     }
 
     @Override
-    public void execute(Element arg0, Inputs arg1, Outputs arg2, XmlWriter arg3) throws Throwable {
+    public void execute(Element args, Inputs inputs, Outputs outputs, XmlWriter w) throws Throwable {
         // TODO Auto-generated method stub
 
     }
 
     @Override
     public String name() {
-        // TODO Auto-generated method stub
-        return null;
+        return SERVICE_NAME;
     }
 
 }
