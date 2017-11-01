@@ -88,7 +88,8 @@ public class SvcAssetDocCopy extends PluginService {
 		// Fetch the documents from the source asset
 		List<XmlDoc.Element> docs = findDocs(asset, docNames);
 		if (docs == null) {
-			throw new Exception("No input document found");
+			// Nothing to do
+			return;
 		}
 		
 		// Override the namespace and tag attributes if the action is add.
