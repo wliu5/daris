@@ -118,6 +118,10 @@ public class ScpPutClient implements Closeable {
     public boolean verbose() {
         return _verbose;
     }
+    
+    public void setVerbose(boolean verbose){
+        _verbose = verbose;
+    }
 
     private void initialize() throws IOException {
 
