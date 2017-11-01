@@ -181,6 +181,7 @@ public class ScpSink implements DataSinkImpl {
                 : SshConnection.create(params.host, params.port, params.hostKey, params.user, params.privateKey,
                         params.passphrase)).createScpPutClient(null, params.directory, false, false, params.dirMode,
                                 params.fileMode);
+        // .createSftpClient(params.directory, params.dirMode, params.fileMode);
     }
 
     @Override
@@ -257,7 +258,8 @@ public class ScpSink implements DataSinkImpl {
                         sb.append(System.currentTimeMillis());
                     }
                 }
-                scp.put(in, length, sb.toString());
+                String dstPath = sb.toString();
+                scp.put(in, length, dstPath);
             }
         } finally {
             if (multipleTransferContext == null) {

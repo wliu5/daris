@@ -61,6 +61,10 @@ public class SftpClient implements Closeable {
         this(connection, client, baseDir, DEFAULT_DIRECTORY_MODE, DEFAULT_FILE_MODE, false);
     }
 
+    public SshConnection connection() {
+        return _connection;
+    }
+
     public void setVerbose(boolean verbose) {
         _verbose = verbose;
     }
