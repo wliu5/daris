@@ -215,6 +215,19 @@ proc createDict_publication_identifier_types { } {
 	addDictionaryEntry daris:pssd.publication.identifier.type mediatype
 }
 
+
+#============================================================================#
+# Dictionary for pssd-study/other-id                                         #
+#============================================================================#
+proc create_dict_pssd_study_otherid_types { } {
+    set dict daris:pssd.study.other-id.types
+    set desc "Other ID types"
+    if { [xvalue exists [dictionary.exists :name ${dict}]] == "false" } {
+        dictionary.create :name ${dict} :description ${desc} :case-sensitive false
+    }
+# It’s up to the domain specific package to populate
+}
+
 # ============================================================================
 # Create all dictionaries.
 # ============================================================================
@@ -228,6 +241,7 @@ proc createUpdatePSSDDicts { } {
     createDict_pssd_project_asset_namespaces
     createDict_pssd_project_cid_roots
     createDict_pssd_research_keywords
+    create_dict_pssd_study_otherid_types
 }
 
 # ============================================================================
@@ -238,7 +252,7 @@ proc destroyPSSDDicts { } {
 	            daris:pssd.human.name.prefix daris:pssd.publication.identifier.type \
 	            daris:pssd.funding.organization daris:pssd.ethics.organization \
 	            daris:pssd.project.asset.namespaces daris:pssd.project.cid.rootnames \
-	            daris:pssd.research.keyword}
+	            daris:pssd.research.keyword daris:pssd.study.other-id.types }
 	foreach dict $dicts {
 		if { [xvalue exists [dictionary.exists :name $dict]] == "true" } {
 			dictionary.destroy :name $dict

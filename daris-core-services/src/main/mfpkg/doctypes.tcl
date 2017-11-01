@@ -160,6 +160,12 @@ asset.doc.type.update :create true :type daris:pssd-study \
         > \
         :element -name "other-id" -type "string" -min-occurs "0" -max-occurs "infinity" < \
            :description "An arbitrary identifier for the Study supplied by some other authority" \
+			:attribute -name type -type enumeration < \
+				:description "The type (authority) of this identifier." \
+				 :restriction -base enumeration < \
+                    :dictionary daris:pssd.study.other-id.types \
+                  > \
+			> \
         > \
 	>
 

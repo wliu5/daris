@@ -1,5 +1,6 @@
 package nig.mf.plugin.pssd.services;
 
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -7,7 +8,9 @@ import nig.mf.plugin.pssd.PSSDObject;
 import nig.mf.plugin.pssd.Study;
 import nig.mf.plugin.pssd.method.ExMethod;
 import nig.mf.pssd.plugin.util.DistributedAsset;
+import arc.dtype.EnumerationType;
 import arc.mf.plugin.PluginService;
+import arc.mf.plugin.PluginService.Interface;
 import arc.mf.plugin.PluginService.Interface.Element;
 import arc.mf.plugin.ServiceExecutor;
 import arc.mf.plugin.dtype.BooleanType;
@@ -65,12 +68,17 @@ public class SvcStudyCreate extends PluginService {
                 BooleanType.DEFAULT,
                 "Set to [true,false] to indicate the Study is a container for [processed,not-processed] data only.  If not set (default), then the Study can hold any kind of data, processed or not processed.",
                 0, 1));
-        defn.add(new Interface.Element("other-id", StringType.DEFAULT, "An arbitrary identifier for the Study supplied by some other authority.", 0, 1));
-
+        
+        Interface.Element me = new Interface.Element("other-id", StringType.DEFAULT, "An arbitrary identifier for the Study supplied by some other authority.", 0, Integer.MAX_VALUE);
+        me.add(new Interface.Attribute("type", new DictionaryEnumType(Study.OTHER_ID_DICTIONARY),
+                "The type (authority) of the identifier.",
+                0));
+        defn.add(me);
+        
         defn.add(new Interface.Element("allow-incomplete-meta", BooleanType.DEFAULT,
                 "Should the metadata be accepted if incomplete? Defaults to false.", 0, 1));
 
-        Interface.Element me = new Element(
+        me = new Element(
                 "meta",
                 XmlDocType.DEFAULT,
                 "Optional metadata - a list of asset documents. If the metadata belongs to a method, then it must have an 'ns' attribute which corresponds to the 'ExMethod CID_Step ID_Group' (e.g. 1.1.1.1_1.1_Neuropsych).  The group component is optional. It can be used by e.g. the portal to group documents into sub-tabs.",
@@ -138,7 +146,8 @@ public class SvcStudyCreate extends PluginService {
         // Handle step/type
         String studyType = args.value("type");
         String step = args.value("step");
-        String otherID = args.value("other-id");
+        Collection<XmlDoc.Element> otherIDs = args.elements("other-id");
+        
         // We need both type and step but can source from each other.
         if (studyType == null && step == null) {
             throw new Exception("You must give at least one of step and/or type");
@@ -184,7 +193,7 @@ public class SvcStudyCreate extends PluginService {
         }
 
         try {
-            String cid = Study.create(executor(), dEID, studyNumber, studyType, name, description, otherID, processed, step,
+            String cid = Study.create(executor(), dEID, studyNumber, studyType, name, description, otherIDs, processed, step,
                     args.booleanValue("allow-incomplete-meta", false), args.element("meta"), dPID, fillIn);
             w.add("id", cid);
         } finally {

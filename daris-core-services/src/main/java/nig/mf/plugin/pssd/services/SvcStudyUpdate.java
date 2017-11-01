@@ -1,5 +1,7 @@
 package nig.mf.plugin.pssd.services;
 
+import java.util.Collection;
+
 import nig.mf.plugin.pssd.PSSDObject;
 import nig.mf.plugin.pssd.Study;
 import nig.mf.pssd.plugin.util.DistributedAsset;
@@ -40,7 +42,12 @@ public class SvcStudyUpdate extends PluginService {
                 BooleanType.DEFAULT,
                 "Set to [true,false] to indicate the Study is a container for [processed,not-processed] data only.  If not set (default), then the Study can hold any kind of data, processed or not processed.",
                 0, 1));
-        _defn.add(new Interface.Element("other-id", StringType.DEFAULT, "An arbitrary identifier for the Study supplied by some other authority.", 0, 1));
+        //
+        me = new Interface.Element("other-id", StringType.DEFAULT, "An arbitrary identifier for the Study supplied by some other authority.", 0, Integer.MAX_VALUE);
+        me.add(new Interface.Attribute("type", new DictionaryEnumType(Study.OTHER_ID_DICTIONARY),
+                "The type (authority) of the identifier.",
+                0));
+        _defn.add(me);
 
         _defn.add(new Interface.Element("allow-incomplete-meta", BooleanType.DEFAULT,
                 "Should the metadata be accepted if incomplete? Defaults to false.", 0, 1));
@@ -110,10 +117,10 @@ public class SvcStudyUpdate extends PluginService {
         if (t != null) {
             processed = t.booleanValue();
         }
-        String otherID = args.value("other-id");
+        Collection<XmlDoc.Element> otherIDs = args.elements("other-id");
 
         // Update local Study object.
-        Study.update(executor(), id, studyType, name, description, processed, otherID, exMethod, step,
+        Study.update(executor(), id, studyType, name, description, processed, otherIDs, exMethod, step,
                 args.booleanValue("allow-incomplete-meta", false), args.element("meta"));
 
     }
