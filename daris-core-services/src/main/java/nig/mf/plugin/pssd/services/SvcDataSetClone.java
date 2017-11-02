@@ -136,6 +136,10 @@ public class SvcDataSetClone extends PluginService {
 		dm.add("pid", pid);
 		if (fillIn!=null) dm.add(fillIn);
 		if (datasetNumber != null) dm.add(datasetNumber);
+		String mimeType = r.value("object/type");
+		if (mimeType!=null) {
+			dm.add("type", mimeType);
+		}
 
 		// We don't really clone the ACLs - we just set the standard ones.
 		if (isPrimary) {
