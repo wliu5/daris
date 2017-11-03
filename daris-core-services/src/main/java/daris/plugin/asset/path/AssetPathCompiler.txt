@@ -30,7 +30,7 @@ public class AssetPathCompiler
 
   public static String compile(ServiceExecutor executor, XmlDoc.Element ae, String expr) throws Throwable
   {
-    return AssetPathUtils.getMetadataValue(executor, ae.value("@id"), expr);
+    return new AssetPathCompiler(executor, ae, expr).compile();
   }
 
   private ServiceExecutor _executor;
@@ -80,6 +80,8 @@ TOKEN : /* RESERVED WORDS AND LITERALS */
 | < OPT : "opt" >
 | < IF_NULL : "if-null" >
 | < UNLESS_NULL : "unless-null" >
+| < SAFE_NAME : "safe-name" >
+| < SAFE_PATH : "safe-path" >
 }
 
 TOKEN : /* LITERALS */
@@ -176,6 +178,8 @@ String expression() :
   | s = opt()
   | s = ifNull()
   | s = unlessNull()
+  | s = safeName()
+  | s = safePath()
   )
   {
     return s;
@@ -449,5 +453,31 @@ String unlessNull() :
     {
       return v;
     }
+  }
+}
+
+String safeName() :
+{
+  String s;
+}
+{
+  < SAFE_NAME > < LPAREN > s = expression() < RPAREN >
+  {
+    s = s == null ? "" : s;
+    s = s.trim().replaceAll("\\ +", " ").replaceAll("[^a-zA-Z0-9\\.\\-\\ ]", "_").replaceAll("_+", "_");
+    return s;
+  }
+}
+
+String safePath() :
+{
+  String s;
+}
+{
+  < SAFE_PATH > < LPAREN > s = expression() < RPAREN >
+  {
+    s = s == null ? "" : s;
+    s = s.trim().replaceAll("\\ +", " ").replaceAll("[^a-zA-Z0-9\\.\\-\\ \\/]", "_").replaceAll("_+", "_");
+    return s;
   }
 }
