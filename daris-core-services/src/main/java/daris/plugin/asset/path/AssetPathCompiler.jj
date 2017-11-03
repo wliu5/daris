@@ -1,0 +1,417 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
+ */
+
+options
+{
+  STATIC = false;
+}
+
+PARSER_BEGIN(AssetPathCompiler)
+package daris.plugin.asset.path;
+import java.io.ByteArrayInputStream;
+import arc.mf.plugin.ServiceExecutor;
+import arc.xml.XmlDoc;
+import nig.mf.pssd.CiteableIdUtil;
+
+public class AssetPathCompiler
+{
+  public static final String PREFIX = "$$$:";
+
+  public static String compile(ServiceExecutor executor, String assetId, String expr) throws Throwable
+  {
+    XmlDoc.Element ae = AssetPathUtils.getAssetMeta(executor, assetId);
+    return compile(executor, ae, expr);
+  }
+
+  public static String compile(String cid, ServiceExecutor executor, String expr) throws Throwable
+  {
+    XmlDoc.Element ae = AssetPathUtils.getAssetMeta(cid, executor);
+    return compile(executor, ae, expr);
+  }
+
+  public static String compile(ServiceExecutor executor, XmlDoc.Element ae, String expr) throws Throwable
+  {
+    if (expr.startsWith(PREFIX))
+    {
+      expr = expr.substring(4);
+      AssetPathCompiler compiler = new AssetPathCompiler(executor, ae, expr);
+      return compiler.compile();
+    }
+    else
+    {
+      return AssetPathUtils.getMetadataValue(executor, ae.value("@id"), expr);
+    }
+  }
+
+  private ServiceExecutor _executor;
+
+  private XmlDoc.Element _ae;
+
+  public AssetPathCompiler(ServiceExecutor executor, XmlDoc.Element ae, String s)
+  {
+    this (new ByteArrayInputStream(s.getBytes()));
+    _executor = executor;
+    _ae = ae;
+  }
+
+  public static void main(String args []) throws ParseException
+  {
+    AssetPathCompiler parser = new AssetPathCompiler(System.in);
+    while (true)
+    {
+      System.out.println(parser.compile());
+    }
+  }
+}
+
+PARSER_END(AssetPathCompiler)
+
+SKIP : /* WHITE SPACE */
+{
+  " "
+| "\t"
+| "\r"
+| "\f"
+}
+
+TOKEN :
+{
+  < EOL : "\n" >
+}
+
+TOKEN : /* RESERVED WORDS AND LITERALS */
+{
+  < CID : "cid" >
+| < XVALUE : "xvalue" >
+| < PVALUE : "pvalue" >
+| < RVALUE : "rvalue" >
+| < REPLACE : "replace" >
+| < JOIN : "join" >
+| < OPT : "opt" >
+}
+
+TOKEN : /* LITERALS */
+{
+  < STRING :
+    "'"
+    (
+      (~[ "'", "\"", "\\", "\n", "\r" ])
+    |
+      (
+        "\\"
+        (
+          [ "n", "t", "b", "r", "f", "\\", "'", "\"" ]
+        | [ "0"-"7" ] ([ "0"-"7" ])?
+        | [ "0"-"3" ] [ "0"-"7" ] [ "0"-"7" ]
+        )
+      )
+    )*
+    "'" 
+  >
+| < POSITIVE_INTEGER :
+    "0"
+  | [ "1"-"9" ] ([ "0"-"9" ])* >
+}
+
+TOKEN : /* SEPARATORS */
+{
+  < LPAREN : "(" >
+| < RPAREN : ")" >
+| < COMMA : "," >
+| < SLASH : "/" >
+}
+
+TOKEN : /* OPERATORS */
+{
+  < OR : "|" >
+}
+
+String compile() :
+{
+  String r;
+}
+{
+  r = path()
+  (
+    < EOL >
+  | < EOF >
+  )
+  {
+    return r;
+  }
+}
+
+String path() :
+{
+  StringBuilder sb = new StringBuilder();
+  String v;
+}
+{
+  (
+    < SLASH >
+    {
+      sb.append("/");
+    }
+  )?
+  v = expression()
+  {
+    sb.append(v);
+  }
+  (
+    < SLASH > v = expression()
+    {
+      sb.append("/").append(v);
+    }
+  )*
+  {
+    return sb.toString();
+  }
+}
+
+String expression() :
+{
+  String s;
+}
+{
+  (
+    s = cid()
+  | s = xvalue()
+  | s = pvalue()
+  | s = rvalue()
+  | s = svalue()
+  | s = replace()
+  | s = join()
+  | s = opt()
+  )
+  {
+    return s;
+  }
+}
+
+String cid() :
+{
+  int idx1;
+  int idx2;
+}
+{
+  < CID > < LPAREN > idx1 = integer() 
+  < COMMA > idx2 = integer() 
+  < RPAREN >
+  {
+    String cid = null;
+    try
+    {
+      cid = _ae.value("cid");
+    }
+    catch (Throwable e)
+    {
+      e.printStackTrace(System.err);
+    }
+    if (cid != null)
+    {
+      String [ ] parts = cid.split("\\.");
+      if (parts == null || parts.length == 1)
+      {
+        return cid;
+      }
+      int len = parts.length;
+      int from = idx1 < 0 ? (len + idx1) : idx1;
+      int to = idx2 <= 0 ? (len + idx2) : idx2;
+      StringBuilder sb = new StringBuilder();
+      for (int i = from; i < to; i++)
+      {
+        if (i > from)
+        {
+          sb.append('.');
+        }
+        sb.append(parts [ i ]);
+      }
+      return sb.toString();
+    }
+    return "";
+  }
+}
+
+int integer() :
+{
+  Token t;
+  int i;
+  boolean negtive = false;
+}
+{
+  ("-"
+  {
+    negtive = true;
+  }
+  )? 
+  t = < POSITIVE_INTEGER >
+  {
+    i = Integer.parseInt(t.image);
+  }
+  {
+    if (negtive)
+    {
+      i = i * (- 1);
+    }
+    return i;
+  }
+}
+
+String svalue() :
+{
+  Token t;
+  String s;
+}
+{
+  t = < STRING >
+  {
+    s = t.image;
+    return s.substring(1, s.length() - 1);
+  }
+}
+
+String xvalue() :
+{
+  String xpath;
+  String defaultValue = null;
+  String value = "";
+}
+{
+  < XVALUE > < LPAREN > xpath = svalue()
+  (
+    < COMMA > defaultValue = expression()
+  )?
+  < RPAREN >
+  {
+    try
+    {
+      value = _ae.stringValue(xpath, defaultValue);
+    }
+    catch (Throwable e)
+    {
+      e.printStackTrace(System.err);
+    }
+    return value;
+  }
+}
+
+String pvalue() :
+{
+  Token t;
+  int depth;
+  String xpath;
+  String defaultValue = null;
+}
+{
+  < PVALUE > < LPAREN > t = < POSITIVE_INTEGER >
+  {
+    depth = Integer.parseInt(t.image);
+  }
+  < COMMA > xpath = svalue()
+  (
+    < COMMA > defaultValue = expression()
+  )?
+  < RPAREN >
+  {
+    String value = AssetPathUtils.getParentMetadataValue(_executor, _ae, depth, xpath, defaultValue);
+    if (value != null)
+    {
+      return value;
+    }
+    else
+    {
+      return "";
+    }
+  }
+}
+
+String rvalue() :
+{
+  String type;
+  String xpath;
+  String defaultValue = null;
+}
+{
+  < RVALUE > < LPAREN > type = svalue() < COMMA > xpath = svalue()
+  (
+    < COMMA > defaultValue = expression()
+  )?
+  < RPAREN >
+  {
+    String value = AssetPathUtils.getRelatedMetadataValue(_executor, _ae, type, xpath, defaultValue);
+    if (value != null)
+    {
+      return value;
+    }
+    else
+    {
+      return "";
+    }
+  }
+}
+
+String replace() :
+{
+  String s;
+  String m;
+  String r;
+}
+{
+  < REPLACE > < LPAREN > s = expression() < COMMA > m = svalue() < COMMA > r = svalue() < RPAREN >
+  {
+    return s.replace(m, r);
+  }
+}
+
+String join() :
+{
+  String s;
+  StringBuilder sb = new StringBuilder();
+}
+{
+  < JOIN > < LPAREN > s = expression()
+  {
+    sb.append(s);
+  }
+  (
+    < COMMA > s = expression()
+    {
+      sb.append(s);
+    }
+  )*
+  < RPAREN >
+  {
+    return sb.toString();
+  }
+}
+
+String opt() :
+{
+  String s;
+  String v = "";
+}
+{
+  < OPT > < LPAREN > s = expression()
+  {
+    if (v.isEmpty() && s!=null && !s.isEmpty())
+    {
+      v = s;
+      return v;
+    }
+  }
+  (
+    < COMMA > s = expression()
+    {
+      if (v.isEmpty() && s!=null && !s.isEmpty())
+      {
+        v = s;
+        return v;
+      }
+    }
+  )*
+  < RPAREN >
+  {
+    return v;
+  }
+}

@@ -1,4 +1,4 @@
-package daris.plugin.asset.path;
+package daris.plugin.asset.path1;
 
 import arc.mf.plugin.ServiceExecutor;
 import arc.xml.XmlDoc;

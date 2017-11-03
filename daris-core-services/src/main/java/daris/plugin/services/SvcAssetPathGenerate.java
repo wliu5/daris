@@ -7,8 +7,8 @@ import arc.mf.plugin.dtype.CiteableIdType;
 import arc.mf.plugin.dtype.StringType;
 import arc.xml.XmlDoc;
 import arc.xml.XmlDoc.Element;
-import arc.xml.XmlWriter;
 import daris.plugin.asset.path.AssetPathCompiler;
+import arc.xml.XmlWriter;
 
 public class SvcAssetPathGenerate extends PluginService {
 
@@ -61,8 +61,8 @@ public class SvcAssetPathGenerate extends PluginService {
             throws Throwable {
         String path;
         if (expr.startsWith(AssetPathCompiler.PREFIX)) {
-            AssetPathCompiler compiler = AssetPathCompiler.parse(expr);
-            path = compiler.compile(executor, assetMeta);
+            // path = compiler.compile(executor, assetMeta);
+            path = AssetPathCompiler.compile(executor, assetMeta, expr);
         } else {
             XmlDoc.Element pathElement = executor
                     .execute("asset.path.generate",
@@ -71,7 +71,9 @@ public class SvcAssetPathGenerate extends PluginService {
             path = pathElement.value();
         }
         // replace space with underscore
-        return path.trim().replaceAll("\\ *\\/\\ *", "/").replaceAll("\\ +", "_");
+        // return path.trim().replaceAll("\\ *\\/\\ *", "/").replaceAll("\\ +",
+        // "_");
+        return path;
     }
 
     @Override
