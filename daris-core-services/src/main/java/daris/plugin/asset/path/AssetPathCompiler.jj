@@ -16,8 +16,6 @@ import nig.mf.pssd.CiteableIdUtil;
 
 public class AssetPathCompiler
 {
-  public static final String PREFIX = "$$$:";
-
   public static String compile(ServiceExecutor executor, String assetId, String expr) throws Throwable
   {
     XmlDoc.Element ae = AssetPathUtils.getAssetMeta(executor, assetId);
@@ -32,16 +30,7 @@ public class AssetPathCompiler
 
   public static String compile(ServiceExecutor executor, XmlDoc.Element ae, String expr) throws Throwable
   {
-    if (expr.startsWith(PREFIX))
-    {
-      expr = expr.substring(4);
-      AssetPathCompiler compiler = new AssetPathCompiler(executor, ae, expr);
-      return compiler.compile();
-    }
-    else
-    {
-      return AssetPathUtils.getMetadataValue(executor, ae.value("@id"), expr);
-    }
+    return new AssetPathCompiler(executor, ae, expr).compile();
   }
 
   private ServiceExecutor _executor;
@@ -89,6 +78,10 @@ TOKEN : /* RESERVED WORDS AND LITERALS */
 | < REPLACE : "replace" >
 | < JOIN : "join" >
 | < OPT : "opt" >
+| < IF_NULL : "if-null" >
+| < UNLESS_NULL : "unless-null" >
+| < SAFE_NAME : "safe-name" >
+| < SAFE_PATH : "safe-path" >
 }
 
 TOKEN : /* LITERALS */
@@ -183,6 +176,10 @@ String expression() :
   | s = replace()
   | s = join()
   | s = opt()
+  | s = ifNull()
+  | s = unlessNull()
+  | s = safeName()
+  | s = safePath()
   )
   {
     return s;
@@ -394,7 +391,7 @@ String opt() :
 {
   < OPT > < LPAREN > s = expression()
   {
-    if (v.isEmpty() && s!=null && !s.isEmpty())
+    if (v.isEmpty() && s != null && !s.isEmpty())
     {
       v = s;
       return v;
@@ -403,7 +400,7 @@ String opt() :
   (
     < COMMA > s = expression()
     {
-      if (v.isEmpty() && s!=null && !s.isEmpty())
+      if (v.isEmpty() && s != null && !s.isEmpty())
       {
         v = s;
         return v;
@@ -413,5 +410,74 @@ String opt() :
   < RPAREN >
   {
     return v;
+  }
+}
+
+String ifNull() :
+{
+  String s = "";
+  String v = "";
+}
+{
+  < IF_NULL > < LPAREN > s = expression() 
+  < COMMA > v = expression() < RPAREN >
+  {
+    if (s == null || s.isEmpty())
+    {
+      return v;
+    }
+    else
+    {
+      return s;
+    }
+  }
+}
+
+String unlessNull() :
+{
+  String s = "";
+  String v = "";
+}
+{
+  < UNLESS_NULL > < LPAREN > s = expression()
+  (
+    < COMMA > v = expression()
+  )?
+  < RPAREN >
+  {
+    if (v == null || v.isEmpty())
+    {
+      return s;
+    }
+    else
+    {
+      return v;
+    }
+  }
+}
+
+String safeName() :
+{
+  String s;
+}
+{
+  < SAFE_NAME > < LPAREN > s = expression() < RPAREN >
+  {
+    s = s == null ? "" : s;
+    s = s.trim().replaceAll("\\ +", " ").replaceAll("[^a-zA-Z0-9\\.\\-\\ ]", "_").replaceAll("_+", "_");
+    return s;
+  }
+}
+
+String safePath() :
+{
+  String s;
+}
+{
+  < SAFE_PATH > < LPAREN > s = expression() < RPAREN >
+  {
+    s = s == null ? "" : s;
+    s = s.trim().replaceAll("\\ +", " ").replaceAll("[^a-zA-Z0-9\\.\\-\\ \\/]", "_").replaceAll("_+", "_");
+    return s;
   }
 }

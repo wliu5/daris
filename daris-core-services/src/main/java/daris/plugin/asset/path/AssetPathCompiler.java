@@ -6,8 +6,6 @@ import arc.xml.XmlDoc;
 import nig.mf.pssd.CiteableIdUtil;
 
 public class AssetPathCompiler implements AssetPathCompilerConstants {
-  public static final String PREFIX = "$$$:";
-
   public static String compile(ServiceExecutor executor, String assetId, String expr) throws Throwable
   {
     XmlDoc.Element ae = AssetPathUtils.getAssetMeta(executor, assetId);
@@ -22,16 +20,7 @@ public class AssetPathCompiler implements AssetPathCompilerConstants {
 
   public static String compile(ServiceExecutor executor, XmlDoc.Element ae, String expr) throws Throwable
   {
-    if (expr.startsWith(PREFIX))
-    {
-      expr = expr.substring(4);
-      AssetPathCompiler compiler = new AssetPathCompiler(executor, ae, expr);
-      return compiler.compile();
-    }
-    else
-    {
-      return AssetPathUtils.getMetadataValue(executor, ae.value("@id"), expr);
-    }
+    return new AssetPathCompiler(executor, ae, expr).compile();
   }
 
   private ServiceExecutor _executor;
@@ -132,6 +121,18 @@ public class AssetPathCompiler implements AssetPathCompilerConstants {
     case OPT:
       s = opt();
       break;
+    case IF_NULL:
+      s = ifNull();
+      break;
+    case UNLESS_NULL:
+      s = unlessNull();
+      break;
+    case SAFE_NAME:
+      s = safeName();
+      break;
+    case SAFE_PATH:
+      s = safePath();
+      break;
     default:
       jj_la1[3] = jj_gen;
       jj_consume_token(-1);
@@ -189,8 +190,8 @@ public class AssetPathCompiler implements AssetPathCompilerConstants {
   int i;
   boolean negtive = false;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case 20:
-      jj_consume_token(20);
+    case 24:
+      jj_consume_token(24);
     negtive = true;
       break;
     default:
@@ -357,7 +358,7 @@ public class AssetPathCompiler implements AssetPathCompilerConstants {
     jj_consume_token(OPT);
     jj_consume_token(LPAREN);
     s = expression();
-    if (v.isEmpty() && s!=null && !s.isEmpty())
+    if (v.isEmpty() && s != null && !s.isEmpty())
     {
       v = s;
       {if (true) return v;}
@@ -374,7 +375,7 @@ public class AssetPathCompiler implements AssetPathCompilerConstants {
       }
       jj_consume_token(COMMA);
       s = expression();
-      if (v.isEmpty() && s!=null && !s.isEmpty())
+      if (v.isEmpty() && s != null && !s.isEmpty())
       {
         v = s;
         {if (true) return v;}
@@ -382,6 +383,77 @@ public class AssetPathCompiler implements AssetPathCompilerConstants {
     }
     jj_consume_token(RPAREN);
     {if (true) return v;}
+    throw new Error("Missing return statement in function");
+  }
+
+  final public String ifNull() throws ParseException {
+  String s = "";
+  String v = "";
+    jj_consume_token(IF_NULL);
+    jj_consume_token(LPAREN);
+    s = expression();
+    jj_consume_token(COMMA);
+    v = expression();
+    jj_consume_token(RPAREN);
+    if (s == null || s.isEmpty())
+    {
+      {if (true) return v;}
+    }
+    else
+    {
+      {if (true) return s;}
+    }
+    throw new Error("Missing return statement in function");
+  }
+
+  final public String unlessNull() throws ParseException {
+  String s = "";
+  String v = "";
+    jj_consume_token(UNLESS_NULL);
+    jj_consume_token(LPAREN);
+    s = expression();
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case COMMA:
+      jj_consume_token(COMMA);
+      v = expression();
+      break;
+    default:
+      jj_la1[10] = jj_gen;
+      ;
+    }
+    jj_consume_token(RPAREN);
+    if (v == null || v.isEmpty())
+    {
+      {if (true) return s;}
+    }
+    else
+    {
+      {if (true) return v;}
+    }
+    throw new Error("Missing return statement in function");
+  }
+
+  final public String safeName() throws ParseException {
+  String s;
+    jj_consume_token(SAFE_NAME);
+    jj_consume_token(LPAREN);
+    s = expression();
+    jj_consume_token(RPAREN);
+    s = s == null ? "" : s;
+    s = s.trim().replaceAll("\u005c\u005c +", " ").replaceAll("[^a-zA-Z0-9\u005c\u005c.\u005c\u005c-\u005c\u005c ]", "_").replaceAll("_+", "_");
+    {if (true) return s;}
+    throw new Error("Missing return statement in function");
+  }
+
+  final public String safePath() throws ParseException {
+  String s;
+    jj_consume_token(SAFE_PATH);
+    jj_consume_token(LPAREN);
+    s = expression();
+    jj_consume_token(RPAREN);
+    s = s == null ? "" : s;
+    s = s.trim().replaceAll("\u005c\u005c +", " ").replaceAll("[^a-zA-Z0-9\u005c\u005c.\u005c\u005c-\u005c\u005c \u005c\u005c/]", "_").replaceAll("_+", "_");
+    {if (true) return s;}
     throw new Error("Missing return statement in function");
   }
 
@@ -394,13 +466,13 @@ public class AssetPathCompiler implements AssetPathCompilerConstants {
   public Token jj_nt;
   private int jj_ntk;
   private int jj_gen;
-  final private int[] jj_la1 = new int[10];
+  final private int[] jj_la1 = new int[11];
   static private int[] jj_la1_0;
   static {
       jj_la1_init_0();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0x21,0x40000,0x40000,0x3fc0,0x100000,0x20000,0x20000,0x20000,0x20000,0x20000,};
+      jj_la1_0 = new int[] {0x21,0x400000,0x400000,0x3ffc0,0x1000000,0x200000,0x200000,0x200000,0x200000,0x200000,0x200000,};
    }
 
   /** Constructor with InputStream. */
@@ -414,7 +486,7 @@ public class AssetPathCompiler implements AssetPathCompilerConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 10; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 11; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -428,7 +500,7 @@ public class AssetPathCompiler implements AssetPathCompilerConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 10; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 11; i++) jj_la1[i] = -1;
   }
 
   /** Constructor. */
@@ -438,7 +510,7 @@ public class AssetPathCompiler implements AssetPathCompilerConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 10; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 11; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -448,7 +520,7 @@ public class AssetPathCompiler implements AssetPathCompilerConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 10; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 11; i++) jj_la1[i] = -1;
   }
 
   /** Constructor with generated Token Manager. */
@@ -457,7 +529,7 @@ public class AssetPathCompiler implements AssetPathCompilerConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 10; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 11; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -466,7 +538,7 @@ public class AssetPathCompiler implements AssetPathCompilerConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 10; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 11; i++) jj_la1[i] = -1;
   }
 
   private Token jj_consume_token(int kind) throws ParseException {
@@ -517,12 +589,12 @@ public class AssetPathCompiler implements AssetPathCompilerConstants {
   /** Generate ParseException. */
   public ParseException generateParseException() {
     jj_expentries.clear();
-    boolean[] la1tokens = new boolean[21];
+    boolean[] la1tokens = new boolean[25];
     if (jj_kind >= 0) {
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 11; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {
@@ -531,7 +603,7 @@ public class AssetPathCompiler implements AssetPathCompilerConstants {
         }
       }
     }
-    for (int i = 0; i < 21; i++) {
+    for (int i = 0; i < 25; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;

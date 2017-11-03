@@ -12,9 +12,27 @@ package daris.plugin.asset.path;
 import java.io.ByteArrayInputStream;
 import arc.mf.plugin.ServiceExecutor;
 import arc.xml.XmlDoc;
+import nig.mf.pssd.CiteableIdUtil;
 
 public class AssetPathCompiler
 {
+  public static String compile(ServiceExecutor executor, String assetId, String expr) throws Throwable
+  {
+    XmlDoc.Element ae = AssetPathUtils.getAssetMeta(executor, assetId);
+    return compile(executor, ae, expr);
+  }
+
+  public static String compile(String cid, ServiceExecutor executor, String expr) throws Throwable
+  {
+    XmlDoc.Element ae = AssetPathUtils.getAssetMeta(cid, executor);
+    return compile(executor, ae, expr);
+  }
+
+  public static String compile(ServiceExecutor executor, XmlDoc.Element ae, String expr) throws Throwable
+  {
+    return AssetPathUtils.getMetadataValue(executor, ae.value("@id"), expr);
+  }
+
   private ServiceExecutor _executor;
 
   private XmlDoc.Element _ae;
@@ -31,7 +49,7 @@ public class AssetPathCompiler
     AssetPathCompiler parser = new AssetPathCompiler(System.in);
     while (true)
     {
-      System.out.println(parser.parse());
+      System.out.println(parser.compile());
     }
   }
 }
@@ -59,7 +77,9 @@ TOKEN : /* RESERVED WORDS AND LITERALS */
 | < RVALUE : "rvalue" >
 | < REPLACE : "replace" >
 | < JOIN : "join" >
-| < SUBST : "subst" >
+| < OPT : "opt" >
+| < IF_NULL : "if-null" >
+| < UNLESS_NULL : "unless-null" >
 }
 
 TOKEN : /* LITERALS */
@@ -98,7 +118,7 @@ TOKEN : /* OPERATORS */
   < OR : "|" >
 }
 
-String parse() :
+String compile() :
 {
   String r;
 }
@@ -153,7 +173,9 @@ String expression() :
   | s = svalue()
   | s = replace()
   | s = join()
-  | s = subst()
+  | s = opt()
+  | s = ifNull()
+  | s = unlessNull()
   )
   {
     return s;
@@ -164,15 +186,43 @@ String cid() :
 {
   int idx1;
   int idx2;
-  StringBuilder sb = new StringBuilder();
 }
 {
   < CID > < LPAREN > idx1 = integer() 
   < COMMA > idx2 = integer() 
   < RPAREN >
   {
-    sb.append("cid(").append(idx1).append(",").append(idx2).append(")");
-    return sb.toString();
+    String cid = null;
+    try
+    {
+      cid = _ae.value("cid");
+    }
+    catch (Throwable e)
+    {
+      e.printStackTrace(System.err);
+    }
+    if (cid != null)
+    {
+      String [ ] parts = cid.split("\\.");
+      if (parts == null || parts.length == 1)
+      {
+        return cid;
+      }
+      int len = parts.length;
+      int from = idx1 < 0 ? (len + idx1) : idx1;
+      int to = idx2 <= 0 ? (len + idx2) : idx2;
+      StringBuilder sb = new StringBuilder();
+      for (int i = from; i < to; i++)
+      {
+        if (i > from)
+        {
+          sb.append('.');
+        }
+        sb.append(parts [ i ]);
+      }
+      return sb.toString();
+    }
+    return "";
   }
 }
 
@@ -218,6 +268,7 @@ String xvalue() :
 {
   String xpath;
   String defaultValue = null;
+  String value = "";
 }
 {
   < XVALUE > < LPAREN > xpath = svalue()
@@ -226,29 +277,29 @@ String xvalue() :
   )?
   < RPAREN >
   {
-    StringBuilder sb = new StringBuilder("xvalue(");
-    sb.append(xpath);
-    if (defaultValue != null)
+    try
     {
-      sb.append(",").append(defaultValue);
+      value = _ae.stringValue(xpath, defaultValue);
     }
-    sb.append(")");
-    return sb.toString();
+    catch (Throwable e)
+    {
+      e.printStackTrace(System.err);
+    }
+    return value;
   }
 }
 
 String pvalue() :
 {
   Token t;
-  int level;
+  int depth;
   String xpath;
   String defaultValue = null;
-  StringBuilder sb = new StringBuilder();
 }
 {
   < PVALUE > < LPAREN > t = < POSITIVE_INTEGER >
   {
-    level = Integer.parseInt(t.image);
+    depth = Integer.parseInt(t.image);
   }
   < COMMA > xpath = svalue()
   (
@@ -256,15 +307,15 @@ String pvalue() :
   )?
   < RPAREN >
   {
-    sb.append("pvalue(");
-    sb.append(level);
-    sb.append(",").append(xpath);
-    if (defaultValue != null)
+    String value = AssetPathUtils.getParentMetadataValue(_executor, _ae, depth, xpath, defaultValue);
+    if (value != null)
     {
-      sb.append(",").append(defaultValue);
+      return value;
     }
-    sb.append(")");
-    return sb.toString();
+    else
+    {
+      return "";
+    }
   }
 }
 
@@ -273,7 +324,6 @@ String rvalue() :
   String type;
   String xpath;
   String defaultValue = null;
-  StringBuilder sb = new StringBuilder();
 }
 {
   < RVALUE > < LPAREN > type = svalue() < COMMA > xpath = svalue()
@@ -282,15 +332,15 @@ String rvalue() :
   )?
   < RPAREN >
   {
-    sb.append("pvalue(");
-    sb.append(type);
-    sb.append(",").append(xpath);
-    if (defaultValue != null)
+    String value = AssetPathUtils.getRelatedMetadataValue(_executor, _ae, type, xpath, defaultValue);
+    if (value != null)
     {
-      sb.append(",").append(defaultValue);
+      return value;
     }
-    sb.append(")");
-    return sb.toString();
+    else
+    {
+      return "";
+    }
   }
 }
 
@@ -329,30 +379,75 @@ String join() :
   }
 }
 
-String subst() :
+String opt() :
 {
   String s;
-  StringBuilder sb = new StringBuilder();
+  String v = "";
 }
 {
-  < SUBST > < LPAREN > s = expression()
+  < OPT > < LPAREN > s = expression()
   {
-    if (sb.length() <= 0)
+    if (v.isEmpty() && s != null && !s.isEmpty())
     {
-      sb.append(s);
+      v = s;
+      return v;
     }
   }
   (
     < COMMA > s = expression()
     {
-      if (sb.length() <= 0)
+      if (v.isEmpty() && s != null && !s.isEmpty())
       {
-        sb.append(s);
+        v = s;
+        return v;
       }
     }
   )*
   < RPAREN >
   {
-    return sb.toString();
+    return v;
+  }
+}
+
+String ifNull() :
+{
+  String s = "";
+  String v = "";
+}
+{
+  < IF_NULL > < LPAREN > s = expression() 
+  < COMMA > v = expression() < RPAREN >
+  {
+    if (s == null || s.isEmpty())
+    {
+      return v;
+    }
+    else
+    {
+      return s;
+    }
+  }
+}
+
+String unlessNull() :
+{
+  String s = "";
+  String v = "";
+}
+{
+  < UNLESS_NULL > < LPAREN > s = expression()
+  (
+    < COMMA > v = expression()
+  )?
+  < RPAREN >
+  {
+    if (v == null || v.isEmpty())
+    {
+      return s;
+    }
+    else
+    {
+      return v;
+    }
   }
 }

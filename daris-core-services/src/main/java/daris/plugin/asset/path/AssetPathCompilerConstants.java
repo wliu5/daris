@@ -27,19 +27,27 @@ public interface AssetPathCompilerConstants {
   /** RegularExpression Id. */
   int OPT = 12;
   /** RegularExpression Id. */
-  int STRING = 13;
+  int IF_NULL = 13;
   /** RegularExpression Id. */
-  int POSITIVE_INTEGER = 14;
+  int UNLESS_NULL = 14;
   /** RegularExpression Id. */
-  int LPAREN = 15;
+  int SAFE_NAME = 15;
   /** RegularExpression Id. */
-  int RPAREN = 16;
+  int SAFE_PATH = 16;
   /** RegularExpression Id. */
-  int COMMA = 17;
+  int STRING = 17;
   /** RegularExpression Id. */
-  int SLASH = 18;
+  int POSITIVE_INTEGER = 18;
   /** RegularExpression Id. */
-  int OR = 19;
+  int LPAREN = 19;
+  /** RegularExpression Id. */
+  int RPAREN = 20;
+  /** RegularExpression Id. */
+  int COMMA = 21;
+  /** RegularExpression Id. */
+  int SLASH = 22;
+  /** RegularExpression Id. */
+  int OR = 23;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -59,6 +67,10 @@ public interface AssetPathCompilerConstants {
     "\"replace\"",
     "\"join\"",
     "\"opt\"",
+    "\"if-null\"",
+    "\"unless-null\"",
+    "\"safe-name\"",
+    "\"safe-path\"",
     "<STRING>",
     "<POSITIVE_INTEGER>",
     "\"(\"",

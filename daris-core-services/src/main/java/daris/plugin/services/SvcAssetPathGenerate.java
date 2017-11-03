@@ -11,6 +11,8 @@ import daris.plugin.asset.path.AssetPathCompiler;
 import arc.xml.XmlWriter;
 
 public class SvcAssetPathGenerate extends PluginService {
+    
+    public static final String PREFIX = "$$$:";
 
     public static final String SERVICE_NAME = "daris.asset.path.generate";
 
@@ -60,9 +62,9 @@ public class SvcAssetPathGenerate extends PluginService {
     public static String generatePath(ServiceExecutor executor, XmlDoc.Element assetMeta, String expr)
             throws Throwable {
         String path;
-        if (expr.startsWith(AssetPathCompiler.PREFIX)) {
+        if (expr.startsWith(PREFIX)) {
             // path = compiler.compile(executor, assetMeta);
-            path = AssetPathCompiler.compile(executor, assetMeta, expr);
+            path = AssetPathCompiler.compile(executor, assetMeta, expr.substring(4));
         } else {
             XmlDoc.Element pathElement = executor
                     .execute("asset.path.generate",
