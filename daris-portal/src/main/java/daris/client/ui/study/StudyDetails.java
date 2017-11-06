@@ -1,8 +1,13 @@
 package daris.client.ui.study;
 
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.List;
+
 import arc.gui.form.Field;
 import arc.gui.form.FieldDefinition;
 import arc.gui.form.FieldGroup;
+import arc.gui.form.FieldRenderOptions;
 import arc.gui.form.Form;
 import arc.gui.form.FormEditMode;
 import arc.gui.form.FormItem;
@@ -15,6 +20,8 @@ import arc.mf.client.util.ObjectUtil;
 import arc.mf.client.util.StateChangeListener;
 import arc.mf.client.xml.XmlStringWriter;
 import arc.mf.dtype.ConstantType;
+import arc.mf.dtype.DictionaryEnumerationSource;
+import arc.mf.dtype.DocType;
 import arc.mf.dtype.EnumerationType;
 import arc.mf.dtype.StringType;
 import daris.client.model.exmethod.StepEnum;
@@ -154,28 +161,81 @@ public class StudyDetails extends DObjectDetails {
         }
         interfaceForm.add(_studyTypeField);
 
-        if (FormEditMode.READ_ONLY != mode() || so.otherId() != null) {
-            Field<String> otherIdField = new Field<String>(new FieldDefinition("other-id",
-                    FormEditMode.READ_ONLY == mode() ? ConstantType.DEFAULT : StringType.DEFAULT,
-                    "An arbitrary identifier for the Study supplied by some other authority.", null, 0, 1));
-            if (so.otherId() != null) {
-                otherIdField.setInitialValue(so.otherId());
-            }
-            if (FormEditMode.READ_ONLY != mode()) {
-                otherIdField.addListener(new FormItemListener<String>() {
+        List<SimpleEntry<String, String>> otherIds = so.otherIds();
 
-                    @Override
-                    public void itemValueChanged(FormItem<String> f) {
-                        so.setOtherId(f.value());
+        FormItemListener<String> fil = new FormItemListener<String>() {
+
+            @SuppressWarnings("rawtypes")
+            @Override
+            public void itemValueChanged(FormItem<String> f) {
+                Form form = f.form();
+                List<FormItem> items = form.fieldsByName("other-id");
+                List<SimpleEntry<String, String>> otherIds = new ArrayList<SimpleEntry<String, String>>();
+                for (FormItem item : items) {
+                    FieldGroup fg = (FieldGroup) item;
+                    String type = fg.fieldsByName("type").get(0).valueAsString();
+                    String value = fg.fieldsByName("value").get(0).valueAsString();
+                    if (type != null && value != null) {
+                        SimpleEntry<String, String> entry = new SimpleEntry<String, String>(type, value);
+                        if (!otherIds.contains(entry)) {
+                            otherIds.add(entry);
+                        }
                     }
-
-                    @Override
-                    public void itemPropertyChanged(FormItem<String> f, Property property) {
-
-                    }
-                });
+                }
+                if (otherIds.isEmpty()) {
+                    so.setOtherIds(null);
+                } else {
+                    so.setOtherIds(otherIds);
+                }
             }
-            interfaceForm.add(otherIdField);
+
+            @Override
+            public void itemPropertyChanged(FormItem<String> f, Property property) {
+
+            }
+        };
+        if (otherIds != null) {
+            for (SimpleEntry<String, String> entry : otherIds) {
+                FieldGroup otherIdFG = new FieldGroup(
+                        new FieldDefinition("other-id", DocType.DEFAULT, null, null, 0, Integer.MAX_VALUE));
+                Field<String> otherIdTypeField = new Field<String>(new FieldDefinition("type",
+                        new EnumerationType<String>(
+                                new DictionaryEnumerationSource("daris:pssd.study.other-id.types", false)),
+                        "The type (authority) of this identifier.", null, 1, 1));
+                otherIdTypeField.setInitialValue(entry.getKey());
+                otherIdTypeField.setRenderOptions(new FieldRenderOptions().setWidth(338));
+                if (mode() != FormEditMode.READ_ONLY) {
+                    otherIdTypeField.addListener(fil);
+                }
+                otherIdFG.add(otherIdTypeField);
+
+                Field<String> otherIdValueField = new Field<String>(new FieldDefinition("value", StringType.DEFAULT,
+                        "An arbitrary identifier for the Study supplied by some other authority.", null, 1, 1));
+                otherIdValueField.setInitialValue(entry.getValue());
+                otherIdValueField.setRenderOptions(new FieldRenderOptions().setWidth(320));
+                if (mode() != FormEditMode.READ_ONLY) {
+                    otherIdValueField.addListener(fil);
+                }
+                otherIdFG.add(otherIdValueField);
+                interfaceForm.add(otherIdFG);
+            }
+        } else if (mode() != FormEditMode.READ_ONLY) {
+            FieldGroup otherIdFG = new FieldGroup(
+                    new FieldDefinition("other-id", DocType.DEFAULT, null, null, 0, Integer.MAX_VALUE));
+            Field<String> otherIdTypeField = new Field<String>(new FieldDefinition("type",
+                    new EnumerationType<String>(
+                            new DictionaryEnumerationSource("daris:pssd.study.other-id.types", false)),
+                    "The type (authority) of this identifier.", null, 1, 1));
+            otherIdTypeField.setRenderOptions(new FieldRenderOptions().setWidth(338));
+            otherIdTypeField.addListener(fil);
+            otherIdFG.add(otherIdTypeField);
+
+            Field<String> otherIdValueField = new Field<String>(new FieldDefinition("value", StringType.DEFAULT,
+                    "An arbitrary identifier for the Study supplied by some other authority.", null, 1, 1));
+            otherIdValueField.setRenderOptions(new FieldRenderOptions().setWidth(320));
+            otherIdValueField.addListener(fil);
+            otherIdFG.add(otherIdValueField);
+            interfaceForm.add(otherIdFG);
         }
 
         /*
