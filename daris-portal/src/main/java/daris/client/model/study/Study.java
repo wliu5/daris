@@ -1,5 +1,7 @@
 package daris.client.model.study;
 
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.List;
 
 import arc.mf.client.util.ActionListener;
@@ -26,7 +28,7 @@ public class Study extends DObject {
     private XmlElement _methodMeta;
     private XmlElement _methodMetaForEdit;
     private Boolean _processed;
-    private String _otherId;
+    private List<SimpleEntry<String, String>> _otherIds;
 
     public Study(String exMethodId) {
 
@@ -54,7 +56,16 @@ public class Study extends DObject {
                 _methodMeta = mme;
             }
         }
-        _otherId = xe.value("other-id");
+        List<XmlElement> oies = xe.elements("other-id");
+        if (oies != null && !oies.isEmpty()) {
+            _otherIds = new ArrayList<SimpleEntry<String, String>>(oies.size());
+            for (XmlElement oie : oies) {
+                String type = oie.value("@type");
+                String oid = oie.value();
+                SimpleEntry<String, String> entry = new SimpleEntry<String, String>(type, oid);
+                _otherIds.add(entry);
+            }
+        }
     }
 
     public Study(String id, String proute, String name, String description) {
@@ -170,12 +181,12 @@ public class Study extends DObject {
         _methodMetaForEdit = methodMetaForEdit;
     }
 
-    public String otherId() {
-        return _otherId;
+    public List<SimpleEntry<String, String>> otherIds() {
+        return _otherIds;
     }
 
-    public void setOtherId(String otherId) {
-        _otherId = otherId;
+    public void setOtherIds(List<SimpleEntry<String, String>> otherIds) {
+        _otherIds = otherIds;
     }
 
     @Override
@@ -204,8 +215,10 @@ public class Study extends DObject {
         if (_processed != null) {
             w.add("processed", _processed);
         }
-        if (_otherId != null) {
-            w.add("other-id", _otherId);
+        if (_otherIds != null) {
+            for (SimpleEntry<String, String> entry : _otherIds) {
+                w.add("other-id", new String[] { "type", entry.getKey() }, entry.getValue());
+            }
         }
         if (_stepPath != null) {
             w.add("step", _stepPath);
@@ -263,8 +276,10 @@ public class Study extends DObject {
         if (_processed != null) {
             w.add("processed", _processed);
         }
-        if (_otherId != null) {
-            w.add("other-id", _otherId);
+        if (_otherIds != null) {
+            for (SimpleEntry<String, String> entry : _otherIds) {
+                w.add("other-id", new String[] { "type", entry.getKey() }, entry.getValue());
+            }
         }
         if (_stepPath != null) {
             w.push("method");
