@@ -47,14 +47,9 @@ public class NIGDicomAssetEngineFactory implements DicomAssetEngineFactory {
                 "If true, will auto-create Subjects if the identifier is of the form P.S and the Subject does not exist.");
         args.put("nig.dicom.subject.clone_first",
                 "If auto-creating subjects, make new ones by cloning the first one if it exists. If it does not exist, just generate new subject as per normal");
-        args.put("nig.dicom.subject.name.from.last",
-        		"When auto-creating Subjects, set the Subject name to the DICOM patient last name");
-        args.put("nig.dicom.subject.name.from.first",
-        		"When auto-creating Subjects, set the Subject name to the DICOM patient first name");
-        args.put("nig.dicom.subject.name.from.full",
-        		"When auto-creating Subjects, set the Subject name to the DICOM patient full name");
-        args.put("nig.dicom.subject.name.from.id",
-        		"When auto-creating Subjects, name the Subject from the DICOM PatientID.");
+        args.put("nig.dicom.subject.name.from",
+        		"When auto-creating Subjects, set the Subject name to values source from the DICOM meta-data. "
+       		+ "Allowed values are [patient.name.first, patient.name.last, patient.name.full, patient.id, patient.id+name.last]");
         args.put("nig.dicom.subject.name.from.index.range",
                 "When auto-creating Subjects, and utilising a control nig.dicom.subject.name.from.{full,last,full,id} to set the Subject name, select characters from the given index range pair. E.g. 0,11 would select the String starting at index 0 and finishing at index 11.  This control is applied before control nig.dicom.subject.name.from.ignore-after-last-delim");
         args.put("nig.dicom.subject.name.from.ignore-after-last-delim",

@@ -92,10 +92,13 @@ public class DicomIngestControls {
     private Boolean _useEncryptedPatient;
 
     // Controls set subject name from DICOM Patient Name or ID
+    // TBD Turn all these into an ENUM
     private Boolean _setSubjectNameFromFirst; // Set from first name
     private Boolean _setSubjectNameFromLast; // Set from last name
     private Boolean _setSubjectNameFromFull; // Set from full name
     private Boolean _setSubjectNameFromID; // Set from ID
+    private Boolean _setSubjectNameFromIDandLast; // ID and last name
+    
     private String _setSubjectNameFromIgnoreAfterLastDelim; // Ignore chars
                                                             // after (and incl)
                                                             // last delim
@@ -125,6 +128,7 @@ public class DicomIngestControls {
         _setSubjectNameFromFull = false;
         _setSubjectNameFromIgnoreAfterLastDelim = null;
         _setSubjectNameFromID = false;
+        _setSubjectNameFromIDandLast = false;
         _setSubjectNameFromIndexRange = null;
 
         // Minimum CID depth to be considered a CID..
@@ -193,6 +197,9 @@ public class DicomIngestControls {
 
     public Boolean setSubjectNameFromFull() {
         return _setSubjectNameFromFull;
+    }
+    public Boolean setSubjectNameFromIDandLast () {
+    	return _setSubjectNameFromIDandLast;
     }
 
     public String setSubjectNameFromIgnoreAfterLastDelim() {
@@ -374,52 +381,25 @@ public class DicomIngestControls {
             }
         }
 
-        // Name the Subject object from the DICOM name or ID
-        String setName = (String) args.get("nig.dicom.subject.name.from.last");
-        if (setName != null) {
-            if (setName.equalsIgnoreCase("true")) {
-                _setSubjectNameFromLast = true;
-            } else if (setName.equalsIgnoreCase("false")) {
-                _setSubjectNameFromLast = false;
+        // Name the Subject object from a DICOM element
+        String setFromName = (String) args.get("nig.dicom.subject.name.from");
+        if (setFromName != null) {
+        	if (setFromName.equalsIgnoreCase("patient.name.first")) {
+        		_setSubjectNameFromFirst = true;
+        	} else if (setFromName.equalsIgnoreCase("patient.name.last")) {
+        		_setSubjectNameFromLast = true;
+        	}  else if (setFromName.equalsIgnoreCase("patient.name.full")) {
+        		_setSubjectNameFromFull = true;
+           	} else if (setFromName.equalsIgnoreCase("patient.id")) {
+        		_setSubjectNameFromID = true;
+           	} else if (setFromName.equalsIgnoreCase("patient.id+name.last")) {
+        		_setSubjectNameFromIDandLast = true;
             } else {
-                throw new ExInvalidSetting("nig.dicom.subject.name.from.last",
-                        "expected one of [true,false] - found: " + setName);
-            }
-        }
-        setName = (String) args.get("nig.dicom.subject.name.from.first");
-        if (setName != null) {
-            if (setName.equalsIgnoreCase("true")) {
-                _setSubjectNameFromFirst = true;
-            } else if (setName.equalsIgnoreCase("false")) {
-                _setSubjectNameFromFirst = false;
-            } else {
-                throw new ExInvalidSetting("nig.dicom.subject.name.from.first",
-                        "expected one of [true,false] - found: " + setName);
-            }
-        }
-        setName = (String) args.get("nig.dicom.subject.name.from.full");
-        if (setName != null) {
-            if (setName.equalsIgnoreCase("true")) {
-                _setSubjectNameFromFull = true;
-            } else if (setName.equalsIgnoreCase("false")) {
-                _setSubjectNameFromFull = false;
-            } else {
-                throw new ExInvalidSetting("nig.dicom.subject.name.from.full",
-                        "expected one of [true,false] - found: " + setName);
+                throw new ExInvalidSetting("nig.dicom.subject.name.from",
+                        "expected one of [patient.name.first, patient.name.last, patient.name.full, patient.id, patient.id+name.last] - found: " + setFromName);
             }
         }
         //
-        setName = (String) args.get("nig.dicom.subject.name.from.id");
-        if (setName != null) {
-            if (setName.equalsIgnoreCase("true")) {
-                _setSubjectNameFromID = true;
-            } else if (setName.equalsIgnoreCase("false")) {
-                _setSubjectNameFromID = false;
-            } else {
-                throw new ExInvalidSetting("nig.dicom.subject.name.from.id",
-                        "expected one of [true,false] - found: " + setName);
-            }
-        }
         _setSubjectNameFromIgnoreAfterLastDelim = (String) args
                 .get("nig.dicom.subject.name.from.ignore-after-last-delim");
         ;
