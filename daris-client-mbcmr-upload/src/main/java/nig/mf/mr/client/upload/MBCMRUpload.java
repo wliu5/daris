@@ -523,7 +523,7 @@ public class MBCMRUpload {
 	private static String createRawSeries(ServerClient.Connection cxn,
 			File path, MRMetaData pm, String rawStudyID, String rawStudyCID,
 			Boolean expire, UserCredential cred) throws Throwable {
-		// Create a study with siemens doc attached
+		// Create a data set with siemens doc attached
 		XmlStringWriter w = new XmlStringWriter();
 		w.add("pid", rawStudyCID);
 
