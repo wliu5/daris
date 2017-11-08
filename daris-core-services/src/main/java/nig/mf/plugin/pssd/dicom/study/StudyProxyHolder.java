@@ -6,8 +6,8 @@ import arc.mf.plugin.dicom.StudyProxy;
 
 public class StudyProxyHolder {
 
-	StudyProxy _study;
-	Boolean _keep;            // If false, indicates the Study should be discarded (some business process made this decision)
+	private StudyProxy _study;
+	private Boolean _keep;            // If false, indicates the Study should be discarded (some business process made this decision)
 
 	public StudyProxyHolder (StudyProxy study, Boolean keep) {
 		_study = study;
