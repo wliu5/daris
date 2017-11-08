@@ -40,18 +40,26 @@ public class StudyProxyFactory {
 			DataElementMap dem, DicomIngestControls ic) throws Throwable {
 
 		// Look for citeable id first..
-		StudyProxyHolder study = createPSSDStudy(executor, studyUID, dem, ic);
-		if (study != null) {
-			if (study.keep()) {
-				return study.studyProxy();
+		StudyProxyHolder holder = createPSSDStudy(executor, studyUID, dem, ic);
+		
+		// The Holder is always non-null. The proxy inside may be null.  
+	
+		if (!holder.keep()) {
+			// THe server has matched the discard meta-data element (DICOM server control nig.dicom.study.discard)
+			// and this Study should be discarded.  
+			// TBD: THe DICOM engine framework does not currently support this and the control has been deactivated.
+			// so that .keep() will always be returned true at this time.
+			// Code left in place for when the framework is enhanced (Arcitecta)
+			return new NullStudyProxy(null);
+		} else {
+			// No discard 
+			if (holder.studyProxy() != null) {
+				return holder.studyProxy();
 			} else {
-				// THe server has matched the discard meta-data element (DICOM server control nig.dicom.study.discard)
-				// and this Study should be discarded.  
-				// TBD: THe DICOM engine framework does not currently support this and the control has been deactivated.
-				// Code left in place for when the framework is enhanced.
-				return new NullStudyProxy(null);
+				// The proxy is null, so probably we did not find the CID
+				// Fall through to the next engine
 			}
-		} 
+		}
 
 
 		// We had a null return. Continue on and see if any
