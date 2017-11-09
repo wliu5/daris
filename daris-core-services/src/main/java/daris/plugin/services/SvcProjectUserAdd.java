@@ -193,7 +193,7 @@ public class SvcProjectUserAdd extends PluginService {
         }
         XmlDocMaker dm = new XmlDocMaker("args");
         if (authority != null) {
-            dm.add("authority", new String[] { "protocol", protocol });
+            dm.add("authority", new String[] { "protocol", protocol }, authority);
         }
         dm.add("domain", domain);
         dm.add("user", user);

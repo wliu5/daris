@@ -129,9 +129,10 @@ public class SvcProjectUserRemove extends PluginService {
 
     static void removeRoleUser(ServiceExecutor executor, String roleUser, String projectCid) throws Throwable {
 
-        Collection<String> roles = executor
-                .execute("actor.describe", "<args><type>role</type><name>" + roleUser + "</name></args>", null, null)
-                .values("actor/role[@type='role']");
+        XmlDocMaker dm = new XmlDocMaker("args");
+        dm.add("type", "role");
+        dm.add("name", roleUser);
+        Collection<String> roles = executor.execute("actor.describe", dm.root()).values("actor/role[@type='role']");
         if (roles == null || roles.isEmpty()) {
             return;
         }
@@ -146,12 +147,17 @@ public class SvcProjectUserRemove extends PluginService {
     static void removeUser(ServiceExecutor executor, String domain, String user, String authority, String protocol,
             String projectCid) throws Throwable {
         String actorName = domain + ":" + user;
-        if (authority != null) {
+        // @formatter:off
+        // TODO: Inconsistency here need to be resolved by Arcitecta: The following command doesn't work:
+        // actor.describe :type  user :name  internalsp:aaf:lianne.schmaal@unimelb.edu.au
+        // @formatter:on
+        if (authority != null && !"internalsp".equals(authority)) {
             actorName = authority + ":" + actorName;
         }
-        Collection<String> roles = executor
-                .execute("actor.describe", "<args><type>user</type><name>" + actorName + "</name></args>", null, null)
-                .values("actor/role[@type='role']");
+        XmlDocMaker dm = new XmlDocMaker("args");
+        dm.add("type", "user");
+        dm.add("name", actorName);
+        Collection<String> roles = executor.execute("actor.describe", dm.root()).values("actor/role[@type='role']");
         if (roles == null || roles.isEmpty()) {
             return;
         }
