@@ -205,57 +205,52 @@ public class DICOMPatient {
         return full;
     }
 
-    private void create(XmlDoc.Element r) throws Throwable {
-        Collection<XmlDoc.Element> names = r.elements("name");
-        if (names != null && names.size() > 0) {
-            for (XmlDoc.Element name : names) {
-                String type = name.value("@type");
-                if (type.equals("first")) {
-                    _firstName = name.value().trim();
-                } else if (type.equals("last")) {
-                    _lastName = name.value().trim();
-                } else if (type.equals("full")) {
-                    _fullName = name.value().trim();
-                }
-            }
+	private void create(XmlDoc.Element r) throws Throwable {
+		_dob = r.dateValue("dob");
+		_sex = r.value("sex");
+		if (_sex != null) {
+			_sex = _sex.trim();
+		}
+		_id = r.value("id");
+		//
+		_firstName = r.value("name[@type='first']");
+		if (_firstName!=null) _firstName = _firstName.trim();
+		//
+		_lastName = r.value("name[@type='last']");
+		if (_lastName!=null) _lastName = _lastName.trim();
+		//
+		_fullName = r.value("name[@type='full']");
+		if (_fullName!=null) _fullName = _fullName.trim();
 
-			 // Construct a full name if not native
-			 if (_fullName == null) {
-				 if (_firstName != null)
-					 _fullName = _firstName;
-				 if (_lastName != null) {
-					 if (_fullName == null) {
-						 _fullName = _lastName;
-					 } else {
-						 _fullName += " " + _lastName;
-					 }
-				 }
-			 } else {
+		// Construct a full name if not native
+		if (_fullName == null) {
 
-				 // If it's  missing Construct a first/last name if possible from  fullname
-				 if (_firstName==null) {
-					 String[] t = _fullName.split(" ");
-					 if (t.length==2) {
-						 _firstName = t[0];
-					 }
-				 }
-				 if (_lastName==null) {
-					 String[] t = _fullName.split(" ");
-					 if (t.length==2) {
-						 _lastName = t[1];
-					 }
-				 }
-			 }
-			 
+			if (_firstName != null) {
+				_fullName = _firstName;
+			}
+			if (_lastName != null) {
+				if (_fullName == null) {
+					_fullName = _lastName;
+				} else {
+					_fullName += " " + _lastName;
+				}
+			}
+		} else {
 
-            //
-            _dob = r.dateValue("dob");
-            _sex = r.value("sex");
-            if (_sex != null) {
-            	_sex = _sex.trim();
-            }
-            _id = r.value("id");
-        }
-    }
+			// If full name was supplied, but first and last not, try to reconstruct them
+			if (_firstName==null) {
+				String[] t = _fullName.split(" ");
+				if (t.length==2) {
+					_firstName = t[0];
+				}
+			}
+			if (_lastName==null) {
+				String[] t = _fullName.split(" ");
+				if (t.length==2) {
+					_lastName = t[1];
+				}
+			}
+		}
+	}
 
 }
