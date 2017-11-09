@@ -1,30 +1,21 @@
-package io.github.xtman.ssh.client;
+package io.github.xtman.ssh.client.ganymed;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import ch.ethz.ssh2.Session;
+import io.github.xtman.ssh.client.Connection;
 
-public class SshSession implements Closeable {
+public class GanymedSession implements io.github.xtman.ssh.client.Session {
 
     public static final String DEFAULT_ENCODING = "UTF-8";
 
-    private SshConnection _connection;
-    private Session _session;
+    private GanymedConnection _connection;
+    private ch.ethz.ssh2.Session _session;
 
-    SshSession(SshConnection connection, Session session) {
+    GanymedSession(GanymedConnection connection, ch.ethz.ssh2.Session session) {
         _connection = connection;
         _session = session;
-    }
-
-    public void execCommand(String command, String charsetName) throws IOException {
-        _session.execCommand(command, charsetName);
-    }
-
-    public void execCommand(String command) throws IOException {
-        _session.execCommand(command);
     }
 
     public int exitStatus() {
@@ -47,6 +38,21 @@ public class SshSession implements Closeable {
                 _connection.removeSession(_session);
             }
         }
+    }
+
+    @Override
+    public Connection connection() {
+        return _connection;
+    }
+
+    @Override
+    public void execute(String command, String charsetName) throws Throwable {
+        _session.execCommand(command, charsetName);
+    }
+
+    @Override
+    public void execute(String command) throws Throwable {
+        _session.execCommand(command);
     }
 
 }

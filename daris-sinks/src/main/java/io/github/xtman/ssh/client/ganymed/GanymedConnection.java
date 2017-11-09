@@ -1,16 +1,15 @@
-package io.github.xtman.ssh.client;
+package io.github.xtman.ssh.client.ganymed;
 
 import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 
 import ch.ethz.ssh2.ChannelCondition;
 import ch.ethz.ssh2.Connection;
@@ -19,11 +18,16 @@ import ch.ethz.ssh2.SFTPv3Client;
 import ch.ethz.ssh2.ServerHostKeyVerifier;
 import ch.ethz.ssh2.Session;
 import ch.ethz.ssh2.channel.Channel;
+import io.github.xtman.ssh.client.ConnectionBuilder;
+import io.github.xtman.ssh.client.ConnectionDetails;
+import io.github.xtman.ssh.client.PutClient;
+import io.github.xtman.ssh.client.ScpPutClient;
+import io.github.xtman.ssh.client.SftpClient;
 import io.github.xtman.util.AbortCheck;
 
-public class SshConnection implements Closeable {
+public class GanymedConnection implements io.github.xtman.ssh.client.Connection {
 
-    public static final int DEFAULT_MAX_SESSIONS = 0;
+    public static final String IMPL = "ganymed";
 
     public static final int CONNECT_TIMEOUT_MILLISECS = 60000; // 60 seconds
 
@@ -32,36 +36,25 @@ public class SshConnection implements Closeable {
 
     public static final int EXEC_TIMEOUT_MILLISECS = 5000; // 5 seconds
 
-    private String _host;
-    private int _port;
-    private String _hostPublicKey;
-    private String _username;
-    private String _password;
-    private String _userPrivateKey;
-    private String _userPrivateKeyPassphrase;
+    private io.github.xtman.ssh.client.ConnectionDetails _cxnDetails;
 
     private Connection _cxn;
     private ConnectionInfo _cxnInfo;
 
     private int _maxSessions;
-    private List<Session> _sessions;
+    private Collection<Session> _sessions;
 
     private boolean _verbose = false;
 
-    SshConnection(String host, int port, String hostPublicKey, String username, String password, String userPrivateKey,
-            String userPrivateKeyPassphrase, int maxSessions) throws Throwable {
-        _host = host;
-        _port = port;
-        _hostPublicKey = hostPublicKey;
-        _username = username;
-        _password = password;
-        _userPrivateKey = userPrivateKey;
-        _userPrivateKeyPassphrase = userPrivateKeyPassphrase;
+    public GanymedConnection(ConnectionDetails cxnDetails, int maxSessions, boolean verbose) throws Throwable {
 
+        _cxnDetails = cxnDetails;
         _maxSessions = maxSessions;
-        _sessions = Collections.synchronizedList(new ArrayList<Session>());
+        _verbose = verbose;
 
-        _cxn = new ch.ethz.ssh2.Connection(_host, _port) {
+        _sessions = Collections.synchronizedCollection(new HashSet<Session>());
+
+        _cxn = new ch.ethz.ssh2.Connection(_cxnDetails.host(), _cxnDetails.port()) {
 
             public Session openSession() throws IOException {
                 synchronized (_sessions) {
@@ -88,17 +81,18 @@ public class SshConnection implements Closeable {
             }
         };
         _cxn.setServerHostKeyAlgorithms(new String[] { "ssh-rsa" });
-        _cxnInfo = _cxn.connect(_hostPublicKey == null ? null : new ServerHostKeyVerifier() {
+        _cxnInfo = _cxn.connect(_cxnDetails.hostKey() == null ? null : new ServerHostKeyVerifier() {
 
             @Override
-            public boolean verifyServerHostKey(String hostname, int port, String serverHostKeyType,
+            public boolean verifyServerHostKey(String serverHost, int serverPort, String serverHostKeyPrefix,
                     byte[] serverHostKey) throws Exception {
-                if (_hostPublicKey == null) {
+                if (_cxnDetails.hostKey() == null) {
                     return true;
                 } else {
-                    byte[] hostKey = SshKeyTools.getPublicKeyBytes(_hostPublicKey);
-                    String hostKeyType = SshKeyTools.getPublicKeyType(hostKey);
-                    if (!serverHostKeyType.equals(hostKeyType)) {
+                    byte[] hostKey = io.github.xtman.ssh.client.KeyTools.getPublicKeyBytes(_cxnDetails.hostKey());
+                    String hostKeyPrefix = io.github.xtman.ssh.client.KeyTools
+                            .getPublicKeyPrefix(_cxnDetails.hostKey());
+                    if (!hostKeyPrefix.equals(serverHostKeyPrefix)) {
                         return false;
                     }
                     return Arrays.equals(hostKey, serverHostKey);
@@ -106,19 +100,19 @@ public class SshConnection implements Closeable {
             }
         }, CONNECT_TIMEOUT_MILLISECS, KEY_EXCHANGE_TIMEOUT_MILLISECS);
         try {
-            if (_password == null && _userPrivateKey == null) {
+            if (_cxnDetails.password() == null && _cxnDetails.privateKey() == null) {
                 throw new IllegalArgumentException("Missing user's password or private key.");
             }
             boolean authenticated = false;
-            if (_password != null) {
-                authenticated = _cxn.authenticateWithPassword(_username, _password);
+            if (_cxnDetails.password() != null) {
+                authenticated = _cxn.authenticateWithPassword(_cxnDetails.username(), _cxnDetails.password());
             }
-            if (!authenticated && _userPrivateKey != null) {
-                authenticated = _cxn.authenticateWithPublicKey(_username, _userPrivateKey.toCharArray(),
-                        _userPrivateKeyPassphrase);
+            if (!authenticated && _cxnDetails.privateKey() != null) {
+                authenticated = _cxn.authenticateWithPublicKey(_cxnDetails.username(),
+                        _cxnDetails.privateKey().toCharArray(), _cxnDetails.passphrase());
             }
             if (!authenticated) {
-                throw new Exception("Failed to authenticate user: " + _username);
+                throw new Exception("Failed to authenticate user: " + _cxnDetails.username());
             }
         } catch (Throwable e) {
             if (_cxn != null) {
@@ -130,22 +124,7 @@ public class SshConnection implements Closeable {
             }
             throw e;
         }
-    }
 
-    public String host() {
-        return _host;
-    }
-
-    public int port() {
-        return _port;
-    }
-
-    public String username() {
-        return _username;
-    }
-
-    public String password() {
-        return _password;
     }
 
     void removeSession(Session session) {
@@ -167,22 +146,41 @@ public class SshConnection implements Closeable {
         }
     }
 
-    public SshSession createSession() throws Throwable {
-        return new SshSession(this, _cxn.openSession());
+    public io.github.xtman.ssh.client.Session createSession() throws Throwable {
+        return new GanymedSession(this, _cxn.openSession());
     }
 
-    public ScpPutClient createScpPutClient(String encoding, String baseDir, boolean preserveMtime, boolean compress,
-            int dirMode, int fileMode) throws Throwable {
-        return new ScpPutClient(this, _cxn.openSession(), encoding, baseDir, preserveMtime, compress, dirMode, fileMode,
-                false);
+    @Override
+    public GanymedScpPutClient createScpPutClient(String baseDir, int dirMode, int fileMode, String encoding,
+            boolean preserveModificationTime, boolean compress) throws Throwable {
+        return new GanymedScpPutClient(this, _cxn.openSession(), baseDir, dirMode, fileMode, encoding,
+                preserveModificationTime, compress, verbose());
     }
 
-    public ScpPutClient createScpPutClient(String baseDir) throws Throwable {
-        return new ScpPutClient(this, _cxn.openSession(), baseDir);
+    @Override
+    public GanymedScpPutClient createScpPutClient(String baseDir, int dirMode, int fileMode, String encoding)
+            throws Throwable {
+        return new GanymedScpPutClient(this, _cxn.openSession(), baseDir, dirMode, fileMode, encoding, false, false,
+                verbose());
     }
 
-    public ScpPutClient createScpPutClient() throws Throwable {
-        return new ScpPutClient(this, _cxn.openSession());
+    @Override
+    public ScpPutClient createScpPutClient(String baseDir, int dirMode, int fileMode) throws Throwable {
+        return new GanymedScpPutClient(this, _cxn.openSession(), baseDir, dirMode, fileMode, PutClient.DEFAULT_ENCODING,
+                false, false, verbose());
+    }
+
+    @Override
+    public GanymedScpPutClient createScpPutClient(String baseDir) throws Throwable {
+        return new GanymedScpPutClient(this, _cxn.openSession(), baseDir, PutClient.DEFAULT_DIRECTORY_MODE,
+                PutClient.DEFAULT_FILE_MODE, PutClient.DEFAULT_ENCODING, false, false, verbose());
+    }
+
+    @Override
+    public GanymedScpPutClient createScpPutClient() throws Throwable {
+        return new GanymedScpPutClient(this, _cxn.openSession(), PutClient.DEFAULT_BASE_DIRECTORY,
+                PutClient.DEFAULT_DIRECTORY_MODE, PutClient.DEFAULT_FILE_MODE, PutClient.DEFAULT_ENCODING, false, false,
+                verbose());
     }
 
     public int exec(String command, String charsetName, OutputStream stdout, OutputStream stderr, AbortCheck abortCheck)
@@ -311,16 +309,19 @@ public class SshConnection implements Closeable {
         return exec(command, null, null, null, null);
     }
 
-    public SftpClient createSftpClient() throws IOException {
-        return new SftpClient(this, new SFTPv3Client(_cxn));
+    @Override
+    public GanymedSftpClient createSftpClient() throws IOException {
+        return new GanymedSftpClient(this, new SFTPv3Client(_cxn));
     }
 
-    public SftpClient createSftpClient(String baseDir) throws IOException {
-        return new SftpClient(this, new SFTPv3Client(_cxn), baseDir);
+    @Override
+    public GanymedSftpClient createSftpClient(String baseDir) throws IOException {
+        return new GanymedSftpClient(this, new SFTPv3Client(_cxn), baseDir);
     }
 
-    public SftpClient createSftpClient(String baseDir, int dirMode, int fileMode) throws Throwable {
-        return new SftpClient(this, new SFTPv3Client(_cxn), baseDir, dirMode, fileMode);
+    @Override
+    public GanymedSftpClient createSftpClient(String baseDir, int dirMode, int fileMode) throws Throwable {
+        return new GanymedSftpClient(this, new SFTPv3Client(_cxn), baseDir, dirMode, fileMode);
     }
 
     private void clearSessions() {
@@ -357,26 +358,44 @@ public class SshConnection implements Closeable {
         }
     }
 
-    public static SshConnection create(String host, int port, String hostPublicKey, String username, String password)
-            throws Throwable {
-        return new SshConnection(host, port, hostPublicKey, username, password, null, null, DEFAULT_MAX_SESSIONS);
+    @Override
+    public ConnectionDetails connectionDetails() {
+        return _cxnDetails;
     }
 
-    public static SshConnection create(String host, int port, String hostPublicKey, String username, String password,
-            int maxSessions) throws Throwable {
-        return new SshConnection(host, port, hostPublicKey, username, password, null, null, maxSessions);
+    @Override
+    public int maxSessions() {
+        return _maxSessions;
     }
 
-    public static SshConnection create(String host, int port, String hostPublicKey, String username,
-            String userPrivateKey, String userPrivateKeyPassphrase) throws Throwable {
-        return new SshConnection(host, port, hostPublicKey, username, null, userPrivateKey, userPrivateKeyPassphrase,
-                DEFAULT_MAX_SESSIONS);
+    @Override
+    public SftpClient createSftpClient(String baseDir, int dirMode, int fileMode, String encoding) throws Throwable {
+        return new GanymedSftpClient(this, new SFTPv3Client(_cxn), baseDir, dirMode, fileMode, encoding, verbose());
     }
 
-    public static SshConnection create(String host, int port, String hostPublicKey, String username,
-            String userPrivateKey, String userPrivateKeyPassphrase, int maxSessions) throws Throwable {
-        return new SshConnection(host, port, hostPublicKey, username, null, userPrivateKey, userPrivateKeyPassphrase,
-                maxSessions);
+    @Override
+    public boolean verbose() {
+        return _verbose;
+    }
+
+    public static class Builder extends ConnectionBuilder {
+        public Builder() {
+            super(IMPL);
+        }
+
+        public Builder(String impl) {
+            super(IMPL);
+        }
+
+        @Override
+        public Builder setImplementation(String impl) {
+            return this;
+        }
+
+        @Override
+        public GanymedConnection build() throws Throwable {
+            return (GanymedConnection) super.build();
+        }
     }
 
 }

@@ -13,6 +13,8 @@ import arc.archive.ArchiveInput;
 import arc.archive.ArchiveRegistry;
 import arc.mf.plugin.DataSinkImpl;
 import arc.mf.plugin.PluginTask;
+import arc.mf.plugin.PluginThread;
+import arc.mf.plugin.ServiceExecutor;
 import arc.mf.plugin.dtype.BooleanType;
 import arc.mf.plugin.dtype.DataType;
 import arc.mf.plugin.dtype.IntegerType;
@@ -23,8 +25,10 @@ import arc.mime.NamedMimeType;
 import arc.streams.LongInputStream;
 import arc.streams.StreamCopy;
 import arc.xml.XmlDoc;
+import arc.xml.XmlDocMaker;
+import io.github.xtman.ssh.client.Connection;
+import io.github.xtman.ssh.client.ConnectionBuilder;
 import io.github.xtman.ssh.client.ScpPutClient;
-import io.github.xtman.ssh.client.SshConnection;
 import io.github.xtman.util.PathUtils;
 import nig.ssh.client.Ssh;
 
@@ -49,7 +53,8 @@ public class ScpSink implements DataSinkImpl {
         DIRECTORY("directory",StringType.DEFAULT, "The base directory on the remote SSH server. If not set, the user's home direcotry will be used."),
         DECOMPRESS("decompress", BooleanType.DEFAULT, "Indicate whether to decompress the archive. Defaults to false. Note: it can only decompress the recognized archive types, zip, tar, gzip, bzip2 and aar. Also if the calling service e.g. shopping cart services already decompress the archive, turning off the decompress for the sink can do nothing but just transfer the decompressed data."),
         FILE_MODE("file-mode", new StringType(Pattern.compile("^[0-7]{4}$")),"The remote file mode. Defaults to "+ String.format("%04o", DEFAULT_FILE_MODE) +"." ),
-        DIR_MODE("dir-mode", new StringType(Pattern.compile("^[0-7]{4}$")),"The remote directory mode. Defaults to "+ String.format("%04o", DEFAULT_DIR_MODE) +"." );
+        DIR_MODE("dir-mode", new StringType(Pattern.compile("^[0-7]{4}$")),"The remote directory mode. Defaults to "+ String.format("%04o", DEFAULT_DIR_MODE) +"." ),
+        LAYOUT_PATTERN("layout-pattern", StringType.DEFAULT, "The expression to generate output path.");
         // @formatter:on
 
         private String _paramName;
@@ -99,9 +104,11 @@ public class ScpSink implements DataSinkImpl {
         public final boolean decompress;
         public final int fileMode;
         public final int dirMode;
+        public final String layoutPattern;
 
         Params(String host, int port, String hostKey, String user, String password, String privateKey,
-                String passphrase, String directory, boolean decompress, int fileMode, int dirMode) {
+                String passphrase, String directory, boolean decompress, int fileMode, int dirMode,
+                String layoutPattern) {
             this.host = host;
             this.port = port;
             this.hostKey = hostKey;
@@ -113,6 +120,7 @@ public class ScpSink implements DataSinkImpl {
             this.decompress = decompress;
             this.fileMode = fileMode;
             this.dirMode = dirMode;
+            this.layoutPattern = layoutPattern;
         }
 
         public static Params parse(Map<String, String> params) throws Throwable {
@@ -170,18 +178,24 @@ public class ScpSink implements DataSinkImpl {
                 dirMode = Integer.parseInt(dirModeStr, 8);
             }
 
+            String layoutPattern = params.get(ParamDefn.LAYOUT_PATTERN.paramName());
+
             return new Params(host, port, hostKey, user, password, privateKey, passphrase, directory, decompress,
-                    fileMode, dirMode);
+                    fileMode, dirMode, layoutPattern);
         }
     }
 
     private static ScpPutClient createScpPutClient(Params params) throws Throwable {
-        return (params.password != null
-                ? SshConnection.create(params.host, params.port, params.hostKey, params.user, params.password)
-                : SshConnection.create(params.host, params.port, params.hostKey, params.user, params.privateKey,
-                        params.passphrase)).createScpPutClient(null, params.directory, false, false, params.dirMode,
-                                params.fileMode);
-        // .createSftpClient(params.directory, params.dirMode, params.fileMode);
+        ConnectionBuilder builder = new ConnectionBuilder("jsch");
+        builder.setServer(params.host, params.port, params.hostKey);
+        if (params.password != null) {
+            builder.setUserCredentials(params.user, params.password);
+        } else {
+            builder.setUserCredentials(params.user, params.privateKey,
+                        params.passphrase);
+        }
+        Connection cxn  = builder.build();
+        return cxn.createScpPutClient(params.directory, params.dirMode, params.fileMode);
     }
 
     @Override
@@ -209,12 +223,12 @@ public class ScpSink implements DataSinkImpl {
             LongInputStream in, java.lang.String appMimeType, java.lang.String streamMimeType, long length)
             throws Throwable {
         // @formatter:off
-        // System.out.println("path: " + path);
+        System.out.println("path: " + path);
         // System.out.println("userMeta: " + userMeta);
-        // System.out.println("meta: " + meta);
+        System.out.println("meta: " + meta);
         // System.out.println("appMimeType: " + appMimeType);
         // System.out.println("streamMimeType: " + streamMimeType);
-        // System.out.println("multi-transfer: " + (multipleTransferContext != null));
+        System.out.println("multi-transfer: " + (multipleTransferContext != null));
         // @formatter:on
         Params params = Params.parse(parameters);
         final ScpPutClient scp = multipleTransferContext == null ? createScpPutClient(params)
@@ -225,9 +239,17 @@ public class ScpSink implements DataSinkImpl {
 
         try {
             StringBuilder sb = new StringBuilder();
-            if (path != null) {
+            System.out.println("### 1");
+            if (params.layoutPattern != null && assetId != null) {
+                System.out.println("### 2");
+                sb.append(generatePath(PluginThread.serviceExecutor(), assetId, params.layoutPattern));
+            } else if (path != null) {
+                System.out.println("### 3");
                 sb.append(PathUtils.normalise(path));
+            } else {
+
             }
+
             if (params.decompress && streamMimeType != null && ArchiveRegistry.isAnArchive(streamMimeType)) {
                 // decompress archive
                 if (assetName != null) {
@@ -274,6 +296,14 @@ public class ScpSink implements DataSinkImpl {
         }
     }
 
+    private static String generatePath(ServiceExecutor executor, String assetId, String layoutPattern)
+            throws Throwable {
+        XmlDocMaker dm = new XmlDocMaker("args");
+        dm.add("id", assetId);
+        dm.add("expr", layoutPattern);
+        return executor.execute("asset.path.generate", dm.root()).value("path");
+    }
+
     private static void extractAndTransfer(ScpPutClient scp, LongInputStream in, String mimeType, String base)
             throws Throwable {
 
@@ -282,12 +312,15 @@ public class ScpSink implements DataSinkImpl {
             ArchiveInput.Entry entry = null;
             while ((entry = ai.next()) != null) {
                 try {
+                    System.out.print(">>>");
                     String dstPath = PathUtils.join(base, entry.name());
                     if (entry.isDirectory()) {
+                        System.out.println(dstPath);
                         scp.mkdirs(dstPath);
                     } else {
                         long size = entry.size();
                         if (size >= 0) {
+                            System.out.println(dstPath);
                             scp.put(entry.stream(), size, dstPath);
                         } else {
                             File tf = PluginTask.createTemporaryFile();
@@ -295,6 +328,7 @@ public class ScpSink implements DataSinkImpl {
                                 StreamCopy.copy(entry.stream(), tf);
                                 InputStream ti = new BufferedInputStream(new FileInputStream(tf));
                                 try {
+                                    System.out.println(dstPath);
                                     scp.put(ti, tf.length(), dstPath);
                                 } finally {
                                     ti.close();
@@ -306,6 +340,7 @@ public class ScpSink implements DataSinkImpl {
                     }
                 } finally {
                     ai.closeEntry();
+                    System.out.println("<<<");
                 }
             }
         } finally {

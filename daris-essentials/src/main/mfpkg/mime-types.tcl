@@ -32,6 +32,8 @@ create_mime_type "nifti/series"      "NIFTI series"
 create_mime_type "minc/series"       "MINC series"
 create_mime_type "bruker/series"     "Bruker/Paravision image series"
 create_mime_type "bruker/fid"        "Bruker Free-Induction Decay data"
+create_mime_type "image/x-nifti"     "NIFTI image"                       "nii"    "yes"
+create_mime_type "image/x-nifti-gz"  "Gzipped NIFTI image"               "nii.gz" "no"
 # Siemens RDA spectrum type
 create_mime_type "siemens/rda"       "RDA(Siemens Spectrum)"
 # Siemens RAW PET/CT format. The Doc Types are created in the PSSD package
