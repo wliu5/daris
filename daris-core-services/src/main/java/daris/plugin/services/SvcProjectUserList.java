@@ -17,6 +17,7 @@ import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
 import daris.plugin.model.DataUse;
 import daris.plugin.model.ProjectRole;
+import daris.plugin.model.UserSelf;
 
 public class SvcProjectUserList extends PluginService {
 
@@ -67,12 +68,20 @@ public class SvcProjectUserList extends PluginService {
                     String userId = ue.value("@id");
                     String fullName = ue.value("name");
                     String email = ue.value("e-mail");
+
+                    ProjectRole.Type roleType = null;
+                    DataUse dataUse = null;
                     Set<String> roles = filterValues(ue.values("role[@type='role']"),
                             ProjectRole.PROJECT_SPECIFIC_ROLE_PREFIX, "." + cid);
-                    ProjectRole.Type roleType = ProjectRole.Type.roleTypeFrom(roles, cid);
-                    DataUse dataUse = (roleType == ProjectRole.Type.PROJECT_ADMINISTRATOR
-                            || roleType == ProjectRole.Type.SUBJECT_ADMINISTRATOR) ? null
-                                    : DataUse.dataUseFrom(roles, cid);
+
+                    if (roles == null && UserSelf.isAdmin(executor())) {
+                        roleType = ProjectRole.Type.PROJECT_ADMINISTRATOR;
+                    } else {
+                        roleType = ProjectRole.Type.roleTypeFrom(roles, cid);
+                        dataUse = (roleType == ProjectRole.Type.PROJECT_ADMINISTRATOR
+                                || roleType == ProjectRole.Type.SUBJECT_ADMINISTRATOR) ? null
+                                        : DataUse.dataUseFrom(roles, cid);
+                    }
                     w.add("user",
                             new String[] { "domain", domain, "user", user, "id", userId, "authority", authority,
                                     "protocol", protocol, "name", fullName, "email", email, "role", roleType.toString(),

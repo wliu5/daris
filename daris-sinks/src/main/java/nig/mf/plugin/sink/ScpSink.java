@@ -223,12 +223,12 @@ public class ScpSink implements DataSinkImpl {
             LongInputStream in, java.lang.String appMimeType, java.lang.String streamMimeType, long length)
             throws Throwable {
         // @formatter:off
-        System.out.println("path: " + path);
+//        System.out.println("path: " + path);
         // System.out.println("userMeta: " + userMeta);
-        System.out.println("meta: " + meta);
+//        System.out.println("meta: " + meta);
         // System.out.println("appMimeType: " + appMimeType);
         // System.out.println("streamMimeType: " + streamMimeType);
-        System.out.println("multi-transfer: " + (multipleTransferContext != null));
+//        System.out.println("multi-transfer: " + (multipleTransferContext != null));
         // @formatter:on
         Params params = Params.parse(parameters);
         final ScpPutClient scp = multipleTransferContext == null ? createScpPutClient(params)
