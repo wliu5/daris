@@ -28,8 +28,8 @@ public class NiftiFileGetModule implements Module {
     }
 
     @Override
-    public void execute(HttpServer server, SessionKey sessionKey,
-            HttpRequest request, HttpResponse response) throws Throwable {
+    public void execute(HttpServer server, SessionKey sessionKey, HttpRequest request, HttpResponse response)
+            throws Throwable {
         // id
         String id = request.variableValue(NiftiServlet.ARG_ID);
         // cid
@@ -38,8 +38,7 @@ public class NiftiFileGetModule implements Module {
         String idxStr = request.variableValue(NiftiServlet.ARG_IDX);
         long idx = idxStr == null ? 1 : Long.parseLong(idxStr);
         // disposition
-        Disposition disposition = Disposition.parse(
-                request.variableValue(DicomServlet.ARG_DISPOSITION),
+        Disposition disposition = Disposition.parse(request.variableValue(DicomServlet.ARG_DISPOSITION),
                 Disposition.attachment);
         // filename
         String fileName = request.variableValue(DicomServlet.ARG_FILENAME);
@@ -49,9 +48,7 @@ public class NiftiFileGetModule implements Module {
         } else {
             dm.add("cid", cid);
         }
-        XmlDoc.Element ae = server
-                .execute(sessionKey, "asset.get", dm.root(), null, null)
-                .element("asset");
+        XmlDoc.Element ae = server.execute(sessionKey, "asset.get", dm.root(), null, null).element("asset");
 
         validate(ae);
 
@@ -71,29 +68,23 @@ public class NiftiFileGetModule implements Module {
             if (fileName == null) {
                 fileName = idStr + ".nii";
             }
-            response.setHeaderField("Content-Disposition",
-                    disposition.name() + "; filename=\"" + fileName + "\"");
-            server.execute(sessionKey, "asset.get", dm.root(),
-                    (HttpRequest) null, response);
+            response.setHeaderField("Content-Disposition", disposition.name() + "; filename=\"" + fileName + "\"");
+            server.execute(sessionKey, "asset.get", dm.root(), (HttpRequest) null, response);
         } else if (isGZ(cExt)) {
             response.setHeaderField("Content-Type", MIME_TYPE_NII_GZ);
             if (fileName == null) {
                 fileName = idStr + ".nii.gz";
             }
-            response.setHeaderField("Content-Disposition",
-                    disposition.name() + "; filename=\"" + fileName + "\"");
-            server.execute(sessionKey, "asset.get", dm.root(),
-                    (HttpRequest) null, response);
+            response.setHeaderField("Content-Disposition", disposition.name() + "; filename=\"" + fileName + "\"");
+            server.execute(sessionKey, "asset.get", dm.root(), (HttpRequest) null, response);
         } else if (isArchive(cExt)) {
             response.setHeaderField("Content-Type", MIME_TYPE_NII);
             if (fileName == null) {
                 fileName = idStr + "_" + idx + ".nii";
             }
-            response.setHeaderField("Content-Disposition",
-                    disposition.name() + "; filename=\"" + fileName + "\"");
+            response.setHeaderField("Content-Disposition", disposition.name() + "; filename=\"" + fileName + "\"");
             dm.add("idx", idx);
-            server.execute(sessionKey, "daris.archive.content.get", dm.root(),
-                    (HttpRequest) null, response);
+            server.execute(sessionKey, "daris.archive.content.get", dm.root(), (HttpRequest) null, response);
         } else {
             throw new Exception("Unsupported content type: " + cType);
         }
@@ -103,27 +94,21 @@ public class NiftiFileGetModule implements Module {
         String cid = ae.value("cid");
         String idStr = cid == null ? ae.value("@id") : cid;
         if (!ae.elementExists("content")) {
-            throw new Exception("Asset " + idStr
-                    + " is not a valid NIFTI series. No content.");
+            throw new Exception("Asset " + idStr + " is not a valid NIFTI series. No content.");
         }
         String ctype = ae.value("content/type");
         String cext = ae.value("content/type/@ext");
         if (!isNII(cext) && !isGZ(cext) && !isArchive(cext)) {
-            throw new Exception("Asset " + idStr
-                    + " is not a valid NIFTI series. Unsupported content mime type: "
-                    + ctype);
+            throw new Exception(
+                    "Asset " + idStr + " is not a valid NIFTI series. Unsupported content mime type: " + ctype + ",  ext: " + cext);
         }
         String type = ae.value("type");
         String lctype = ae.value("content/ltype");
-        if (!(MIME_TYPE_NIFTI_SERIES.equals(type)
-                || MIME_TYPE_NIFTI_SERIES.equals(lctype)
-                || MIME_TYPE_NII_GZ.equals(type)
-                || MIME_TYPE_NII_GZ.equals(lctype) || MIME_TYPE_NII.equals(type)
-                || MIME_TYPE_NII.equals(lctype)
-                || ae.elementExists("meta/daris:nifti-1"))) {
-            throw new Exception("Asset " + idStr
-                    + " is not a valid NIFTI series. Unsupported asset mime type: "
-                    + type + " and logical content type: " + lctype);
+        if (!(MIME_TYPE_NIFTI_SERIES.equals(type) || MIME_TYPE_NIFTI_SERIES.equals(lctype)
+                || MIME_TYPE_NII_GZ.equals(type) || MIME_TYPE_NII_GZ.equals(lctype) || MIME_TYPE_NII.equals(type)
+                || MIME_TYPE_NII.equals(lctype) || ae.elementExists("meta/daris:nifti-1"))) {
+            throw new Exception("Asset " + idStr + " is not a valid NIFTI series. Unsupported asset mime type: " + type
+                    + " and logical content type: " + lctype);
         }
     }
 
@@ -132,7 +117,7 @@ public class NiftiFileGetModule implements Module {
     }
 
     static boolean isGZ(String ext) {
-        return "gz".equalsIgnoreCase(ext);
+        return "gz".equalsIgnoreCase(ext) || "nii.gz".equalsIgnoreCase(ext);
     }
 
     static boolean isZIP(String ext) {

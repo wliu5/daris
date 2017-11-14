@@ -9,8 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import io.github.xtman.ssh.client.Connection;
+import io.github.xtman.ssh.client.ConnectionBuilder;
 import io.github.xtman.ssh.client.ScpPutClient;
-import io.github.xtman.ssh.client.SshConnection;
 
 public class ScpCLI {
 
@@ -67,9 +68,12 @@ public class ScpCLI {
                 password = readPasswordFromConsole();
             }
 
-            SshConnection cxn = SshConnection.create(host, port, null, user, password);
+            ConnectionBuilder builder = new ConnectionBuilder();
+            builder.setImplementation("jsch");
+            builder.setServer(host, port, null).setUserCredentials(user, password);
+            Connection cxn = builder.build();
             try {
-                ScpPutClient scp = cxn.createScpPutClient(baseDir);
+                ScpPutClient scp = cxn.createScpPutClient(baseDir, 0755, 0644, "UTF-8", true, false);
                 try {
                     for (Path input : inputs) {
                         if (Files.isDirectory(input)) {

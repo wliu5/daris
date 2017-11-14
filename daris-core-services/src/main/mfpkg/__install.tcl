@@ -81,6 +81,9 @@ source old-release-cleanup.tcl
 # include utility functions in utils.tcl
 source utils.tcl
 
+# MIME types
+source mime-types.tcl
+
 #============================================================================================
 # Create dictionary namespaces
 dictionary.namespace.create :description "Namespace for DaRIS framework dictionaries" :namespace daris :ifexists ignore

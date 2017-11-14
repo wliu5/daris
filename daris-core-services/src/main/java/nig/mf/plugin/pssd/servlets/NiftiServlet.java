@@ -33,11 +33,12 @@ public class NiftiServlet extends AbstractServlet {
 
     public static final String ARG_FILENAME = "filename";
 
+    public static final String ARG_ENTRY_NAME = "ename";
+
     public static enum ModuleName {
 
         file, header, view;
-        public static ModuleName parse(HttpRequest request,
-                ModuleName defaultModuleName) {
+        public static ModuleName parse(HttpRequest request, ModuleName defaultModuleName) {
             String name = request.variableValue(ARG_MODULE);
             ModuleName moduleName = parse(name);
             if (moduleName == null) {
@@ -61,19 +62,15 @@ public class NiftiServlet extends AbstractServlet {
 
     public NiftiServlet() {
         super();
-        arguments().add(ARG_ID, CiteableIdType.DEFAULT,
-                "The asset id of the DICOM series.", 0);
+        arguments().add(ARG_ID, CiteableIdType.DEFAULT, "The asset id of the DICOM series.", 0);
 
-        arguments().add(ARG_CID, CiteableIdType.DEFAULT,
-                "The citeable id of the DICOM dataset/series.", 0);
+        arguments().add(ARG_CID, CiteableIdType.DEFAULT, "The citeable id of the DICOM dataset/series.", 0);
 
         arguments().add(ARG_MODULE, new EnumType(ModuleName.values()),
-                "The module to execute. Can be 'file', 'header' or 'view'. Defaults to 'view'.",
-                0);
+                "The module to execute. Can be 'file', 'header' or 'view'. Defaults to 'view'.", 0);
 
         arguments().add(ARG_IDX, new EnumType(ModuleName.values()),
-                "This specifies the idx'th file in the DICOM dataset/series(archive). Defaults to one.",
-                0);
+                "This specifies the idx'th file entry in the NIFTI dataset/series(archive). Defaults to one.", 0);
 
         arguments().add(ARG_DISPOSITION, new EnumType(Disposition.values()),
                 "How the content/archive should be treated by the caller. Defaults to attachment. This argument applies only for module: download.",
@@ -82,20 +79,21 @@ public class NiftiServlet extends AbstractServlet {
         arguments().add(ARG_FILENAME, StringType.DEFAULT,
                 "Name for the content/archive file. Defaults to the object citeable id. This argument applies only for module: download.",
                 0);
+
+        arguments().add(ARG_ENTRY_NAME, StringType.DEFAULT,
+                "Name of the idx'th file entry in the NIFTI dataset archive. Ignores if " + ARG_IDX
+                        + " is not specified. This argument applies only for module: view.",
+                0);
     }
 
     @Override
-    protected void execute(HttpServer server, SessionKey sessionKey,
-            HttpRequest request, HttpResponse response) throws Throwable {
-        if (request.variableValue(ARG_ID) == null
-                && request.variableValue(ARG_CID) == null) {
-            throw new Exception(
-                    "Either asset id or cid is required. Found none.");
+    protected void execute(HttpServer server, SessionKey sessionKey, HttpRequest request, HttpResponse response)
+            throws Throwable {
+        if (request.variableValue(ARG_ID) == null && request.variableValue(ARG_CID) == null) {
+            throw new Exception("Either asset id or cid is required. Found none.");
         }
-        if (request.variableValue(ARG_ID) != null
-                && request.variableValue(ARG_CID) != null) {
-            throw new Exception(
-                    "Either asset id or cid is required. Found both.");
+        if (request.variableValue(ARG_ID) != null && request.variableValue(ARG_CID) != null) {
+            throw new Exception("Either asset id or cid is required. Found both.");
         }
         ModuleName moduleName = ModuleName.parse(request, ModuleName.file);
         Module module = null;
