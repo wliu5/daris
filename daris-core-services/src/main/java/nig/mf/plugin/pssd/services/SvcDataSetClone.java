@@ -130,6 +130,7 @@ public class SvcDataSetClone extends PluginService {
 		// Primary or derived ?
 		String type = r.stringValue("object/source/type");
 		Boolean isPrimary = (type.equals("primary"));
+		Boolean processed =r.booleanValue("object/derivation/processed");
 
 		// Create empty DataSet with no content
 		dm = new XmlDocMaker("args");
@@ -145,6 +146,7 @@ public class SvcDataSetClone extends PluginService {
 		if (isPrimary) {
 			r = executor.execute("om.pssd.dataset.primary.create", dm.root());
 		} else {
+			dm.add("processed", processed);
 			r = executor.execute("om.pssd.dataset.derivation.create", dm.root());
 		}
 
