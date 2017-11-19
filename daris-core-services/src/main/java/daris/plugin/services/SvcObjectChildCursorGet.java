@@ -49,7 +49,7 @@ public class SvcObjectChildCursorGet extends PluginService {
 
     @Override
     public void execute(Element args, Inputs arg1, Outputs arg2, XmlWriter w) throws Throwable {
-        SimpleEntry<String, String> ids = ServiceUtils.getObjectIdentifiers(executor(), args);
+        SimpleEntry<String, String> ids = AssetUtils.getAssetIdentifiers(executor(), args);
         String id = ids.getKey();
         String cid = ids.getValue();
 

@@ -52,7 +52,7 @@ public class SvcAssetPathGenerate extends PluginService {
         }
         String expr = args.value("expr");
 
-        XmlDoc.Element assetMeta = ServiceUtils.getAssetMeta(executor(), assetId, cid);
+        XmlDoc.Element assetMeta = AssetUtils.getAssetMeta(executor(), assetId, cid);
         String assetVersion = assetMeta.value("@version");
 
         String path = generatePath(executor(), assetMeta, expr);

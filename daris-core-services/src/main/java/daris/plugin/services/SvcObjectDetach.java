@@ -49,13 +49,13 @@ public class SvcObjectDetach extends PluginService {
 
     public void execute(XmlDoc.Element args, Inputs in, Outputs out, XmlWriter w) throws Throwable {
 
-        SimpleEntry<String, String> ids = ServiceUtils.getObjectIdentifiers(executor(), args);
+        SimpleEntry<String, String> ids = AssetUtils.getAssetIdentifiers(executor(), args);
         String id = ids.getKey();
 
         boolean detachAll = args.booleanValue("detach-all", false);
         Collection<String> attachmentAssetIds = null;
         if (detachAll) {
-            attachmentAssetIds = ServiceUtils.getAssetMeta(executor(), id, null)
+            attachmentAssetIds = AssetUtils.getAssetMeta(executor(), id, null)
                     .values("related[@type='attachment']/to");
         } else {
             attachmentAssetIds = args.values("aid");
@@ -66,7 +66,7 @@ public class SvcObjectDetach extends PluginService {
     }
 
     public static void detachAll(ServiceExecutor executor, String id) throws Throwable {
-        Collection<String> attachmentAssetIds = ServiceUtils.getAssetMeta(executor, id, null)
+        Collection<String> attachmentAssetIds = AssetUtils.getAssetMeta(executor, id, null)
                 .values("related[@type='attachment']/to");
         detach(executor, id, attachmentAssetIds);
     }

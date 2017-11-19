@@ -91,7 +91,7 @@ public class SvcProjectUserSet extends PluginService {
          */
         checkOneAdmin(executor(), args);
 
-        final XmlDoc.Element ae = ServiceUtils.getAssetMeta(executor(), args.value("id"), args.value("cid"));
+        final XmlDoc.Element ae = AssetUtils.getAssetMeta(executor(), args.value("id"), args.value("cid"));
 
         /*
          * validate if it is a project, also checks the user self has sufficient
