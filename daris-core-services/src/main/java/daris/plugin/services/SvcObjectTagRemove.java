@@ -4,6 +4,7 @@ import arc.mf.plugin.PluginService;
 import arc.xml.XmlDoc.Element;
 import arc.xml.XmlWriter;
 
+//TODO test
 public class SvcObjectTagRemove extends PluginService {
 
     @Override

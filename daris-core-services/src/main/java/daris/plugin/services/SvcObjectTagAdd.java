@@ -14,6 +14,8 @@ import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
 import nig.mf.pssd.CiteableIdUtil;
 
+// TODO test
+
 public class SvcObjectTagAdd extends PluginService {
 
     public static final String SERVICE_NAME = "daris.object.tag.add";
