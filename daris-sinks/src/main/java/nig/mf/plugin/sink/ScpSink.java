@@ -223,14 +223,13 @@ public class ScpSink implements DataSinkImpl {
             throws Throwable {
         // @formatter:off
 //        System.out.println("path: " + path);
-        // System.out.println("userMeta: " + userMeta);
+//        System.out.println("userMeta: " + userMeta);
 //        System.out.println("meta: " + meta);
-        // System.out.println("appMimeType: " + appMimeType);
-        // System.out.println("streamMimeType: " + streamMimeType);
+//        System.out.println("appMimeType: " + appMimeType);
+//        System.out.println("streamMimeType: " + streamMimeType);
 //        System.out.println("multi-transfer: " + (multipleTransferContext != null));
         // @formatter:on
-        
-        // TODO DEBUG jsch
+
         Params params = Params.parse(parameters);
         final ScpPutClient scp = multipleTransferContext == null ? createScpPutClient(params)
                 : (ScpPutClient) multipleTransferContext;
@@ -240,12 +239,9 @@ public class ScpSink implements DataSinkImpl {
 
         try {
             StringBuilder sb = new StringBuilder();
-            System.out.println("### 1");
             if (params.layoutPattern != null && assetId != null) {
-                System.out.println("### 2");
                 sb.append(generatePath(PluginThread.serviceExecutor(), assetId, params.layoutPattern));
             } else if (path != null) {
-                System.out.println("### 3");
                 sb.append(PathUtils.normalise(path));
             } else {
 
@@ -313,15 +309,12 @@ public class ScpSink implements DataSinkImpl {
             ArchiveInput.Entry entry = null;
             while ((entry = ai.next()) != null) {
                 try {
-                    System.out.print(">>>");
                     String dstPath = PathUtils.join(base, entry.name());
                     if (entry.isDirectory()) {
-                        System.out.println(dstPath);
                         scp.mkdirs(dstPath);
                     } else {
                         long size = entry.size();
                         if (size >= 0) {
-                            System.out.println(dstPath);
                             scp.put(entry.stream(), size, dstPath);
                         } else {
                             File tf = PluginTask.createTemporaryFile();
@@ -329,7 +322,6 @@ public class ScpSink implements DataSinkImpl {
                                 StreamCopy.copy(entry.stream(), tf);
                                 InputStream ti = new BufferedInputStream(new FileInputStream(tf));
                                 try {
-                                    System.out.println(dstPath);
                                     scp.put(ti, tf.length(), dstPath);
                                 } finally {
                                     ti.close();
@@ -341,7 +333,6 @@ public class ScpSink implements DataSinkImpl {
                     }
                 } finally {
                     ai.closeEntry();
-                    System.out.println("<<<");
                 }
             }
         } finally {
