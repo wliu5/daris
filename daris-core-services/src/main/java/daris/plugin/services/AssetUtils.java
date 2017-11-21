@@ -66,4 +66,16 @@ public class AssetUtils {
         return executor.execute("asset.exists", dm.root()).booleanValue("exists");
     }
 
+    static String getCiteableId(ServiceExecutor executor, String assetId) throws Throwable {
+        XmlDocMaker dm = new XmlDocMaker("args");
+        dm.add("id", assetId);
+        return executor.execute("asset.identifier.get", dm.root()).value("id/@cid");
+    }
+
+    static String getAssetId(ServiceExecutor executor, String cid) throws Throwable {
+        XmlDocMaker dm = new XmlDocMaker("args");
+        dm.add("cid", cid);
+        return executor.execute("asset.identifier.get", dm.root()).value("id");
+    }
+
 }

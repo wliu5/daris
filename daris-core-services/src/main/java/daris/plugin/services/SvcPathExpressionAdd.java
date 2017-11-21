@@ -5,10 +5,14 @@ import arc.mf.plugin.dtype.CiteableIdType;
 import arc.mf.plugin.dtype.StringType;
 import arc.xml.XmlDoc.Element;
 import arc.xml.XmlWriter;
+import nig.mf.plugin.pssd.Project;
+
 //TODO test
 public class SvcPathExpressionAdd extends PluginService {
 
-    public static final String DICTIONARY = "daris:path.expression";
+    public static final String DICTIONARY_NAME = "daris.path.expression";
+
+    public static final String GLOBAL_DICTIONARY = "daris:" + DICTIONARY_NAME;
 
     public static final String SERVICE_NAME = "daris.path.expression.add";
 
@@ -19,10 +23,11 @@ public class SvcPathExpressionAdd extends PluginService {
         _defn.add(new Interface.Element("name", StringType.DEFAULT, "Name of the expression.", 1, 1));
         _defn.add(new Interface.Element("expr", StringType.DEFAULT,
                 "The expression to generate output/destination path when exporting a daris object.", 1, 1));
-        _defn.add(new Interface.Element("project", CiteableIdType.DEFAULT,
-                "The citeable id of the project. If specified, the expression will be added to the project specific dictionary: "
-                        + DICTIONARY + ".{project}.",
-                0, 1));
+        _defn.add(
+                new Interface.Element("project", CiteableIdType.DEFAULT,
+                        "The citeable id of the project. If specified, the expression will be added to the project specific dictionary: "
+                                + Project.PROJECT_SPECIFIC_DICTIONARY_NAMESPACE_PREFIX + "{project}:" + DICTIONARY_NAME,
+                        0, 1));
 
     }
 
@@ -38,8 +43,8 @@ public class SvcPathExpressionAdd extends PluginService {
 
     @Override
     public String description() {
-        return "Add path expression to dictionary: " + DICTIONARY + " or project specific dictionary: " + DICTIONARY
-                + ".{project}";
+        return "Add path expression to dictionary: " + GLOBAL_DICTIONARY + " or project specific dictionary: "
+                + Project.PROJECT_SPECIFIC_DICTIONARY_NAMESPACE_PREFIX + "{project}:" + DICTIONARY_NAME;
     }
 
     @Override
@@ -47,7 +52,7 @@ public class SvcPathExpressionAdd extends PluginService {
         String name = args.value("name");
         String expr = args.value("expr");
         String project = args.value("project");
-        String dictionary = project == null ? DICTIONARY : (DICTIONARY + "." + project);
+        String dictionary = project == null ? GLOBAL_DICTIONARY : projectSpecificDictionary(project);
 
         if (!DictionaryUtils.dictionaryExists(executor(), dictionary)) {
             DictionaryUtils.createDictionary(executor(), dictionary,
@@ -65,6 +70,10 @@ public class SvcPathExpressionAdd extends PluginService {
     @Override
     public String name() {
         return SERVICE_NAME;
+    }
+
+    static String projectSpecificDictionary(String projectCid) {
+        return Project.projectSpecificDictionaryNamespaceOf(projectCid) + ":" + DICTIONARY_NAME;
     }
 
 }

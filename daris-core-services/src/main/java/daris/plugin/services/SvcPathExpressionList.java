@@ -9,6 +9,7 @@ import arc.xml.XmlDoc;
 import arc.xml.XmlDoc.Element;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
+
 //TODO test
 public class SvcPathExpressionList extends PluginService {
 
@@ -40,10 +41,10 @@ public class SvcPathExpressionList extends PluginService {
 
     @Override
     public void execute(Element args, Inputs inputs, Outputs outputs, XmlWriter w) throws Throwable {
-        listExpressions(executor(), SvcPathExpressionAdd.DICTIONARY, null, w);
+        listExpressions(executor(), SvcPathExpressionAdd.GLOBAL_DICTIONARY, null, w);
         String project = args.value("project");
         if (project != null) {
-            listExpressions(executor(), (SvcPathExpressionAdd.DICTIONARY + "." + project), project, w);
+            listExpressions(executor(), SvcPathExpressionAdd.projectSpecificDictionary(project), project, w);
         }
     }
 

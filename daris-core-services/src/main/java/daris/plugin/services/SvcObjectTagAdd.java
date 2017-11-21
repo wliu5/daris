@@ -7,11 +7,13 @@ import arc.mf.plugin.PluginService;
 import arc.mf.plugin.ServiceExecutor;
 import arc.mf.plugin.dtype.AssetType;
 import arc.mf.plugin.dtype.BooleanType;
+import arc.mf.plugin.dtype.CiteableIdType;
 import arc.mf.plugin.dtype.StringType;
 import arc.xml.XmlDoc;
 import arc.xml.XmlDoc.Element;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
+import nig.mf.plugin.pssd.Project;
 import nig.mf.pssd.CiteableIdUtil;
 
 // TODO test
@@ -19,20 +21,25 @@ import nig.mf.pssd.CiteableIdUtil;
 public class SvcObjectTagAdd extends PluginService {
 
     public static final String SERVICE_NAME = "daris.object.tag.add";
-    public static final String DICTIONARY_PREFIX = "daris:tags.";
+    public static final String DICTIONARY_NAME = "daris.object.tag";
 
     private Interface _defn;
 
     public SvcObjectTagAdd() {
         _defn = new Interface();
-        _defn.add(new Interface.Element("id", AssetType.DEFAULT, "Asset id of the object.", 0, Integer.MAX_VALUE));
+        addToDefn(_defn);
+    }
 
-        Interface.Element cid = new Interface.Element("cid", AssetType.DEFAULT, "Citeable id of the object.", 0,
+    static void addToDefn(Interface defn) {
+        defn.add(new Interface.Element("id", AssetType.DEFAULT, "Asset id of the object.", 0, Integer.MAX_VALUE));
+
+        Interface.Element cid = new Interface.Element("cid", CiteableIdType.DEFAULT, "Citeable id of the object.", 0,
                 Integer.MAX_VALUE);
-        cid.add(new Interface.Attribute("recursive", BooleanType.DEFAULT, "Include descendants.", 0));
-        _defn.add(cid);
+        cid.add(new Interface.Attribute("recursive", BooleanType.DEFAULT, "Include descendants. Defautls to false.",
+                0));
+        defn.add(cid);
 
-        _defn.add(new Interface.Element("tag", StringType.DEFAULT, "Tag to apply.", 1, 1));
+        defn.add(new Interface.Element("tag", StringType.DEFAULT, "Tag name.", 1, 1));
     }
 
     @Override
@@ -53,7 +60,6 @@ public class SvcObjectTagAdd extends PluginService {
     @Override
     public void execute(Element args, Inputs inputs, Outputs outputs, XmlWriter w) throws Throwable {
         String tag = args.value("tag");
-
         if (args.elementExists("id")) {
             Collection<String> ids = args.values("id");
             for (String id : ids) {
@@ -69,12 +75,10 @@ public class SvcObjectTagAdd extends PluginService {
         } else {
             throw new IllegalArgumentException("Missing id or cid.");
         }
-
     }
 
     static void addTag(ServiceExecutor executor, String assetId, String tag) throws Throwable {
-        String cid = executor.execute("asset.identifier.get", "<args><id>" + assetId + "</id></args>", null, null)
-                .value("@cid");
+        String cid = AssetUtils.getCiteableId(executor, assetId);
         if (cid == null) {
             throw new IllegalArgumentException("Asset " + assetId + " is not a valid DaRIS object. No cid is found.");
         }
@@ -83,30 +87,30 @@ public class SvcObjectTagAdd extends PluginService {
 
     static void addTag(String cid, String tag, boolean recursive, ServiceExecutor executor) throws Throwable {
         String projectCid = CiteableIdUtil.getProjectId(cid);
-        String dictionary = DICTIONARY_PREFIX + projectCid;
+        String dictionaryNS = Project.projectSpecificDictionaryNamespaceOf(projectCid);
+        String dictionary = dictionaryNS + ":" + DICTIONARY_NAME;
         if (!DictionaryUtils.dictionaryExists(executor, dictionary)) {
             DictionaryUtils.createDictionary(executor, dictionary, null);
         }
         if (!DictionaryUtils.dictionaryEntryExists(executor, dictionary, tag, null)) {
             DictionaryUtils.addDictionaryEntry(executor, dictionary, tag, null);
         }
+
+        StringBuilder sb = new StringBuilder("cid='").append(cid).append("'");
+        if (recursive) {
+            sb.append(" or cid starts with '").append(cid).append("'");
+        }
+
         XmlDocMaker dm = new XmlDocMaker("args");
+        dm = new XmlDocMaker("args");
+        dm.add("where", sb.toString());
+        dm.add("action", "pipe");
+        dm.push("service", new String[] { "name", "asset.tag.add" });
         dm.push("tag");
         dm.add("name", new String[] { "dictionary", dictionary }, tag);
         dm.pop();
-        dm.add("cid", cid);
-        if (recursive) {
-            dm = new XmlDocMaker("args");
-            dm.add("where", "cid starts with '" + cid + "'");
-            dm.add("size", "infinity");
-            dm.add("action", "get-cid");
-            Collection<String> descendants = executor.execute("asset.query", dm.root()).values("cid");
-            if (descendants != null) {
-                for (String descendant : descendants) {
-                    addTag(descendant, tag, false, executor);
-                }
-            }
-        }
+        dm.pop();
+        executor.execute("asset.query", dm.root());
     }
 
     @Override

@@ -63,7 +63,7 @@ public class ShoppingCartUserSelfSettingsSet extends ObjectMessage<Null> {
             w.push("layout");
             w.add("type", _cart.layout().type().name());
             if (_cart.layout().type() == Layout.Type.custom) {
-                w.add("pattern", _cart.layout().pattern().pattern());
+                w.add("pattern", _cart.layout().pattern());
             }
             w.pop();
 

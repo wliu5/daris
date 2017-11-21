@@ -3,6 +3,9 @@ package daris.client.ui.sc;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.gwt.dom.client.Style.FontWeight;
+import com.google.gwt.user.client.ui.Widget;
+
 import arc.gui.ValidatedInterfaceComponent;
 import arc.gui.form.Field;
 import arc.gui.form.FieldDefinition;
@@ -30,14 +33,11 @@ import arc.mf.dtype.StringType;
 import arc.mf.object.Null;
 import arc.mf.object.ObjectMessageResponse;
 import arc.mf.object.ObjectResolveHandler;
-
-import com.google.gwt.dom.client.Style.FontWeight;
-import com.google.gwt.user.client.ui.Widget;
-
+import daris.client.model.object.exports.PathExpression;
+import daris.client.model.object.exports.PathExpressionEnum;
+import daris.client.model.object.exports.PathExpressionSetRef;
 import daris.client.model.sc.Layout;
-import daris.client.model.sc.Layout.Pattern;
 import daris.client.model.sc.Layout.Type;
-import daris.client.model.sc.LayoutPatternEnum;
 import daris.client.model.sc.ShoppingCart;
 import daris.client.model.sc.ShoppingCartRef;
 import daris.client.model.sc.Status;
@@ -60,7 +60,7 @@ public class ShoppingCartSettingsForm extends ValidatedInterfaceComponent {
     private HTML _sb;
 
     private Field<Layout.Type> _layoutTypeField;
-    private Field<Layout.Pattern> _layoutPatternField;
+    private Field<PathExpression> _layoutPatternField;
 
     private ShoppingCart _cart;
     private FormEditMode _mode;
@@ -171,8 +171,8 @@ public class ShoppingCartSettingsForm extends ValidatedInterfaceComponent {
 //        }
         // @formatter:on
 
-        Field<String> nameField = new Field<String>(new FieldDefinition("name", StringType.DEFAULT,
-                "Name for the shopping-cart", null, 0, 1));
+        Field<String> nameField = new Field<String>(
+                new FieldDefinition("name", StringType.DEFAULT, "Name for the shopping-cart", null, 0, 1));
         nameField.setInitialValue(_cart.name(), false);
         nameField.addListener(new FormItemListener<String>() {
 
@@ -190,22 +190,22 @@ public class ShoppingCartSettingsForm extends ValidatedInterfaceComponent {
 
         FieldGroup layoutFieldGroup = new FieldGroup(new FieldDefinition("layout", ConstantType.DEFAULT,
                 "The layout to use when producing the cart output content.", null, 1, 1));
-        _layoutTypeField = new Field<Layout.Type>(new FieldDefinition("type", new EnumerationType<Layout.Type>(
-                Layout.Type.values()), "Layout type", null, 1, 1));
+        _layoutTypeField = new Field<Layout.Type>(new FieldDefinition("type",
+                new EnumerationType<Layout.Type>(Layout.Type.values()), "Layout type", null, 1, 1));
         _layoutTypeField.setInitialValue(cart.layout().type(), false);
         _layoutTypeField.addListener(new FormItemListener<Layout.Type>() {
 
             @Override
             public void itemValueChanged(FormItem<Type> f) {
                 Layout.Type type = f.value();
-                Layout.Pattern pattern = _layoutPatternField.value();
+                PathExpression pattern = _layoutPatternField.value();
                 if (type == Layout.Type.custom) {
                     if (pattern != null) {
-                        cart.setLayout(new Layout(type, pattern));
+                        cart.setLayout(new Layout(type, pattern.expression));
                     }
                 } else {
                     if (pattern == null) {
-                        cart.setLayout(new Layout(type, pattern));
+                        cart.setLayout(new Layout(type, null));
                     } else {
                         _layoutPatternField.setValue(null);
                     }
@@ -218,38 +218,39 @@ public class ShoppingCartSettingsForm extends ValidatedInterfaceComponent {
             }
         });
         layoutFieldGroup.add(_layoutTypeField);
-        _layoutPatternField = new Field<Layout.Pattern>(new FieldDefinition("pattern",
-                new EnumerationType<Layout.Pattern>(new LayoutPatternEnum()),
-                "An Asset Path Language (APL) expression. Only applicable if the layout type is custom.", null, 0, 1));
+        _layoutPatternField = new Field<PathExpression>(
+                new FieldDefinition("pattern", new EnumerationType<PathExpression>(new PathExpressionEnum(null)),
+                        "Expression to generate destination path of the object. Applicable only if the layout type is custom.",
+                        null, 0, 1));
         _layoutPatternField.setRenderOptions(new FieldRenderOptions().setWidth(200));
         if (cart.layout() != null && cart.layout().pattern() != null) {
-            Layout.Pattern.resolve(cart.layout().pattern().pattern(), new ObjectResolveHandler<Layout.Pattern>() {
+            PathExpressionSetRef.resolve(cart.layout().pattern(), new ObjectResolveHandler<PathExpression>() {
 
                 @Override
-                public void resolved(Pattern po) {
-                    _layoutPatternField.setInitialValue(po);
+                public void resolved(PathExpression pe) {
+                    _layoutPatternField.setInitialValue(pe);
                 }
             });
         }
-        _layoutPatternField.addListener(new FormItemListener<Layout.Pattern>() {
+        _layoutPatternField.addListener(new FormItemListener<PathExpression>() {
 
             @Override
-            public void itemValueChanged(FormItem<Pattern> f) {
-                Layout.Pattern pattern = f.value();
+            public void itemValueChanged(FormItem<PathExpression> f) {
+                PathExpression pattern = f.value();
                 Layout.Type type = _layoutTypeField.value();
                 if (type == Layout.Type.custom) {
                     if (pattern != null) {
-                        cart.setLayout(new Layout(type, pattern));
+                        cart.setLayout(new Layout(type, pattern.expression));
                     }
                 } else {
                     if (pattern == null) {
-                        cart.setLayout(new Layout(type, pattern));
+                        cart.setLayout(new Layout(type, null));
                     }
                 }
             }
 
             @Override
-            public void itemPropertyChanged(FormItem<Pattern> f, Property property) {
+            public void itemPropertyChanged(FormItem<PathExpression> f, Property property) {
 
             }
         });
@@ -257,13 +258,13 @@ public class ShoppingCartSettingsForm extends ValidatedInterfaceComponent {
         mainForm.add(layoutFieldGroup);
 
         if (cart.transcodes() != null) {
-            FieldGroup transcodesFieldGroup = new FieldGroup(new FieldDefinition("Data Transformation",
-                    ConstantType.DEFAULT, null, null, 1, 1));
+            FieldGroup transcodesFieldGroup = new FieldGroup(
+                    new FieldDefinition("Data Transformation", ConstantType.DEFAULT, null, null, 1, 1));
             for (Transcode t : cart.transcodes()) {
-                FieldGroup transcodeFieldGroup = new FieldGroup(new FieldDefinition("transcode", ConstantType.DEFAULT,
-                        null, null, 1, 1));
-                Field<String> transcodeFromField = new Field<String>(new FieldDefinition("from", ConstantType.DEFAULT,
-                        null, null, 1, 1));
+                FieldGroup transcodeFieldGroup = new FieldGroup(
+                        new FieldDefinition("transcode", ConstantType.DEFAULT, null, null, 1, 1));
+                Field<String> transcodeFromField = new Field<String>(
+                        new FieldDefinition("from", ConstantType.DEFAULT, null, null, 1, 1));
                 transcodeFromField.setValue(t.from());
                 transcodeFieldGroup.add(transcodeFromField);
                 Field<Transcode> transcodeToField = new Field<Transcode>(new FieldDefinition("to",

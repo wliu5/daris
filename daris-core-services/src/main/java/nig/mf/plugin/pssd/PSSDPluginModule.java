@@ -11,6 +11,11 @@ import arc.mf.plugin.http.HttpServlet;
 import arc.mf.plugin.http.HttpServletPluginModule;
 import daris.plugin.services.SvcCollectionTranscodeList;
 import daris.plugin.services.SvcCollectionTypeList;
+import daris.plugin.services.SvcProjectDictionaryCreate;
+import daris.plugin.services.SvcProjectDictionaryDestroy;
+import daris.plugin.services.SvcProjectDictionaryList;
+import daris.plugin.services.SvcProjectDictionaryNamespaceCreate;
+import daris.plugin.services.SvcProjectDictionaryNamespaceDescribe;
 import nig.mf.plugin.pssd.announcement.events.PSSDAnnouncementEvent;
 import nig.mf.plugin.pssd.announcement.events.PSSDAnnouncementEventFilterFactory;
 import nig.mf.plugin.pssd.dicom.NIGDicomAssetEngineFactory;
@@ -289,9 +294,6 @@ public class PSSDPluginModule implements HttpServletPluginModule {
         _services.add(new SvcShoppingCartOrder());
         _services.add(new SvcShoppingCartDestinationList());
         _services.add(new SvcShoppingCartCleanup());
-        _services.add(new SvcShoppingCartLayoutPatternList());
-        _services.add(new SvcShoppingCartLayoutPatternAdd());
-        _services.add(new SvcShoppingCartLayoutPatternRemove());
 
         _services.add(new SvcRepositoryDescriptionSet());
         _services.add(new SvcRepositoryDescribe());
@@ -386,6 +388,13 @@ public class PSSDPluginModule implements HttpServletPluginModule {
         _services.add(new daris.plugin.services.SvcProjectUserList());
         _services.add(new daris.plugin.services.SvcProjectUserRemove());
         _services.add(new daris.plugin.services.SvcProjectUserSet());
+        
+        _services.add(new daris.plugin.services.SvcObjectTagAdd());
+        _services.add(new daris.plugin.services.SvcObjectTagRemove());
+        
+        _services.add(new daris.plugin.services.SvcPathExpressionAdd());
+        _services.add(new daris.plugin.services.SvcPathExpressionList());
+        _services.add(new daris.plugin.services.SvcPathExpressionRemove());
 
         // MyTardis dataset import
         _services.add(new daris.plugin.experimental.mytardis.services.SvcMyTardisDatasetImport());

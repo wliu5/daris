@@ -13,7 +13,7 @@ public class ShoppingCartTemplate {
     public static final String NAME = "pssd";
 
     public static final String DEFAULT_LAYOUT = Layout.Type.custom.name();
-    public static final String DEFAULT_LAYOUT_PATTERN = Layout.Pattern.PSSD_DEFAULT.pattern;
+    public static final String DEFAULT_LAYOUT_PATTERN = Layout.DEFAULT_PATTERN;
 
     public static final String SERVICE_TEMPLATE_EXISTS = "shopping.cart.template.exists";
     public static final String SERVICE_TEMPLATE_DESCRIBE = "shopping.cart.template.describe";
@@ -26,8 +26,8 @@ public class ShoppingCartTemplate {
     }
 
     public static String getId(ServiceExecutor executor) throws Throwable {
-        return executor.execute(SERVICE_TEMPLATE_DESCRIBE, "<args><name>" + NAME + "</name></args>", null, null).value(
-                "shopping-cart-template/@id");
+        return executor.execute(SERVICE_TEMPLATE_DESCRIBE, "<args><name>" + NAME + "</name></args>", null, null)
+                .value("shopping-cart-template/@id");
     }
 
     public static String create(ServiceExecutor executor) throws Throwable {

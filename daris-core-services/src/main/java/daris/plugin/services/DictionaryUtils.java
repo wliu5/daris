@@ -2,6 +2,7 @@ package daris.plugin.services;
 
 import arc.mf.plugin.ServiceExecutor;
 import arc.xml.XmlDocMaker;
+import nig.mf.plugin.pssd.Project;
 
 public class DictionaryUtils {
 
@@ -52,6 +53,23 @@ public class DictionaryUtils {
             dm.add("definition", definition);
         }
         executor.execute("dictionary.entry.remove", dm.root());
+    }
+
+    public static boolean dictionaryNamespaceExists(ServiceExecutor executor, String cid) throws Throwable {
+        XmlDocMaker dm = new XmlDocMaker("args");
+        dm.add("namespace", Project.projectSpecificDictionaryNamespaceOf(cid));
+        return executor.execute("dictionary.namespace.exists", dm.root()).booleanValue("exists", false);
+    }
+
+    public static void createDictionaryNamespace(ServiceExecutor executor, String dictNS, String description)
+            throws Throwable {
+        XmlDocMaker dm = new XmlDocMaker("args");
+        dm.add("ifexists", "ignore");
+        dm.add("namespace", dictNS);
+        if (description != null) {
+            dm.add("description", description);
+        }
+        executor.execute("dictionary.namespace.create", dm.root());
     }
 
 }
