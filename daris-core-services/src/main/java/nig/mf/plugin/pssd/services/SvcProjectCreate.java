@@ -236,8 +236,6 @@ public class SvcProjectCreate extends PluginService {
 
                 // create project specific dictionary namespace
                 Project.createProjectSpecificDictionaryNamespace(executor(), cid);
-                Project.grantProjectSpecificDictionaryNamespacePermissions(
-                        executor(), cid);
                 
                 selfMemberRole = createProjectAsset(executor(), args, cid);
 

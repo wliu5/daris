@@ -1,4 +1,4 @@
-package nig.mf.plugin.pssd.services;
+package daris.plugin.services;
 
 import arc.mf.plugin.PluginService;
 import arc.mf.plugin.dtype.CiteableIdType;
@@ -36,7 +36,6 @@ public class SvcProjectDictionaryNamespaceCreate extends PluginService {
 	public void execute(Element args, Inputs inputs, Outputs arg2, XmlWriter w) throws Throwable {
 		String projectCid = args.value("cid");
 		Project.createProjectSpecificDictionaryNamespace(executor(), projectCid);
-		Project.grantProjectSpecificDictionaryNamespacePermissions(executor(), projectCid);
 	}
 
 	@Override

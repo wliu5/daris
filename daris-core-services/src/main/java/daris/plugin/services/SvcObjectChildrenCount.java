@@ -42,7 +42,7 @@ public class SvcObjectChildrenCount extends PluginService {
         String cid = args.value("cid");
         String id = args.value("id");
         if (cid == null && id != null) {
-            cid = ServiceUtils.getObjectIdentifiers(executor(), id, null).getValue();
+            cid = AssetUtils.getAssetIdentifiers(executor(), id, null).getValue();
         }
 
         long count = countChildren(executor(), cid);

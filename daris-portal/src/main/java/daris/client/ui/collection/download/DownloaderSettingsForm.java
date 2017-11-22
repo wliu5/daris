@@ -32,11 +32,12 @@ import arc.mf.dtype.IntegerType;
 import arc.mf.session.ServiceResponseHandler;
 import arc.mf.session.Session;
 import daris.client.model.collection.download.DownloaderSettings;
-import daris.client.model.collection.download.OutputPattern;
 import daris.client.model.collection.download.TargetPlatform;
 import daris.client.model.collection.messages.CollectionTranscodeList;
 import daris.client.model.object.DObjectRef;
 import daris.client.model.object.Parts;
+import daris.client.model.object.exports.PathExpression;
+import daris.client.model.object.exports.PathExpressionSetRef;
 import daris.client.ui.widget.LoadingMessage;
 
 public class DownloaderSettingsForm extends ValidatedInterfaceComponent {
@@ -70,7 +71,7 @@ public class DownloaderSettingsForm extends ValidatedInterfaceComponent {
         w.push("service", new String[] { "name", "daris.collection.transcode.list" });
         w.add("cid", _obj.id());
         w.pop();
-        w.add("service", new String[] { "name", "om.pssd.shoppingcart.layout-pattern.list" });
+        w.add("service", new String[] { "name", PathExpressionSetRef.SERVICE_NAME });
         Session.execute("service.execute", w.document(), new ServiceResponseHandler() {
 
             @Override
@@ -80,17 +81,15 @@ public class DownloaderSettingsForm extends ValidatedInterfaceComponent {
                 int nbAssets = se.intValue("@nbe", -1);
                 Map<String, List<String>> availableTranscodes = CollectionTranscodeList.instantiateAvailableTranscodes(
                         xe.elements("reply[@service='daris.collection.transcode.list']/response/transcode"));
-                Map<String, OutputPattern> availableOutputPatterns = OutputPattern
-                        .instantiateShoppingCartLayoutPatterns(xe.elements(
-                                "reply[@service='om.pssd.shoppingcart.layout-pattern.list']/response/layout-pattern"));
+                List<PathExpression> availableOutputPatterns = PathExpressionSetRef.instantiate(
+                        xe.elements("reply[@service='" + PathExpressionSetRef.SERVICE_NAME + "']/response/expression"));
                 updateForm(nbAssets, totalSize, availableTranscodes, availableOutputPatterns);
             }
         });
     }
 
     private void updateForm(final int nbAssets, final long totalSize,
-            final Map<String, List<String>> availableTranscodes,
-            final Map<String, OutputPattern> availableOutputPatterns) {
+            final Map<String, List<String>> availableTranscodes, final List<PathExpression> availableOutputPatterns) {
         if (_form != null) {
             removeMustBeValid(_form);
         }
@@ -185,30 +184,28 @@ public class DownloaderSettingsForm extends ValidatedInterfaceComponent {
          * output patterns;
          */
         if (availableOutputPatterns != null && !availableOutputPatterns.isEmpty()) {
-            OutputPattern firstAvailable = availableOutputPatterns.values().iterator().next();
-            _settings.setOutputPattern(firstAvailable.pattern());
+            PathExpression firstAvailable = availableOutputPatterns.get(0);
+            _settings.setOutputPattern(firstAvailable.expression);
             if (availableOutputPatterns.size() > 1) {
-                List<EnumerationType.Value<OutputPattern>> values = new ArrayList<EnumerationType.Value<OutputPattern>>();
-                Set<String> names = availableOutputPatterns.keySet();
-                for (String name : names) {
-                    OutputPattern pattern = availableOutputPatterns.get(name);
-                    EnumerationType.Value<OutputPattern> value = new EnumerationType.Value<OutputPattern>(
-                            pattern.name(), pattern.description(), pattern);
+                List<EnumerationType.Value<PathExpression>> values = new ArrayList<EnumerationType.Value<PathExpression>>();
+                for (PathExpression pe : availableOutputPatterns) {
+                    EnumerationType.Value<PathExpression> value = new EnumerationType.Value<PathExpression>(
+                            pe.displayName(), null, pe);
                     values.add(value);
                 }
-                Field<OutputPattern> outputPatternField = new Field<OutputPattern>(new FieldDefinition("Output Pattern",
-                        "output-pattern", new EnumerationType<OutputPattern>(values), "The output file path pattern.",
-                        null, 0, 1));
+                Field<PathExpression> outputPatternField = new Field<PathExpression>(new FieldDefinition(
+                        "Output Pattern", "output-pattern", new EnumerationType<PathExpression>(values),
+                        "The output file path pattern.", null, 0, 1));
                 outputPatternField.setInitialValue(firstAvailable, false);
-                outputPatternField.addListener(new FormItemListener<OutputPattern>() {
+                outputPatternField.addListener(new FormItemListener<PathExpression>() {
 
                     @Override
-                    public void itemValueChanged(FormItem<OutputPattern> f) {
-                        _settings.setOutputPattern(f.value() == null ? null : f.value().pattern());
+                    public void itemValueChanged(FormItem<PathExpression> f) {
+                        _settings.setOutputPattern(f.value() == null ? null : f.value().expression);
                     }
 
                     @Override
-                    public void itemPropertyChanged(FormItem<OutputPattern> f, Property property) {
+                    public void itemPropertyChanged(FormItem<PathExpression> f, Property property) {
 
                     }
                 });

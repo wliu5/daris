@@ -2,9 +2,6 @@ package nig.mf.plugin.pssd.services;
 
 import java.util.List;
 
-import nig.mf.plugin.pssd.ApplicationProperty;
-import nig.mf.plugin.pssd.sc.Layout;
-import nig.mf.plugin.pssd.sc.Status;
 import arc.mf.plugin.PluginService;
 import arc.mf.plugin.ServiceExecutor;
 import arc.mf.plugin.dtype.EnumType;
@@ -13,6 +10,8 @@ import arc.mf.plugin.dtype.LongType;
 import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
+import daris.plugin.services.SvcPathExpressionList;
+import nig.mf.plugin.pssd.sc.Status;
 
 public class SvcShoppingCartDescribe extends PluginService {
 
@@ -100,8 +99,9 @@ public class SvcShoppingCartDescribe extends PluginService {
             String url = dde.value();
             if (url.startsWith(SINK_URL_PREFIX)) {
                 String sinkName = url.substring(SINK_URL_PREFIX.length());
-                String sinkType = executor.execute("sink.describe", "<args><name>" + sinkName + "</name></args>", null,
-                        null).value("sink/destination/type");
+                String sinkType = executor
+                        .execute("sink.describe", "<args><name>" + sinkName + "</name></args>", null, null)
+                        .value("sink/destination/type");
                 dde.add(new XmlDoc.Attribute("sink-type", sinkType));
             }
         }
@@ -114,11 +114,14 @@ public class SvcShoppingCartDescribe extends PluginService {
         // @formatter:on
         XmlDoc.Element lpe = ce.element("layout/layout-pattern");
         if (lpe != null) {
-            Layout.Pattern lp = ApplicationProperty.ShoppingCartLayoutPattern.getPattern(executor, lpe.value());
-            if (lp != null) {
-                lpe.add(new XmlDoc.Attribute("name", lp.name));
-                if (lp.description != null) {
-                    lpe.add(new XmlDoc.Attribute("description", lp.description));
+            String lp = lpe.value();
+            List<XmlDoc.Element> ees = executor.execute(SvcPathExpressionList.SERVICE_NAME).elements("expression");
+            if (ees != null) {
+                for (XmlDoc.Element ee : ees) {
+                    if (lp.equals(ee.value())) {
+                        lpe.add(ee.attribute("name"));
+                        break;
+                    }
                 }
             }
         }

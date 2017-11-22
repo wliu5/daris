@@ -52,7 +52,7 @@ public class SvcProjectUserList extends PluginService {
 
     @Override
     public void execute(Element args, Inputs arg1, Outputs arg2, XmlWriter w) throws Throwable {
-        SimpleEntry<String, String> ids = ServiceUtils.getObjectIdentifiers(executor(), args);
+        SimpleEntry<String, String> ids = AssetUtils.getAssetIdentifiers(executor(), args);
         String cid = ids.getValue();
 
         String include = args.stringValue("include", "all");

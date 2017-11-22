@@ -41,7 +41,7 @@ public class SvcObjectAttachmentList extends PluginService {
 
     public void execute(XmlDoc.Element args, Inputs in, Outputs out, XmlWriter w) throws Throwable {
 
-        SimpleEntry<String, String> ids = ServiceUtils.getObjectIdentifiers(executor(), args);
+        SimpleEntry<String, String> ids = AssetUtils.getAssetIdentifiers(executor(), args);
         String id = ids.getKey();
         List<XmlDoc.Element> aaes = executor().execute("asset.get",
                 "<args><id>" + id + "</id><get-related-meta>true</get-related-meta></args>", null, null)

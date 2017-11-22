@@ -103,16 +103,16 @@ public class SvcObjectAttach extends PluginService {
 
     public void execute(XmlDoc.Element args, Inputs inputs, Outputs out, XmlWriter w) throws Throwable {
 
-        SimpleEntry<String, String> ids = ServiceUtils.getObjectIdentifiers(executor(), args);
+        SimpleEntry<String, String> ids = AssetUtils.getAssetIdentifiers(executor(), args);
         String id = ids.getKey();
         IfExists ifExists = IfExists.fromString(args.value("ifexists"), IfExists.RENAME);
         String attachmentName = args.value("attachment/name");
         String attachmentDescription = args.value("attachment/description");
 
-        XmlDoc.Element ae = ServiceUtils.getAssetMeta(executor(), id, null);
+        XmlDoc.Element ae = AssetUtils.getAssetMeta(executor(), id, null);
         String namespace = ae.value("namespace");
 
-        boolean exists = ServiceUtils.assetExists(executor(), "path=" + namespace + "/" + attachmentName);
+        boolean exists = AssetUtils.assetExists(executor(), "path=" + namespace + "/" + attachmentName);
 
         if (exists) {
             if (ifExists == IfExists.ERROR) {

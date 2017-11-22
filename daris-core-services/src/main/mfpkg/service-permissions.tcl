@@ -185,18 +185,6 @@ actor.grant :role -type role service-user :type plugin:service :name om.pssd.sho
 # service: om.pssd.shoppingcart.exists
 actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.exists
 
-# service: om.pssd.shoppingcart.layout-pattern.add
-actor.grant :type plugin:service :name om.pssd.shoppingcart.layout-pattern.add :perm < :access ADMINISTER :resource -type service application.property.* >
-actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.layout-pattern.add
-
-# service: om.pssd.shoppingcart.layout-pattern.list
-actor.grant :type plugin:service :name om.pssd.shoppingcart.layout-pattern.list :perm < :access ADMINISTER :resource -type service application.property.* >
-actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.layout-pattern.list
-
-# service: om.pssd.shoppingcart.layout-pattern.remove
-actor.grant :type plugin:service :name om.pssd.shoppingcart.layout-pattern.remove :perm < :access ADMINISTER :resource -type service application.property.* >
-actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.layout-pattern.remove
-
 # service:  om.pssd.shoppingcart.order 
 actor.grant :type plugin:service :name om.pssd.shoppingcart.order :perm < :access ADMINISTER :resource -type service application.property.* >
 actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.order
@@ -338,4 +326,11 @@ actor.grant :role -type role service-user :type plugin:service :name daris.objec
 actor.grant :role -type role service-user :type plugin:service :name daris.dicom.onsend.user.list
 
 actor.grant :perm < :access ADMINISTER :resource -type service server.java.environment > :type plugin:service :name daris.downloader.get
+
+actor.grant :role -type role service-user :type plugin:service :name daris.object.tag.add
+actor.grant :role -type role service-user :type plugin:service :name daris.object.tag.remove
+
+actor.grant :role -type role service-user :type plugin:service :name daris.path.expression.add
+actor.grant :role -type role service-user :type plugin:service :name daris.path.expression.list
+actor.grant :role -type role service-user :type plugin:service :name daris.path.expression.remove
 

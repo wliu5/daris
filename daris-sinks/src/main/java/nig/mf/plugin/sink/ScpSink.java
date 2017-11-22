@@ -191,10 +191,9 @@ public class ScpSink implements DataSinkImpl {
         if (params.password != null) {
             builder.setUserCredentials(params.user, params.password);
         } else {
-            builder.setUserCredentials(params.user, params.privateKey,
-                        params.passphrase);
+            builder.setUserCredentials(params.user, params.privateKey, params.passphrase);
         }
-        Connection cxn  = builder.build();
+        Connection cxn = builder.build();
         return cxn.createScpPutClient(params.directory, params.dirMode, params.fileMode);
     }
 
@@ -230,6 +229,8 @@ public class ScpSink implements DataSinkImpl {
         // System.out.println("streamMimeType: " + streamMimeType);
 //        System.out.println("multi-transfer: " + (multipleTransferContext != null));
         // @formatter:on
+        
+        // TODO DEBUG jsch
         Params params = Params.parse(parameters);
         final ScpPutClient scp = multipleTransferContext == null ? createScpPutClient(params)
                 : (ScpPutClient) multipleTransferContext;

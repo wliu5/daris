@@ -213,18 +213,6 @@ if { [info exists updateSCTemplate] } {
 }
 om.pssd.shoppingcart.template.create :replace $replaceSCT
 
-# ============================================================================
-# Install the secondary shopping cart layout-pattern: pssd-filename-preserved
-# ============================================================================
-if { [xexists layout-pattern\[@name='pssd-filename-preserved'\] [om.pssd.shoppingcart.layout-pattern.list]] == 0 } {
-    try {
-        om.pssd.shoppingcart.layout-pattern.add \
-            :name pssd-filename-preserved \
-            :description pssd-filename-preserved \
-            :pattern "cid(-7,-5)/cid(-7,-4)/cid(-7,-3)/cid(-7,-2)/replace(if-null(variable(tx-to-type),xpath(asset/type)),'/','_')/if-null(xpath(daris:pssd-filename/original), cid(-1), xpath(daris:pssd-filename/original))if-null(xpath(daris:pssd-filename/original), if-null(xpath(daris:pssd-object/name),'','_'),'')if-null(xpath(daris:pssd-filename/original),xpath(daris:pssd-object/name),'')" 
-    } catch { Throwable t } {
-    }
-}
 
 #=============================================================================
 # Set up ANDS XSLT project meta-data harvesting asset

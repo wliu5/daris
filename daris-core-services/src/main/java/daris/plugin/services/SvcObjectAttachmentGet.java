@@ -62,10 +62,10 @@ public class SvcObjectAttachmentGet extends PluginService {
 
     public void execute(XmlDoc.Element args, Inputs in, Outputs outputs, XmlWriter w) throws Throwable {
 
-        SimpleEntry<String, String> ids = ServiceUtils.getObjectIdentifiers(executor(), args);
+        SimpleEntry<String, String> ids = AssetUtils.getAssetIdentifiers(executor(), args);
         String id = ids.getKey();
         String cid = ids.getValue();
-        Collection<String> allAids = ServiceUtils.getAssetMeta(executor(), id, null)
+        Collection<String> allAids = AssetUtils.getAssetMeta(executor(), id, null)
                 .values("related[@type='" + SvcObjectAttach.RELATIONSHIP_TYPE + "']/to");
         if (allAids == null || allAids.isEmpty()) {
             throw new Exception("Object " + cid + " does not have attachment.");

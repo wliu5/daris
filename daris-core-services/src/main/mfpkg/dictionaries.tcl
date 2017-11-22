@@ -33,6 +33,17 @@ proc createDict_pssd_project_cid_roots {} {
 }
 
 # ============================================================================
+# This dictionary object path expressions (layout patterns).
+# ============================================================================
+proc createDict_path_expression {} {
+	if { [xvalue exists [dictionary.exists :name daris:daris.path.expression]] == "false" } {
+		dictionary.create :name daris:daris.path.expression :description "Path expressions to generate output/destination paths when exporting daris objects." :case-sensitive true
+	}
+    addDictionaryEntry daris:daris.path.expression "daris-default" "cid(-7,-5)/cid(-7,-4)/cid(-7,-3)/cid(-7,-2)/replace(if-null(variable(tx-to-type),xpath(asset/type)),'/','_')/if-null(xpath(daris:pssd-filename/original), cid(-1), xpath(daris:pssd-filename/original))if-null(xpath(daris:pssd-filename/original), if-null(xpath(daris:pssd-object/name),'','_'),'')if-null(xpath(daris:pssd-filename/original),xpath(daris:pssd-object/name),'')"
+    addDictionaryEntry daris:daris.path.expression "daris-deprecated" "cid(-7,-5)/cid(-7,-4)/cid(-7,-3)/cid(-7,-2)/replace(if-null(variable(tx-to-type), xpath(asset/type)),'/','_')/cid(-1)if-null(xpath(pssd-object/name),'','_')xpath(pssd-object/name)"
+}
+
+# ============================================================================
 # This dictionary supplies keywords.
 # ============================================================================
 proc createDict_pssd_research_keywords {} {
@@ -242,6 +253,7 @@ proc createUpdatePSSDDicts { } {
     createDict_pssd_project_cid_roots
     createDict_pssd_research_keywords
     create_dict_pssd_study_otherid_types
+    createDict_path_expression
 }
 
 # ============================================================================
@@ -252,7 +264,8 @@ proc destroyPSSDDicts { } {
 	            daris:pssd.human.name.prefix daris:pssd.publication.identifier.type \
 	            daris:pssd.funding.organization daris:pssd.ethics.organization \
 	            daris:pssd.project.asset.namespaces daris:pssd.project.cid.rootnames \
-	            daris:pssd.research.keyword daris:pssd.study.other-id.types }
+	            daris:pssd.research.keyword daris:pssd.study.other-id.types \
+                daris:daris.path.expression }
 	foreach dict $dicts {
 		if { [xvalue exists [dictionary.exists :name $dict]] == "true" } {
 			dictionary.destroy :name $dict

@@ -75,7 +75,7 @@ public class SvcProjectUserAdd extends PluginService {
 
     @Override
     public void execute(final Element args, Inputs arg1, Outputs arg2, XmlWriter w) throws Throwable {
-        final XmlDoc.Element ae = ServiceUtils.getAssetMeta(executor(), args.value("id"), args.value("cid"));
+        final XmlDoc.Element ae = AssetUtils.getAssetMeta(executor(), args.value("id"), args.value("cid"));
 
         /*
          * validate if it is a project, also checks the user self has sufficient

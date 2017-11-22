@@ -42,7 +42,7 @@ public class SvcObjectPathFind extends PluginService {
 
     @Override
     public void execute(Element args, Inputs arg1, Outputs arg2, XmlWriter w) throws Throwable {
-        String cid = ServiceUtils.getObjectIdentifiers(executor(), args).getValue();
+        String cid = AssetUtils.getAssetIdentifiers(executor(), args).getValue();
 
         List<String> parentCids = getParentCids(cid);
         if (parentCids != null && !parentCids.isEmpty()) {
@@ -97,7 +97,7 @@ public class SvcObjectPathFind extends PluginService {
     }
 
     private void addParent(ServiceExecutor executor, String parentCid, int depth, XmlWriter w) throws Throwable {
-        XmlDoc.Element ae = ServiceUtils.getAssetMeta(executor, null, parentCid);
+        XmlDoc.Element ae = AssetUtils.getAssetMeta(executor, null, parentCid);
         String assetId = ae.value("@id");
         String type = ae.value("meta/daris:pssd-object/type");
         String name = ae.value("meta/daris:pssd-object/name");
@@ -107,7 +107,7 @@ public class SvcObjectPathFind extends PluginService {
     }
 
     private void addObject(ServiceExecutor executor, String cid, XmlWriter w) throws Throwable {
-        XmlDoc.Element ae = ServiceUtils.getAssetMeta(executor, null, cid);
+        XmlDoc.Element ae = AssetUtils.getAssetMeta(executor, null, cid);
         String assetId = ae.value("@id");
         String type = ae.value("meta/daris:pssd-object/type");
         String name = ae.value("meta/daris:pssd-object/name");
