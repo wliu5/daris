@@ -50,14 +50,14 @@ public class SvcAssetContentPrune extends PluginService {
 		Boolean prune = args.booleanValue("prune",  false);
 		prune (executor(), where, prune, w);
 	}
-	
+
 	private  void prune  (ServiceExecutor executor, String where, Boolean prune, XmlWriter w) throws Throwable {
-	
-		
+
+
 		if (where==null) {
 			where = "asset has content";
 		} else {
-		   where = where + " and (asset has content)";
+			where = where + " and (asset has content)";
 		}
 		XmlDocMaker dm = new XmlDocMaker("args");
 		dm.add("where", where);
@@ -72,26 +72,27 @@ public class SvcAssetContentPrune extends PluginService {
 		for (String id : ids) {
 			XmlDoc.Element asset = AssetUtil.getAsset(executor, null, id);
 			String versions = asset.value("asset/content/@versions");
-			System.out.println("versions="+versions);
-			Integer iversions = Integer.parseInt(versions);
-			if (iversions>1) {
-				String currentSizeS = asset.value("asset/content/size");
-				String totalSizeS = asset.value("asset/content/@total-size");
-				Integer cs = Integer.parseInt(currentSizeS);
-				Integer ts = Integer.parseInt(totalSizeS);
-				Integer rs = ts - cs;
-				recoverySize += rs;
-				totalSize += ts;
-				nAssets++;
-				w.add("id", new String[]{"current-size", currentSizeS, "total-size", ""+ts, "recovery-size", ""+rs}, id);
-				if (prune) {
-					dm = new XmlDocMaker("args");
-					dm.add("id", id);
-					executor.execute("asset.prune", dm.root());
+			if (versions!=null) {
+				Integer iversions = Integer.parseInt(versions);
+				if (iversions>1) {
+					String currentSizeS = asset.value("asset/content/size");
+					String totalSizeS = asset.value("asset/content/@total-size");
+					Integer cs = Integer.parseInt(currentSizeS);
+					Integer ts = Integer.parseInt(totalSizeS);
+					Integer rs = ts - cs;
+					recoverySize += rs;
+					totalSize += ts;
+					nAssets++;
+					w.add("id", new String[]{"current-size", currentSizeS, "total-size", ""+ts, "recovery-size", ""+rs}, id);
+					if (prune) {
+						dm = new XmlDocMaker("args");
+						dm.add("id", id);
+						executor.execute("asset.prune", dm.root());
+					}
 				}
 			}
 		}
-		w.add("number", new String[]{"total-size", ""+totalSize, "recovery-size", ""+""+recoverySize}, nAssets);
+		w.add("total-number", new String[]{"total-size", ""+totalSize, "total-recovery-size", ""+""+recoverySize}, nAssets);
 
 	}
 }
