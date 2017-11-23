@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import nig.mf.plugin.util.AssetUtil;
 import arc.mf.plugin.PluginService;
+import arc.mf.plugin.PluginTask;
 import arc.mf.plugin.PluginService.Interface.Element;
 import arc.mf.plugin.ServiceExecutor;
 import arc.mf.plugin.dtype.AssetType;
@@ -26,6 +27,7 @@ public class SvcAssetContentPrune extends PluginService {
 		_defn = new Interface();
 		_defn.add(new Element("where", StringType.DEFAULT, "Restrict selection of assets.  A clause selecting only assets with content will be automatically added.", 0, 1));
 		_defn.add (new Element("prune", BooleanType.DEFAULT, "Actually prune assets (default false).   If false just list", 0, 1));
+		_defn.add (new Element("list-all", BooleanType.DEFAULT, "List every asset found (true).  The default (false) is to just list the totals.", 0, 1));
 	}
 
 	public String name() {
@@ -33,7 +35,7 @@ public class SvcAssetContentPrune extends PluginService {
 	}
 
 	public String description() {
-		return "Finds and optionally prunes assets that have content and multiple versions. All sizes listed in the output are in bytes";
+		return "Finds and optionally prunes assets that have content and multiple versions. All sizes listed in the output are in bytes. Is abortable and checked every asset.";
 	}
 
 	public Interface definition() {
@@ -43,15 +45,22 @@ public class SvcAssetContentPrune extends PluginService {
 	public Access access() {
 		return ACCESS_ADMINISTER;
 	}
+	
+	public boolean canBeAborted() {
+
+		return true;
+	}
+
 
 	public void execute(XmlDoc.Element args, Inputs in, Outputs out, XmlWriter w) throws Throwable {
 
 		String where = args.value("where");
 		Boolean prune = args.booleanValue("prune",  false);
-		prune (executor(), where, prune, w);
+		Boolean listAll = args.booleanValue("list-all",  false);
+		prune (executor(), where, prune, listAll, w);
 	}
 
-	private  void prune  (ServiceExecutor executor, String where, Boolean prune, XmlWriter w) throws Throwable {
+	private  void prune  (ServiceExecutor executor, String where, Boolean prune, Boolean listAll, XmlWriter w) throws Throwable {
 
 
 		if (where==null) {
@@ -70,6 +79,7 @@ public class SvcAssetContentPrune extends PluginService {
 		Integer totalSize = 0;
 		Integer nAssets = 0;
 		for (String id : ids) {
+			PluginTask.checkIfThreadTaskAborted();
 			XmlDoc.Element asset = AssetUtil.getAsset(executor, null, id);
 			String versions = asset.value("asset/content/@versions");
 			if (versions!=null) {
@@ -83,7 +93,9 @@ public class SvcAssetContentPrune extends PluginService {
 					recoverySize += rs;
 					totalSize += ts;
 					nAssets++;
-					w.add("id", new String[]{"current-size", currentSizeS, "total-size", ""+ts, "recovery-size", ""+rs}, id);
+					if (listAll) {
+						w.add("id", new String[]{"current-size", currentSizeS, "total-size", ""+ts, "recovery-size", ""+rs}, id);
+					}
 					if (prune) {
 						dm = new XmlDocMaker("args");
 						dm.add("id", id);
