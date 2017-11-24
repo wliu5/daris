@@ -35,7 +35,7 @@ public class SvcAssetContentPrune extends PluginService {
 	}
 
 	public String description() {
-		return "Finds and optionally prunes assets that have content and multiple versions. All sizes listed in the output are in bytes. Is abortable and checked every asset.";
+		return "Finds and optionally prunes DataSet assets that have content and multiple versions of content. All sizes listed in the output are in bytes. Is abortable and checked every asset.";
 	}
 
 	public Interface definition() {
