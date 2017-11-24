@@ -30,6 +30,7 @@ public class EssentialsPluginModule implements PluginModule {
         _svs.add(new SvcAssetCheck());
         _svs.add(new SvcAssetContentChecksumGenerate());
         _svs.add(new SvcAssetContentStringReplace());
+        _svs.add(new SvcAssetContentPrune());
         _svs.add(new SvcAssetDocCopy());
         _svs.add(new SvcAssetDocRemove());
         _svs.add(new SvcAssetDocElementCopy());

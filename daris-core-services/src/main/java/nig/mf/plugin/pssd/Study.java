@@ -463,7 +463,6 @@ public class Study {
         }
 
         // Do it
-        System.out.println("dm=" + dm.root());
         executor.execute("asset.set", dm.root());
 
         // Generate system event
