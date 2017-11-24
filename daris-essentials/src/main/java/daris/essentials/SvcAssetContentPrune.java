@@ -99,6 +99,7 @@ public class SvcAssetContentPrune extends PluginService {
 					if (prune) {
 						dm = new XmlDocMaker("args");
 						dm.add("id", id);
+						dm.add("keep-content", "true");
 						executor.execute("asset.prune", dm.root());
 					}
 				}
