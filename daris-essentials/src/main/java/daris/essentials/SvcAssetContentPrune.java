@@ -75,8 +75,8 @@ public class SvcAssetContentPrune extends PluginService {
 		Collection<String> ids = r.values("id");
 		if (ids==null) return;
 		//
-		Integer recoverySize = 0;
-		Integer totalSize = 0;
+		Long recoverySize = 0L;
+		Long totalSize = 0L;
 		Integer nAssets = 0;
 		for (String id : ids) {
 			PluginTask.checkIfThreadTaskAborted();
@@ -87,9 +87,9 @@ public class SvcAssetContentPrune extends PluginService {
 				if (iversions>1) {
 					String currentSizeS = asset.value("asset/content/size");
 					String totalSizeS = asset.value("asset/content/@total-size");
-					Integer cs = Integer.parseInt(currentSizeS);
-					Integer ts = Integer.parseInt(totalSizeS);
-					Integer rs = ts - cs;
+					Long cs = Long.parseLong(currentSizeS);
+				    Long ts = Long.parseLong(totalSizeS);
+					Long rs = ts - cs;
 					recoverySize += rs;
 					totalSize += ts;
 					nAssets++;
