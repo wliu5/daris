@@ -59,7 +59,13 @@ public class JschConnection implements io.github.xtman.ssh.client.Connection {
         _jschSession = _jsch.getSession(_cxnDetails.username(), _cxnDetails.host(), _cxnDetails.port());
         _jschSession.setConfig("StrictHostKeyChecking", _cxnDetails.hostKey() != null ? "yes" : "no");
         _jschSession.setUserInfo(userInfo());
+        if (_verbose) {
+            System.out.print("opening connection to " + _cxnDetails.host() + ":" + _cxnDetails.port() + " ...");
+        }
         _jschSession.connect();
+        if (_verbose) {
+            System.out.println("done");
+        }
     }
 
     private com.jcraft.jsch.Channel openChannel(String type) throws Throwable {
@@ -88,9 +94,12 @@ public class JschConnection implements io.github.xtman.ssh.client.Connection {
         try {
             clearChannels();
         } finally {
+            if (_verbose) {
+                System.out.print("closing connection to " + _cxnDetails.host() + ":" + _cxnDetails.port() + " ...");
+            }
             _jschSession.disconnect();
             if (_verbose) {
-                System.out.println("Thread " + Thread.currentThread().getId() + ": closed ssh connection.");
+                System.out.println("done");
             }
         }
     }

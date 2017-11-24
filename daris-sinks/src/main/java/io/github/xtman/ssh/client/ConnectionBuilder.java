@@ -24,7 +24,7 @@ public class ConnectionBuilder {
     }
 
     public ConnectionBuilder() {
-        this(null);
+        this("jsch");
     }
 
     public ConnectionBuilder setImplementation(String impl) {
