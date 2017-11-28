@@ -10,12 +10,12 @@ import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
 
-public class SvcDataSetsNoContentList extends PluginService {
+public class SvcAssetsNoContentList extends PluginService {
 
 
 	private Interface _defn;
 
-	public SvcDataSetsNoContentList() {
+	public SvcAssetsNoContentList() {
 		_defn = new Interface();
 		_defn.add(new Interface.Element("cid", CiteableIdType.DEFAULT, "Parent CID(s) to check.", 1, Integer.MAX_VALUE));
 		_defn.add(new Interface.Element("model", StringType.DEFAULT, "A model type to filter assets by.", 0, 1));
@@ -81,7 +81,7 @@ public class SvcDataSetsNoContentList extends PluginService {
 				Collection<String> ids = r.values("cid");
 				if (ids!=null) {
 					sb.append("CID " + cid + " contains " + ids.size() + " empty assets " + text + " - investigate \n");
-					w.add("cid", new String[]{"number-empty-datasets", ""+ids.size()}, cid);
+					w.add("cid", new String[]{"number-empty-assets", ""+ids.size()}, cid);
 					some = true;
 				}				
 			}
