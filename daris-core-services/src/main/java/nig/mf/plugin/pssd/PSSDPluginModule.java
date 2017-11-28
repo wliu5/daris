@@ -11,7 +11,6 @@ import arc.mf.plugin.http.HttpServlet;
 import arc.mf.plugin.http.HttpServletPluginModule;
 import daris.plugin.services.SvcCollectionTranscodeList;
 import daris.plugin.services.SvcCollectionTypeList;
-import daris.plugin.services.SvcDataSetsNoContentList;
 import daris.plugin.services.SvcProjectDictionaryCreate;
 import daris.plugin.services.SvcProjectDictionaryDestroy;
 import daris.plugin.services.SvcProjectDictionaryList;
@@ -52,8 +51,6 @@ public class PSSDPluginModule implements HttpServletPluginModule {
         _services.add(new SvcAnnouncementList());
 
         _services.add(new SvcAssetTemplateNamespaceReplace());
-        
-        _services.add(new SvcDataSetsNoContentList());
 
         _services.add(new SvcRoleTypeDescribe());
         _services.add(new SvcRoleList());
