@@ -154,10 +154,13 @@ public class GanymedScpPutClient implements io.github.xtman.ssh.client.ScpPutCli
          * go to base dir
          */
         if (_verbose) {
-            System.out.println("Sending command: " + cmd);
+            System.out.print("open exec channel by sending command: '" + cmd.substring(0, cmd.length()-1) + "\\n' ... ");
         }
         _session.execCommand(cmd);
         checkResponse(_cin);
+        if (_verbose) {
+            System.out.println("done");
+        }
 
         _initialized = true;
     }
@@ -218,11 +221,14 @@ public class GanymedScpPutClient implements io.github.xtman.ssh.client.ScpPutCli
             String cmd = String.format("T%d 0 %d 0\n", mtime, mtime);
 
             if (_verbose) {
-                System.out.println("Sending command: " + cmd);
+                System.out.print("sending command: '" + cmd.substring(0, cmd.length()-1) + "\\n' ... ");
             }
             _cout.write(cmd.getBytes(encoding()));
             _cout.flush();
             checkResponse(_cin);
+            if (_verbose) {
+                System.out.println("done");
+            }
         }
         // send file mode, length and name
         String fileName = PathUtils.getLastComponent(dstPath);
@@ -231,17 +237,27 @@ public class GanymedScpPutClient implements io.github.xtman.ssh.client.ScpPutCli
         String cmd = sb.toString();
 
         if (_verbose) {
-            System.out.println("Sending command: " + cmd);
+            System.out.print("sending command: '" + cmd.substring(0, cmd.length()-1) + "\\n' ... ");
         }
         _cout.write(cmd.getBytes(encoding()));
         _cout.flush();
         checkResponse(_cin);
+        if (_verbose) {
+            System.out.println("done");
+        }
 
         // send file content
+        if (_verbose) {
+            System.out.print("sending file content ... ");
+        }
         StreamUtils.copy(in, length, _cout);
         // _cout.flush();
         _cout.write(new byte[] { 0 });
         _cout.flush();
+        checkResponse(_cin);
+        if (_verbose) {
+            System.out.println("done");
+        }
 
         /*
          * back to base dir
@@ -333,11 +349,14 @@ public class GanymedScpPutClient implements io.github.xtman.ssh.client.ScpPutCli
     private void pushDir(String dirName) throws IOException {
         String cmd = String.format("D%04o 0 %s\n", directoryMode(), dirName);
         if (_verbose) {
-            System.out.println("Sending command: " + cmd);
+            System.out.print("sending command: '" + cmd.substring(0, cmd.length()-1) + "\\n' ... ");
         }
         _cout.write(cmd.getBytes(encoding()));
         _cout.flush();
         checkResponse(_cin);
+        if (_verbose) {
+            System.out.println("done");
+        }
     }
 
     /**
@@ -348,11 +367,14 @@ public class GanymedScpPutClient implements io.github.xtman.ssh.client.ScpPutCli
     private void popDir() throws IOException {
         String cmd = "E\n";
         if (_verbose) {
-            System.out.println("Sending command: " + cmd);
+            System.out.print("sending command: '" + cmd.substring(0, cmd.length()-1) + "\\n' ... ");
         }
         _cout.write(cmd.getBytes(encoding()));
         _cout.flush();
         checkResponse(_cin);
+        if (_verbose) {
+            System.out.println("done");
+        }
     }
 
     private static void checkResponse(InputStream in) throws IOException {
@@ -412,14 +434,23 @@ public class GanymedScpPutClient implements io.github.xtman.ssh.client.ScpPutCli
 
             }
             try {
+                if (_verbose) {
+                    System.out.print("closing output stream ... ");
+                }
                 _session.getStdout().close();
+                if (_verbose) {
+                    System.out.println("done");
+                }
             } catch (Throwable e) {
 
             }
             try {
+                if (_verbose) {
+                    System.out.print("closing exec channel ... ");
+                }
                 _session.close();
                 if (_verbose) {
-                    System.out.println("Thread " + Thread.currentThread().getId() + ": closed scp.put session.");
+                    System.out.println("closed");
                 }
             } finally {
                 _connection.removeSession(_session);

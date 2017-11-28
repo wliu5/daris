@@ -139,11 +139,14 @@ public class JschScpPutClient implements io.github.xtman.ssh.client.ScpPutClient
             String cmd = String.format("T%d 0 %d 0\n", mtime, mtime);
 
             if (_verbose) {
-                System.out.println("Sending command: " + cmd);
+                System.out.print("sending command: '" + cmd.substring(0, cmd.length() - 1) + "\\n' ... ");
             }
             _cout.write(cmd.getBytes(encoding()));
             _cout.flush();
             checkResponse(_cin);
+            if (_verbose) {
+                System.out.println("done");
+            }
         }
         // send file mode, length and name
         String fileName = PathUtils.getLastComponent(dstPath);
@@ -152,17 +155,27 @@ public class JschScpPutClient implements io.github.xtman.ssh.client.ScpPutClient
         String cmd = sb.toString();
 
         if (_verbose) {
-            System.out.println("Sending command: " + cmd);
+            System.out.print("sending command: '" + cmd.substring(0, cmd.length() - 1) + "\\n' ... ");
         }
         _cout.write(cmd.getBytes(encoding()));
         _cout.flush();
         checkResponse(_cin);
+        if (_verbose) {
+            System.out.println("done");
+        }
 
+        if (_verbose) {
+            System.out.print("sending file content ... ");
+        }
         // send file content
         StreamUtils.copy(in, length, _cout);
         // _cout.flush();
         _cout.write(new byte[] { 0 });
         _cout.flush();
+        checkResponse(_cin);
+        if (_verbose) {
+            System.out.println("done");
+        }
 
         /*
          * back to base dir
@@ -203,7 +216,25 @@ public class JschScpPutClient implements io.github.xtman.ssh.client.ScpPutClient
     @Override
     public void close() throws IOException {
         try {
-            _channel.disconnect();
+            try {
+                if (_cout != null) {
+                    if (_verbose) {
+                        System.out.print("closing output stream... ");
+                    }
+                    _cout.close();
+                    if (_verbose) {
+                        System.out.println("done");
+                    }
+                }
+            } finally {
+                if (_verbose) {
+                    System.out.print("closing exec channel ... ");
+                }
+                _channel.disconnect();
+                if (_verbose) {
+                    System.out.println("done");
+                }
+            }
         } finally {
             _connection.removeChannel(_channel);
         }
@@ -329,10 +360,14 @@ public class JschScpPutClient implements io.github.xtman.ssh.client.ScpPutClient
          * go to base dir
          */
         if (_verbose) {
-            System.out.println("Sending command: " + cmd);
+            System.out.print(
+                    "open exec channel by sending command: '" + cmd.substring(0, cmd.length() - 1) + "\\n' ... ");
         }
         _channel.connect();
         checkResponse(_cin);
+        if (_verbose) {
+            System.out.println("done");
+        }
 
         _initialized = true;
     }
@@ -347,11 +382,14 @@ public class JschScpPutClient implements io.github.xtman.ssh.client.ScpPutClient
     private void pushDir(String dirName) throws IOException {
         String cmd = String.format("D%04o 0 %s\n", directoryMode(), dirName);
         if (_verbose) {
-            System.out.println("Sending command: " + cmd);
+            System.out.print("sending command: '" + cmd.substring(0, cmd.length() - 1) + "\\n' ... ");
         }
         _cout.write(cmd.getBytes(encoding()));
         _cout.flush();
         checkResponse(_cin);
+        if (_verbose) {
+            System.out.println("done");
+        }
     }
 
     /**
@@ -362,11 +400,14 @@ public class JschScpPutClient implements io.github.xtman.ssh.client.ScpPutClient
     private void popDir() throws IOException {
         String cmd = "E\n";
         if (_verbose) {
-            System.out.println("Sending command: " + cmd);
+            System.out.print("sending command: '" + cmd.substring(0, cmd.length() - 1) + "\\n' ... ");
         }
         _cout.write(cmd.getBytes(encoding()));
         _cout.flush();
         checkResponse(_cin);
+        if (_verbose) {
+            System.out.println("done");
+        }
     }
 
     private static void checkResponse(InputStream in) throws IOException {

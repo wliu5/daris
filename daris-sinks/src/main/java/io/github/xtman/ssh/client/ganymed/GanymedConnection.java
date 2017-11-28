@@ -71,16 +71,22 @@ public class GanymedConnection implements io.github.xtman.ssh.client.Connection 
                             }
                         }
                     }
+                    if (_verbose) {
+                        System.out.print("opening channel ...");
+                    }
                     Session session = super.openSession();
                     _sessions.add(session);
                     if (_verbose) {
-                        System.out.println("Thread " + Thread.currentThread().getId() + ": session created.");
+                        System.out.println("done");
                     }
                     return session;
                 }
             }
         };
         _cxn.setServerHostKeyAlgorithms(new String[] { "ssh-rsa" });
+        if (_verbose) {
+            System.out.print("opening connection to " + _cxnDetails.host() + ":" + _cxnDetails.port() + " ...");
+        }
         _cxnInfo = _cxn.connect(_cxnDetails.hostKey() == null ? null : new ServerHostKeyVerifier() {
 
             @Override
@@ -99,20 +105,32 @@ public class GanymedConnection implements io.github.xtman.ssh.client.Connection 
                 }
             }
         }, CONNECT_TIMEOUT_MILLISECS, KEY_EXCHANGE_TIMEOUT_MILLISECS);
+        if (_verbose) {
+            System.out.println("done");
+        }
         try {
             if (_cxnDetails.password() == null && _cxnDetails.privateKey() == null) {
                 throw new IllegalArgumentException("Missing user's password or private key.");
             }
             boolean authenticated = false;
             if (_cxnDetails.password() != null) {
+                if (_verbose) {
+                    System.out.print("authenticating with password ...");
+                }
                 authenticated = _cxn.authenticateWithPassword(_cxnDetails.username(), _cxnDetails.password());
             }
             if (!authenticated && _cxnDetails.privateKey() != null) {
+                if (_verbose) {
+                    System.out.print("authenticating with private key ...");
+                }
                 authenticated = _cxn.authenticateWithPublicKey(_cxnDetails.username(),
                         _cxnDetails.privateKey().toCharArray(), _cxnDetails.passphrase());
             }
             if (!authenticated) {
                 throw new Exception("Failed to authenticate user: " + _cxnDetails.username());
+            }
+            if (_verbose) {
+                System.out.println("authenticated");
             }
         } catch (Throwable e) {
             if (_cxn != null) {
@@ -350,9 +368,12 @@ public class GanymedConnection implements io.github.xtman.ssh.client.Connection 
             clearSessions();
         } finally {
             if (_cxn != null) {
+                if (_verbose) {
+                    System.out.print("closing connection to " + _cxnDetails.host() + ":" + _cxnDetails.port() + " ...");
+                }
                 _cxn.close();
                 if (_verbose) {
-                    System.out.println("Thread " + Thread.currentThread().getId() + ": closed ssh connection.");
+                    System.out.println("done");
                 }
             }
         }
