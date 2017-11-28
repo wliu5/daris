@@ -27,7 +27,7 @@ public class SvcAssetsNoContentList extends PluginService {
 	}
 
 	public String description() {
-		return "Find empty (no content) assets under a parent CID and send an email.";
+		return "Find empty (no content) assets under a parent CID and send an email (only if it finds some empty assets).";
 	}
 
 	public Interface definition() {
