@@ -297,6 +297,7 @@ public class SvcReplicateCheck extends PluginService {
 					XmlDoc.Element asset = AssetUtil.getAsset(executor, null, primaryID);
 					Date mtime = asset.dateValue("asset/mtime");
 					String csize = asset.value("asset/content/size");
+					String type = asset.value("asset/type");
 
 					// Use id overload e.g. "asset.get :id rid=1004.123455"
 					dm = new XmlDocMaker("args");
@@ -319,18 +320,18 @@ public class SvcReplicateCheck extends PluginService {
 					if (csize!=null) {
 						if (csizeRep!=null) {
 							if (mtime.after(mtimeRep) || !csize.equals(csizeRep)) {
-								w.add("id", new String[]{"exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString(),
+								w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString(),
 										"csize-primary", csize, "csize-replica", csizeRep},  primaryID);
 								assetList.add(primaryID);	
 							}
 						} else {
-							w.add("id", new String[]{"exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString(),
+							w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString(),
 									"csize-primary", csize, "csize-replica", "missing"},  primaryID);
 							assetList.add(primaryID);	
 						}
 					} else {
 						if (mtime.after(mtimeRep)) {
-							w.add("id", new String[]{"exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString()},
+							w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString()},
 									primaryID);
 							assetList.add(primaryID);	
 						}
