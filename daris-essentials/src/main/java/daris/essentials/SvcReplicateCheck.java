@@ -122,7 +122,7 @@ public class SvcReplicateCheck extends PluginService {
 			for (String id : assetIDs) {
 				// Check for abort
 				PluginTask.checkIfThreadTaskAborted();
-				
+
 				// Somebody may have destroyed the asset since we made the list
 				// so check it's still there
 				if (AssetUtil.exists(executor(), id, false)) {
@@ -195,7 +195,7 @@ public class SvcReplicateCheck extends PluginService {
 			// (not(xpath(pssd-derivation/processed)='true') or (mf-dicom-series has value))
 			where += " and ( (xpath(daris:pssd-derivation/processed)='false' or daris:pssd-derivation hasno value or daris:pssd-derivation/processed hasno value) or (mf-dicom-series has value) )";
 		}
-		*/
+		 */
 		if (includeDestroyed) {
 			if (wheres!=null) {
 				boolean first = true;
@@ -220,7 +220,7 @@ public class SvcReplicateCheck extends PluginService {
 			}
 		}
 
-		
+
 		dm.add("idx", idx[0]);
 		dm.add("size", size);
 		dm.add("pdist", 0);
@@ -316,10 +316,16 @@ public class SvcReplicateCheck extends PluginService {
 							log(dateTime, "      nig.replicate.check : sizes =" + csize + ", " + csizeRep);
 						}
 					}
-					if (csize!=null && csizeRep!=null) {
-						if (mtime.after(mtimeRep) || !csize.equals(csizeRep)) {
+					if (csize!=null) {
+						if (csizeRep!=null) {
+							if (mtime.after(mtimeRep) || !csize.equals(csizeRep)) {
+								w.add("id", new String[]{"exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString(),
+										"csize-primary", csize, "csize-replica", csizeRep},  primaryID);
+								assetList.add(primaryID);	
+							}
+						} else {
 							w.add("id", new String[]{"exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString(),
-									"csize-primary", csize, "csize-replica", csizeRep},  primaryID);
+									"csize-primary", csize, "csize-replica", "missing"},  primaryID);
 							assetList.add(primaryID);	
 						}
 					} else {
