@@ -4,7 +4,9 @@ import java.util.Collection;
 import java.util.Date;
 
 import arc.mf.plugin.*;
+import arc.mf.plugin.PluginService.Interface.Attribute;
 import arc.mf.plugin.dtype.CiteableIdType;
+import arc.mf.plugin.dtype.IntegerType;
 import arc.mf.plugin.dtype.StringType;
 import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
@@ -18,9 +20,14 @@ public class SvcAssetsNoContentList extends PluginService {
 	public SvcAssetsNoContentList() {
 		_defn = new Interface();
 		_defn.add(new Interface.Element("cid", CiteableIdType.DEFAULT, "Parent CID(s) to check.", 1, Integer.MAX_VALUE));
-		_defn.add(new Interface.Element("model", StringType.DEFAULT, "A model type to filter assets by.", 0, 1));
+		Interface.Element me = new Interface.Element("model", StringType.DEFAULT, "A model type to filter assets by.", 0, 1);
+		Interface.Attribute at = new Interface.Attribute("text", StringType.DEFAULT, "A string for the email representin the model name (e.g. DataSets for om.pssd.dataset') - to avoid mime-cast subsititutions.", 0);
+		me.add(at);
+		_defn.add(me);
 		_defn.add(new Interface.Element("type", StringType.DEFAULT, "A mime type to filter assets by.", 0, 1));
 		_defn.add(new Interface.Element("email",StringType.DEFAULT, "E-mail address to send results to.", 0, 1));
+		_defn.add(new Interface.Element("days", IntegerType.DEFAULT, "Look back time in days. Defaults to all time.", 0, 1));
+
 	}
 	public String name() {
 		return "nig.assets.nocontent.list";
@@ -50,10 +57,17 @@ public class SvcAssetsNoContentList extends PluginService {
 	public void execute(XmlDoc.Element args, Inputs in, Outputs out, XmlWriter w) throws Throwable {
 
 
-		String model = args.value("model");
+		XmlDoc.Element model = args.element("model");
+		String modelName = model.value();
+		String modelText = model.value("@text");
+		if (modelText==null) {
+			modelText = modelName;
+		}
+		//
 		String type = args.value("type");
 		String email = args.value("email");
 		Collection<String> cids = args.values("cid");
+		String days = args.value("days");
 		//
 		StringBuilder sb = new StringBuilder();
 		Boolean some = false;
@@ -61,9 +75,12 @@ public class SvcAssetsNoContentList extends PluginService {
 			String text = null;
 			XmlDocMaker dm = new XmlDocMaker("args");
 			String where = "cid starts with '" + cid + "' and asset hasno content";
+			if (days!=null) {
+				where +=  " and (mtime>='NOW-"+days+"DAY' or ctime>='NOW-" + days + "DAY')";
+			}
 			if (model!=null) {
-				where += " and model='" + model + "'";
-				text = " of model type '" + model + "'";
+				where += " and model='" + modelName + "'";
+				text = " of model type '" + modelText + "'";
 			}
 			if (type!=null) {
 				where += " and type='" + type + "'";
@@ -92,7 +109,7 @@ public class SvcAssetsNoContentList extends PluginService {
 			dm.add("async", "true");
 			dm.add("body", sb.toString());
 			Date date = new Date();
-			dm.add("subject", date.toString() + " : empty DataSets detected");
+			dm.add("subject", date.toString() + " : empty assets detected");
 			dm.add("to", email);
 			executor().execute("mail.send", dm.root());
 		}
