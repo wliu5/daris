@@ -28,7 +28,7 @@ import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
 import io.github.xtman.ssh.client.Connection;
 import io.github.xtman.ssh.client.ConnectionBuilder;
-import io.github.xtman.ssh.client.ScpPutClient;
+import io.github.xtman.ssh.client.ScpClient;
 import io.github.xtman.util.PathUtils;
 import nig.ssh.client.Ssh;
 
@@ -185,7 +185,7 @@ public class ScpSink implements DataSinkImpl {
         }
     }
 
-    private static ScpPutClient createScpPutClient(Params params) throws Throwable {
+    private static ScpClient createScpClient(Params params) throws Throwable {
         ConnectionBuilder builder = new ConnectionBuilder("jsch");
         builder.setServer(params.host, params.port, params.hostKey);
         if (params.password != null) {
@@ -194,7 +194,7 @@ public class ScpSink implements DataSinkImpl {
             builder.setUserCredentials(params.user, params.privateKey, params.passphrase);
         }
         Connection cxn = builder.build();
-        return cxn.createScpPutClient(params.directory, params.dirMode, params.fileMode);
+        return cxn.createScpClient(params.directory, "UTF-8", params.dirMode, params.fileMode, false, false);
     }
 
     @Override
@@ -207,7 +207,7 @@ public class ScpSink implements DataSinkImpl {
     public Object beginMultiple(Map<String, String> parameters) throws Throwable {
 
         Params params = Params.parse(parameters);
-        return createScpPutClient(params);
+        return createScpClient(params);
     }
 
     @Override
@@ -231,8 +231,8 @@ public class ScpSink implements DataSinkImpl {
         // @formatter:on
 
         Params params = Params.parse(parameters);
-        final ScpPutClient scp = multipleTransferContext == null ? createScpPutClient(params)
-                : (ScpPutClient) multipleTransferContext;
+        final ScpClient scp = multipleTransferContext == null ? createScpClient(params)
+                : (ScpClient) multipleTransferContext;
         String assetId = meta != null ? meta.value("@id") : null;
         String assetName = meta != null ? meta.value("name") : null;
         String ext = meta != null ? meta.value("content/type/@ext") : null;
@@ -301,7 +301,7 @@ public class ScpSink implements DataSinkImpl {
         return executor.execute("asset.path.generate", dm.root()).value("path");
     }
 
-    private static void extractAndTransfer(ScpPutClient scp, LongInputStream in, String mimeType, String base)
+    private static void extractAndTransfer(ScpClient scp, LongInputStream in, String mimeType, String base)
             throws Throwable {
 
         ArchiveInput ai = ArchiveRegistry.createInput(in, new NamedMimeType(mimeType));
@@ -348,7 +348,7 @@ public class ScpSink implements DataSinkImpl {
     @Override
     public void endMultiple(Object multipleTransferContext) throws Throwable {
         if (multipleTransferContext != null) {
-            ScpPutClient scp = (ScpPutClient) multipleTransferContext;
+            ScpClient scp = (ScpClient) multipleTransferContext;
             try {
                 scp.close();
             } finally {

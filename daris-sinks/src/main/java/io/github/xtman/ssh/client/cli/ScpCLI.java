@@ -11,7 +11,7 @@ import java.util.Scanner;
 
 import io.github.xtman.ssh.client.Connection;
 import io.github.xtman.ssh.client.ConnectionBuilder;
-import io.github.xtman.ssh.client.ScpPutClient;
+import io.github.xtman.ssh.client.ScpClient;
 
 public class ScpCLI {
 
@@ -73,7 +73,7 @@ public class ScpCLI {
             builder.setServer(host, port, null).setUserCredentials(user, password);
             Connection cxn = builder.build();
             try {
-                ScpPutClient scp = cxn.createScpPutClient(baseDir, 0755, 0644, "UTF-8", true, false);
+                ScpClient scp = cxn.createScpClient(baseDir, "UTF-8", 0755, 0644, false, false);
                 try {
                     for (Path input : inputs) {
                         if (Files.isDirectory(input)) {

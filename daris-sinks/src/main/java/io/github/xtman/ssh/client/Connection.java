@@ -4,33 +4,30 @@ import java.io.Closeable;
 
 public interface Connection extends Closeable {
 
-    public static final int DEFAULT_MAX_SESSIONS = 0;
+    public static final int DEFAULT_MAX_CHANNELS = 0;
+
+    public static final String DEFAULT_REMOTE_BASE_DIRECTORY = ".";
+
+    public static final String DEFAULT_ENCODING = "UTF-8";
 
     ConnectionDetails connectionDetails();
 
-    int maxSessions();
+    int maxChannels();
 
     boolean verbose();
 
-    Session createSession() throws Throwable;
+    Executor createExecutor(String remoteBaseDir, String encoding) throws Throwable;
 
-    SftpClient createSftpClient(String baseDir, int dirMode, int fileMode, String encoding) throws Throwable;
+    ScpClient createScpClient(String remoteBaseDir, String encoding, Integer dirMode, Integer fileMode,
+            boolean compress, boolean preserve) throws Throwable;
 
-    SftpClient createSftpClient(String baseDir, int dirMode, int fileMode) throws Throwable;
+    SftpClient createSftpClient(String remoteBaseDir, String encoding, Integer dirMode, Integer fileMode,
+            boolean compress, boolean preserve) throws Throwable;
 
-    SftpClient createSftpClient(String baseDir) throws Throwable;
+    Executor createExecutor() throws Throwable;
+
+    ScpClient createScpClient() throws Throwable;
 
     SftpClient createSftpClient() throws Throwable;
-
-    ScpPutClient createScpPutClient(String baseDir, int dirMode, int fileMode, String encoding,
-            boolean preserveModificationTime, boolean compress) throws Throwable;
-
-    ScpPutClient createScpPutClient(String baseDir, int dirMode, int fileMode, String encoding) throws Throwable;
-
-    ScpPutClient createScpPutClient(String baseDir, int dirMode, int fileMode) throws Throwable;
-
-    ScpPutClient createScpPutClient(String baseDir) throws Throwable;
-
-    ScpPutClient createScpPutClient() throws Throwable;
 
 }
