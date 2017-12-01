@@ -11,6 +11,7 @@ import com.jcraft.jsch.ChannelExec;
 
 import io.github.xtman.io.util.SizedInputStream;
 import io.github.xtman.io.util.StreamUtils;
+import io.github.xtman.ssh.client.Connection;
 import io.github.xtman.ssh.client.Executor;
 import io.github.xtman.ssh.client.FileAttrs;
 import io.github.xtman.ssh.client.ScpClient;
@@ -52,7 +53,7 @@ public class JschScpClient extends JschTransferClient<ChannelExec> implements Sc
         initializePut();
 
         String path = file.path();
-        if (!path.startsWith(remoteBaseDirectory() + "/")) {
+        if (remoteBaseDirectory() != null && !remoteBaseDirectory().isEmpty()) {
             path = PathUtils.join(remoteBaseDirectory(), path);
         }
         String parent = PathUtils.getRelativePath(PathUtils.getParent(path), remoteBaseDirectory());
@@ -131,8 +132,11 @@ public class JschScpClient extends JschTransferClient<ChannelExec> implements Sc
         if (compress()) {
             sb.append("-C ");
         }
-        // TODO test if .append("\n") is required below
-        sb.append(remoteBaseDirectory());
+        if (remoteBaseDirectory() == null || remoteBaseDirectory().isEmpty()) {
+            sb.append(Connection.DEFAULT_REMOTE_BASE_DIRECTORY);
+        } else {
+            sb.append(remoteBaseDirectory());
+        }
         String cmd = sb.toString();
         this.channel.setCommand(cmd);
         if (this.verbose) {
@@ -186,7 +190,7 @@ public class JschScpClient extends JschTransferClient<ChannelExec> implements Sc
 
     @Override
     public void get(String remotePath, GetHandler h) throws Throwable {
-        if (!remotePath.startsWith(remoteBaseDirectory() + "/")) {
+        if (remoteBaseDirectory() != null && !remoteBaseDirectory().isEmpty()) {
             remotePath = PathUtils.join(remoteBaseDirectory(), remotePath);
         }
 

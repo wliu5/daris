@@ -28,7 +28,7 @@ public class JschSftpClient extends JschTransferClient<ChannelSftp> implements S
     @Override
     public void setRemoteBaseDirectory(String remoteBaseDir) throws Throwable {
         super.setRemoteBaseDirectory(remoteBaseDir);
-        this.channel.cd(remoteBaseDir);
+        this.channel.cd(remoteBaseDirectory());
     }
 
     @Override

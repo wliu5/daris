@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import io.github.xtman.ssh.client.Connection;
 import io.github.xtman.ssh.client.Executor;
-import io.github.xtman.util.PathUtils;
 
 public class JschExecutor implements io.github.xtman.ssh.client.Executor {
 
@@ -14,11 +13,12 @@ public class JschExecutor implements io.github.xtman.ssh.client.Executor {
     private String _encoding;
     protected boolean verbose;
 
-    JschExecutor(JschConnection connection, com.jcraft.jsch.ChannelExec channel, String remoteBaseDir,
-            String encoding, boolean verbose) {
+    JschExecutor(JschConnection connection, com.jcraft.jsch.ChannelExec channel, String remoteBaseDir, String encoding,
+            boolean verbose) {
         _connection = connection;
         _channel = channel;
-        setRemoteBaseDirectory(remoteBaseDir);
+        _remoteBaseDir = (remoteBaseDir == null || remoteBaseDir.trim().isEmpty())
+                ? Connection.DEFAULT_REMOTE_BASE_DIRECTORY : remoteBaseDir.trim();
         _encoding = encoding;
         this.verbose = verbose;
     }
@@ -52,12 +52,7 @@ public class JschExecutor implements io.github.xtman.ssh.client.Executor {
         if (baseDir == null || baseDir.trim().isEmpty()) {
             _remoteBaseDir = Connection.DEFAULT_REMOTE_BASE_DIRECTORY;
         } else {
-            baseDir = baseDir.trim();
-            if (baseDir.startsWith("/") || baseDir.startsWith(".")) {
-                _remoteBaseDir = baseDir;
-            } else {
-                _remoteBaseDir = PathUtils.join(".", baseDir);
-            }
+            _remoteBaseDir = baseDir.trim();
         }
     }
 

@@ -47,7 +47,8 @@ public abstract class JschTransferClient<T extends com.jcraft.jsch.Channel> impl
 
         this.channel = channel;
 
-        _remoteBaseDir = remoteBaseDir == null ? Connection.DEFAULT_REMOTE_BASE_DIRECTORY : remoteBaseDir;
+        _remoteBaseDir = (remoteBaseDir == null || remoteBaseDir.trim().isEmpty())
+                ? Connection.DEFAULT_REMOTE_BASE_DIRECTORY : remoteBaseDir.trim();
 
         _encoding = encoding == null ? Connection.DEFAULT_ENCODING : encoding;
 
