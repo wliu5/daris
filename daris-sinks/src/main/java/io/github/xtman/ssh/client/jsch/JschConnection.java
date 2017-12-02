@@ -130,6 +130,11 @@ public class JschConnection implements io.github.xtman.ssh.client.Connection {
     }
 
     @Override
+    public Executor createExecutor(String remoteBaseDir) throws Throwable {
+        return this.createExecutor(remoteBaseDir, DEFAULT_ENCODING);
+    }
+
+    @Override
     public Executor createExecutor(String remoteBaseDir, String encoding) throws Throwable {
         return new JschExecutor(this, (com.jcraft.jsch.ChannelExec) openChannel(Executor.CHANNEL_TYPE_NAME),
                 remoteBaseDir, encoding, verbose());
@@ -138,6 +143,11 @@ public class JschConnection implements io.github.xtman.ssh.client.Connection {
     @Override
     public ScpClient createScpClient() throws Throwable {
         return this.createScpClient(DEFAULT_REMOTE_BASE_DIRECTORY, DEFAULT_ENCODING, null, null, false, false);
+    }
+
+    @Override
+    public ScpClient createScpClient(String remoteBaseDir) throws Throwable {
+        return this.createScpClient(remoteBaseDir, DEFAULT_ENCODING, null, null, false, false);
     }
 
     @Override
@@ -150,6 +160,12 @@ public class JschConnection implements io.github.xtman.ssh.client.Connection {
     @Override
     public SftpClient createSftpClient() throws Throwable {
         return this.createSftpClient(DEFAULT_REMOTE_BASE_DIRECTORY, DEFAULT_ENCODING, ScpClient.DEFAULT_DIRECTORY_MODE,
+                ScpClient.DEFAULT_FILE_MODE, false, false);
+    }
+
+    @Override
+    public SftpClient createSftpClient(String remoteBaseDir) throws Throwable {
+        return this.createSftpClient(remoteBaseDir, DEFAULT_ENCODING, ScpClient.DEFAULT_DIRECTORY_MODE,
                 ScpClient.DEFAULT_FILE_MODE, false, false);
     }
 

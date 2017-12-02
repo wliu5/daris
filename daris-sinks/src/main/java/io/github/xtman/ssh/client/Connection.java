@@ -18,15 +18,21 @@ public interface Connection extends Closeable {
 
     Executor createExecutor(String remoteBaseDir, String encoding) throws Throwable;
 
+    Executor createExecutor(String remoteBaseDir) throws Throwable;
+
+    Executor createExecutor() throws Throwable;
+
     ScpClient createScpClient(String remoteBaseDir, String encoding, Integer dirMode, Integer fileMode,
             boolean compress, boolean preserve) throws Throwable;
+
+    ScpClient createScpClient(String remoteBaseDir) throws Throwable;
+
+    ScpClient createScpClient() throws Throwable;
 
     SftpClient createSftpClient(String remoteBaseDir, String encoding, Integer dirMode, Integer fileMode,
             boolean compress, boolean preserve) throws Throwable;
 
-    Executor createExecutor() throws Throwable;
-
-    ScpClient createScpClient() throws Throwable;
+    SftpClient createSftpClient(String remoteBaseDir) throws Throwable;
 
     SftpClient createSftpClient() throws Throwable;
 
