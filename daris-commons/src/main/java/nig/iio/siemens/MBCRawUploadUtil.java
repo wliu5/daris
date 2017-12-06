@@ -42,7 +42,7 @@ public class MBCRawUploadUtil {
 
 			// Construct file name
 			Date date = new Date();
-			SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy_HH:mm:ss");
+			SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy_HH-mm-ss");
 			String dt = sdf.format(date);
 			logPath += "/rawdata-upload-" + dt + ".log";
 			//
