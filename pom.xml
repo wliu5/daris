@@ -28,10 +28,10 @@
 		<daris-analyzers.version>1.0.0</daris-analyzers.version>
 		<daris-client-pvupload.version>1.0.0</daris-client-pvupload.version>
 		<daris-client-server-config.version>1.0.0</daris-client-server-config.version>
-		<daris-client-mbcpetct-download.version>1.0.0</daris-client-mbcpetct-download.version>
-		<daris-client-mbcpetct-upload.version>1.0.0</daris-client-mbcpetct-upload.version>
+		<daris-client-mbcpetct-download.version>1.1</daris-client-mbcpetct-download.version>
+		<daris-client-mbcpetct-upload.version>1.1</daris-client-mbcpetct-upload.version>
 		<daris-client-mbcpetct-dicom-retrieve.version>1.0.0</daris-client-mbcpetct-dicom-retrieve.version>
-		<daris-client-mbcmr-upload.version>1.0.0</daris-client-mbcmr-upload.version>
+		<daris-client-mbcmr-upload.version>1.1</daris-client-mbcmr-upload.version>
 		<daris-client-dicom-client.version>1.0.0</daris-client-dicom-client.version>
 		<daris-client.version>0.0.8</daris-client.version>
 		<daris-explorer.version>0.0.1</daris-explorer.version>
