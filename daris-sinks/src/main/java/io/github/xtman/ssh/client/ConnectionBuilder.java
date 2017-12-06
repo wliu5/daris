@@ -1,6 +1,5 @@
 package io.github.xtman.ssh.client;
 
-import io.github.xtman.ssh.client.ganymed.GanymedConnection;
 import io.github.xtman.ssh.client.jsch.JschConnection;
 
 public class ConnectionBuilder {
@@ -14,7 +13,7 @@ public class ConnectionBuilder {
     private String _privateKey;
     private String _passphrase;
     private String _publicKey;
-    private int _maxSessions = Connection.DEFAULT_MAX_SESSIONS;
+    private int _maxSessions = Connection.DEFAULT_MAX_CHANNELS;
     private boolean _verbose = false;
 
     public ConnectionBuilder(String impl) {
@@ -30,8 +29,10 @@ public class ConnectionBuilder {
     public ConnectionBuilder setImplementation(String impl) {
         if ("jsch".equalsIgnoreCase(impl)) {
             _impl = impl.toLowerCase();
-        } else if ("ganymed".equalsIgnoreCase(impl)) {
-            _impl = impl.toLowerCase();
+// @formatter:off
+//        } else if ("ganymed".equalsIgnoreCase(impl)) {
+//            _impl = impl.toLowerCase();
+// @formatter:on
         } else {
             throw new UnsupportedOperationException("Unknown SSH implementation: " + impl);
         }
@@ -140,8 +141,6 @@ public class ConnectionBuilder {
                 _passphrase, _publicKey);
         if ("jsch".equalsIgnoreCase(_impl)) {
             return new JschConnection(cxnDetails, _maxSessions, _verbose);
-        } else if ("ganymed".equalsIgnoreCase(_impl)) {
-            return new GanymedConnection(cxnDetails, _maxSessions, _verbose);
         } else {
             throw new UnsupportedOperationException("Unknown SSH implementation: " + _impl);
         }
