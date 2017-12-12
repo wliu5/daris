@@ -13,6 +13,8 @@
 	<name>daris-client-mbcmr-upload</name>
 	<url>https://github.com/uom-daris/daris</url>
 	<properties>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<!-- DaRIS maven repository on github.com -->
@@ -27,7 +29,7 @@
 		<dependency>
 			<groupId>com.arcitecta</groupId>
 			<artifactId>mfclient</artifactId>
-			<version>4.2.026</version>
+			<version>4.5.037</version>
 		</dependency>
 		<dependency>
 			<groupId>au.edu.unimelb.daris</groupId>
