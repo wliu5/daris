@@ -200,12 +200,11 @@ public class MBCMRUpload {
 		boolean useHttp = false;
 		boolean encrypt = false;
 		String host = ClientConnection.getProperty("mf.host");
-
+		//
 		String p = ClientConnection.getProperty("mf.port");
 		int port = Integer.parseInt(p);
-
+		//
 		String transport = ClientConnection.getProperty("mf.transport");
-
 		if (transport.equalsIgnoreCase("TCPIP")) {
 			useHttp = false;
 			encrypt = false;
@@ -219,11 +218,16 @@ public class MBCMRUpload {
 			throw new Exception("Unexpected transport: " + transport + ", expected one of [tcpip,http,https]");
 		}
 		String token = ClientConnection.getProperty("mf.token");
-
-
+		String domain = ClientConnection.getProperty("mf.domain");
+		String user = ClientConnection.getProperty("mf.user");
+		String password = ClientConnection.getProperty("mf.password");
+		//
 		settings.setServer(host, port, useHttp, encrypt);
 		settings.setToken(token);
 		settings.setApp(TOKEN_APP);
+		settings.setUserCredentials(domain, user, password);
+		
+		// Generate session object and start keep alive pings
 		MFSession session = new MFSession(settings);
 		session.startPingServerPeriodically(60000);   // ms 
 		return session;
@@ -345,12 +349,12 @@ public class MBCMRUpload {
 			Options ops, PrintWriter logger) throws Throwable {
 
 
-		// Look for PET/CT raw STudy associated with this Patient
+		// Look for MR raw STudy associated with this Patient
 		String rawStudyCID = findRawStudy  (session, pm, null, subjectCID);
 
 		// Create Study if needed
 		if (rawStudyCID==null) {
-			rawStudyCID = createRawStudy (session, pm, null, subjectCID);
+			rawStudyCID = createRawStudy (session, pm, subjectCID);
 			MBCRawUploadUtil.log (logger, "  Created raw PSSD Study = " + rawStudyCID);
 		} else {
 			MBCRawUploadUtil.log (logger, "  Found raw PSSD Study = " + rawStudyCID);
@@ -367,7 +371,7 @@ public class MBCMRUpload {
 		// Create asset for raw MR data file. Skip if pre-exists
 		Boolean chkSumsMatch = false;
 		if (rawDataSetCID==null) {
-			rawDataSetCID = createRawSeries (session, file, pm, null, rawStudyCID, ops, logger);
+			rawDataSetCID = createRawSeries (session, file, pm, rawStudyCID, ops, logger);
 		} else {
 			MBCRawUploadUtil.log (logger, "  Found existing raw DataSet ID = " + rawDataSetCID);
 			if (ops.chksum) {
@@ -392,7 +396,6 @@ public class MBCMRUpload {
 					}
 				} else {
 					MBCRawUploadUtil.log (logger, "  *** Checksums do not match - the source file will not be destroyed - you must resolve this discrepancy.");
-					chkSumsMatch = false;     // Make sure source is not destroyed
 				}
 			}
 		}
@@ -453,7 +456,6 @@ public class MBCMRUpload {
 	 * 
 	 * @param cxn
 	 * @param pm
-	 * @param patientAssetID
 	 * @param subjectCID
 	 * @param domain
 	 * @param user
@@ -461,7 +463,7 @@ public class MBCMRUpload {
 	 * @throws Throwable
 	 */
 	private static String createRawStudy(MFSession session,
-			MRMetaData pm, String patientAssetID, String subjectCID) throws Throwable {
+			MRMetaData pm,  String subjectCID) throws Throwable {
 
 		// Create a study with siemens doc attached
 		XmlStringWriter w = new XmlStringWriter();
@@ -549,7 +551,7 @@ public class MBCMRUpload {
 
 
 
-	private static String createRawSeries(MFSession session, File path, MRMetaData pm, String rawStudyID, String rawStudyCID,
+	private static String createRawSeries(MFSession session, File path, MRMetaData pm, String rawStudyCID,
 			Options ops, PrintWriter logger) throws Throwable {
 		// Create a data set with siemens doc attached
 		XmlStringWriter w = new XmlStringWriter();
@@ -584,76 +586,74 @@ public class MBCMRUpload {
 		// DataSet mime type
 		w.add("type", MimeTypes.MR_RAW_SERIES_MIME_TYPE);
 
+		// Prepare correct stream depending on check sum status
+		final InputStream in = ops.chksum ? new CheckedInputStream(new BufferedInputStream(new FileInputStream(path)), new CRC32())  : new BufferedInputStream(new FileInputStream(path));
 
-		final InputStream in = ops.chksum	
-				? new CheckedInputStream(new BufferedInputStream(new FileInputStream(path)), new CRC32()) 
-		: new BufferedInputStream(new FileInputStream(path));
+		// Upload
+		w.add("description", "Raw Siemens DataSet");
+		w.add("filename", path.getName()); // Original filename
+		w.add("name", path.getName()); // Original filename
+		XmlDoc.Element r = null;
+		String cid = null;
+		try {
+			long t1 = System.nanoTime();
 
-				// Upload
-				w.add("description", "Raw Siemens DataSet");
-				w.add("filename", path.getName()); // Original filename
-				w.add("name", path.getName()); // Original filename
-				XmlDoc.Element r = null;
-				String cid = null;
-				try {
-					long t1 = System.nanoTime();
+			r = session.execute("om.pssd.dataset.primary.create", w.document(),
+					new arc.mf.client.ServerClient.GeneratedInput(null, path.getAbsolutePath(), path.length()) {
 
-					r = session.execute("om.pssd.dataset.primary.create", w.document(),
-							new arc.mf.client.ServerClient.GeneratedInput(null, path.getAbsolutePath(), path.length()) {
-
-						@Override
-						protected void copyTo(OutputStream out, AbortCheck ac) throws Throwable {
-							StreamCopy.copy(in, out, ac);
-						}
-					}, null);
-					long t2 = System.nanoTime();
-					//
-					if (r==null) {
-						throw new Exception ("Failed to create PSSD DataSet");
-					}
-					//
-					cid = r.value("id");
-					MBCRawUploadUtil.log (logger, "  Created raw PSSD DataSet = " + cid);
-					double tSec = (double)(t2-t1) / (double)1000000000;
-					//
-					long tsize = FileUtils.sizeOf(path);
-					double rBytes = (double)tsize / tSec;
-					double rMBytes = rBytes / 1000000;
-					MBCRawUploadUtil.log (logger, "  Approximate upload rate = " + rMBytes + " MB/sec");
-					//
-					ServerClient.Connection cxn = session.connect();
-					XmlDoc.Element asset = AssetUtil.getMeta(cxn, null, cid);
-					cxn.close();
-
-					if (ops.chksum) {
-						MBCRawUploadUtil.log (logger, "  Validating checksum");
-						long csum = ((CheckedInputStream) in).getChecksum().getValue();
-						long assetCsum = asset.longValue("asset/content/csum[@base='10']");
-						if (csum == assetCsum) {
-							MBCRawUploadUtil.log(logger, "     Checksums match");	
-							//
-							// Destroy input file if requested
-							if (ops.delete) {
-								MBCRawUploadUtil.deleteFile(path, logger);		
-							}
-						} else {
-							MBCRawUploadUtil.log (logger, "    Checksums do not match. Checksums are:");	
-							MBCRawUploadUtil.log (logger, "       Input file      = " + csum);
-							MBCRawUploadUtil.log (logger, "       Mediaflux asset = " + assetCsum);
-							//
-							if (ops.delete) {
-								cxn = session.connect();
-								AssetUtil.destroy(cxn, null, cid);
-								cxn.close();
-								MBCRawUploadUtil.log (logger, "      Destroyed Mediaflux asset " + cid);
-							}
-						}
-					}
-
-				} finally {
-					in.close();
+				@Override
+				protected void copyTo(OutputStream out, AbortCheck ac) throws Throwable {
+					StreamCopy.copy(in, out, ac);
 				}
-				return cid;
+			}, null);
+			long t2 = System.nanoTime();
+			//
+			if (r==null) {
+				throw new Exception ("Failed to create PSSD DataSet");
+			}
+			//
+			cid = r.value("id");
+			MBCRawUploadUtil.log (logger, "  Created raw PSSD DataSet = " + cid);
+			double tSec = (double)(t2-t1) / (double)1000000000;
+			//
+			long tsize = FileUtils.sizeOf(path);
+			double rBytes = (double)tsize / tSec;
+			double rMBytes = rBytes / 1000000;
+			MBCRawUploadUtil.log (logger, "  Approximate upload rate = " + rMBytes + " MB/sec");
+			//
+			ServerClient.Connection cxn = session.connect();
+			XmlDoc.Element asset = AssetUtil.getMeta(cxn, null, cid);
+			cxn.close();
+
+			if (ops.chksum) {
+				MBCRawUploadUtil.log (logger, "  Validating checksum");
+				long csum = ((CheckedInputStream) in).getChecksum().getValue();
+				long assetCsum = asset.longValue("asset/content/csum[@base='10']");
+				if (csum == assetCsum) {
+					MBCRawUploadUtil.log(logger, "     Checksums match");	
+					//
+					// Destroy input file if requested
+					if (ops.delete) {
+						MBCRawUploadUtil.deleteFile(path, logger);		
+					}
+				} else {
+					MBCRawUploadUtil.log (logger, "    Checksums do not match. Checksums are:");	
+					MBCRawUploadUtil.log (logger, "       Input file      = " + csum);
+					MBCRawUploadUtil.log (logger, "       Mediaflux asset = " + assetCsum);
+					//
+					if (ops.delete) {
+						cxn = session.connect();
+						AssetUtil.destroy(cxn, null, cid);
+						cxn.close();
+						MBCRawUploadUtil.log (logger, "      Destroyed Mediaflux asset " + cid);
+					}
+				}
+			}
+
+		} finally {
+			in.close();
+		}
+		return cid;
 	}
 
 
