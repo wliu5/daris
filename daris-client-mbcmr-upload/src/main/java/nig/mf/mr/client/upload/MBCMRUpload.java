@@ -222,11 +222,15 @@ public class MBCMRUpload {
 		String user = ClientConnection.getProperty("mf.user");
 		String password = ClientConnection.getProperty("mf.password");
 		//
-		settings.setServer(host, port, useHttp, encrypt);
-		settings.setToken(token);
-		settings.setApp(TOKEN_APP);
+		if (!domain.equals("") && !user.equals("") && !password.equals("")) {
+			settings.setServer(host, port, useHttp, encrypt);
+		}
+		if (!token.equals("")) {
+			settings.setToken(token);
+			settings.setApp(TOKEN_APP);
+		}
 		settings.setUserCredentials(domain, user, password);
-		
+
 		// Generate session object and start keep alive pings
 		MFSession session = new MFSession(settings);
 		session.startPingServerPeriodically(60000);   // ms 

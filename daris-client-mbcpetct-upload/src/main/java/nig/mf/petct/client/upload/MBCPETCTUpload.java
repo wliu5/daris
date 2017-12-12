@@ -281,9 +281,13 @@ public class MBCPETCTUpload {
 		String password = ClientConnection.getProperty("mf.password");
 		//
 		settings.setServer(host, port, useHttp, encrypt);
-		settings.setToken(token);
-		settings.setApp(TOKEN_APP);
-		settings.setUserCredentials(domain, user, password);
+		if (!token.equals("")) {
+			settings.setToken(token);
+			settings.setApp(TOKEN_APP);
+		}
+		if (!domain.equals("") && !user.equals("") && !password.equals("")) {
+			settings.setUserCredentials(domain, user, password);
+		}
 
 		// Generate session object and start keep alive pings
 		MFSession session = new MFSession(settings);
