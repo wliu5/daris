@@ -264,6 +264,7 @@ public class MBCMRUpload {
 			MBCRawUploadUtil.log (logger, "   ***    with error " + t.getMessage() + "'");
 			return;
 		}
+		pm.print();
 		pm.printToWriter(logger);
 
 		// Filter out everything but raw data files
