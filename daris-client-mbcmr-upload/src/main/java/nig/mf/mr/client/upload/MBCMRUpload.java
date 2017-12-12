@@ -231,6 +231,8 @@ public class MBCMRUpload {
 
 	private static void upload (PrintWriter logger, Options ops) throws Throwable {
 
+		// This class keeps the session alive.  One can also fetch a ServerClient.Connection
+		// object for occasional use.
 		MFSession session = openMFSession (ops);
 		try {
 
