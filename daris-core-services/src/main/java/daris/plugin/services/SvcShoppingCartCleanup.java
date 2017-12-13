@@ -104,6 +104,7 @@ public class SvcShoppingCartCleanup extends PluginService {
 
         XmlDoc.Element r = executor().execute("shopping.cart.describe", dm.root());
         List<XmlDoc.Element> ces = r.elements("cart");
+        System.out.println("### 1: " + (ces == null ? 0 : ces.size()));
         Set<String> cartIds = new LinkedHashSet<String>();
         if (ces != null) {
             for (XmlDoc.Element ce : ces) {
@@ -115,6 +116,7 @@ public class SvcShoppingCartCleanup extends PluginService {
             }
         }
         if (!cartIds.isEmpty()) {
+            System.out.println("### 2: " + cartIds.size());
             SvcShoppingCartDestroy.destroy(executor(), cartIds);
         }
         w.add("total-destroyed", cartIds.size());

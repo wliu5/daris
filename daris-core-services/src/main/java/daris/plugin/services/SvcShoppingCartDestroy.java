@@ -53,7 +53,7 @@ public class SvcShoppingCartDestroy extends PluginService {
         Set<String> cartIds = new LinkedHashSet<String>();
         if (args.elementExists("sid")) {
             Collection<String> sids = args.values("sid");
-            if (cartIds != null && !cartIds.isEmpty()) {
+            if (sids != null && !sids.isEmpty()) {
                 cartIds.addAll(sids);
             }
         }
@@ -69,6 +69,7 @@ public class SvcShoppingCartDestroy extends PluginService {
         if (cartIds.isEmpty()) {
             return;
         }
+        destroy(executor(), cartIds);
     }
 
     public static void destroy(ServiceExecutor executor, Collection<String> cartIds) throws Throwable {
@@ -79,6 +80,7 @@ public class SvcShoppingCartDestroy extends PluginService {
                 dm.add("sid", cartId);
                 dm.pop();
             }
+            System.out.println(dm.root());
             executor.execute("service.execute", dm.root());
         }
     }
