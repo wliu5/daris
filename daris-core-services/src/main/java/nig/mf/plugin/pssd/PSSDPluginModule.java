@@ -16,19 +16,6 @@ import daris.plugin.services.SvcProjectDictionaryDestroy;
 import daris.plugin.services.SvcProjectDictionaryList;
 import daris.plugin.services.SvcProjectDictionaryNamespaceCreate;
 import daris.plugin.services.SvcProjectDictionaryNamespaceDescribe;
-import daris.plugin.services.SvcShoppingCartCleanup;
-import daris.plugin.services.SvcShoppingCartContentAdd;
-import daris.plugin.services.SvcShoppingCartContentClear;
-import daris.plugin.services.SvcShoppingCartContentList;
-import daris.plugin.services.SvcShoppingCartContentRemove;
-import daris.plugin.services.SvcShoppingCartCreate;
-import daris.plugin.services.SvcShoppingCartDescribe;
-import daris.plugin.services.SvcShoppingCartDestinationList;
-import daris.plugin.services.SvcShoppingCartDestroy;
-import daris.plugin.services.SvcShoppingCartExists;
-import daris.plugin.services.SvcShoppingCartOrder;
-import daris.plugin.services.SvcShoppingCartTemplateCreate;
-import daris.plugin.services.SvcShoppingCartTemplateDestroy;
 import daris.plugin.services.SvcShoppingCartSettingsLoad;
 import daris.plugin.services.SvcShoppingCartSettingsRemove;
 import daris.plugin.services.SvcShoppingCartSettingsSave;
@@ -84,10 +71,6 @@ public class PSSDPluginModule implements HttpServletPluginModule {
         _services.add(new SvcUserRoleGrant());
         _services.add(new SvcUserRoleRevoke());
         _services.add(new SvcUserCreate());
-
-        _services.add(new SvcShoppingCartSettingsSave());
-        _services.add(new SvcShoppingCartSettingsLoad());
-        _services.add(new SvcShoppingCartSettingsRemove());
 
         _services.add(new SvcModelTypesList());
         _services.add(new SvcTypeMetadataSet());
@@ -297,19 +280,24 @@ public class PSSDPluginModule implements HttpServletPluginModule {
         _services.add(new SvcSubjectMetadataDescribe());
         _services.add(new SvcStudyMetadataDescribe());
 
-        _services.add(new SvcShoppingCartTemplateCreate());
-        _services.add(new SvcShoppingCartTemplateDestroy());
-        _services.add(new SvcShoppingCartCreate());
-        _services.add(new SvcShoppingCartExists());
-        _services.add(new SvcShoppingCartDestroy());
-        _services.add(new SvcShoppingCartDescribe());
-        _services.add(new SvcShoppingCartContentList());
-        _services.add(new SvcShoppingCartContentAdd());
-        _services.add(new SvcShoppingCartContentRemove());
-        _services.add(new SvcShoppingCartContentClear());
-        _services.add(new SvcShoppingCartOrder());
-        _services.add(new SvcShoppingCartDestinationList());
-        _services.add(new SvcShoppingCartCleanup());
+        _services.add(new daris.plugin.services.SvcShoppingCartTemplateCreate());
+        _services.add(new daris.plugin.services.SvcShoppingCartTemplateDestroy());
+        _services.add(new daris.plugin.services.SvcShoppingCartCreate());
+        _services.add(new daris.plugin.services.SvcShoppingCartList());
+        _services.add(new daris.plugin.services.SvcShoppingCartExists());
+        _services.add(new daris.plugin.services.SvcShoppingCartDestroy());
+        _services.add(new daris.plugin.services.SvcShoppingCartDescribe());
+        _services.add(new daris.plugin.services.SvcShoppingCartContentList());
+        _services.add(new daris.plugin.services.SvcShoppingCartContentAdd());
+        _services.add(new daris.plugin.services.SvcShoppingCartContentRemove());
+        _services.add(new daris.plugin.services.SvcShoppingCartContentClear());
+        _services.add(new daris.plugin.services.SvcShoppingCartOrder());
+        _services.add(new daris.plugin.services.SvcShoppingCartDestinationList());
+        _services.add(new daris.plugin.services.SvcShoppingCartCleanup());
+
+        _services.add(new SvcShoppingCartSettingsSave());
+        _services.add(new SvcShoppingCartSettingsLoad());
+        _services.add(new SvcShoppingCartSettingsRemove());
 
         _services.add(new SvcRepositoryDescriptionSet());
         _services.add(new SvcRepositoryDescribe());
@@ -344,9 +332,9 @@ public class PSSDPluginModule implements HttpServletPluginModule {
         _services.add(new daris.plugin.services.SvcDicomSendCalledAERemove());
         _services.add(new daris.plugin.services.SvcDicomSendCalledAEList());
         _services.add(new daris.plugin.services.SvcDicomSendCallingAETitleList());
-        
+
         _services.add(new daris.plugin.services.SvcSinkDescribe());
-        
+
         _services.add(new daris.plugin.services.SvcUserDicomSendCalledAEAdd());
         _services.add(new daris.plugin.services.SvcUserDicomSendCalledAERemove());
         _services.add(new daris.plugin.services.SvcUserDicomSendCallingAETitleAdd());
@@ -407,10 +395,10 @@ public class PSSDPluginModule implements HttpServletPluginModule {
         _services.add(new daris.plugin.services.SvcProjectUserList());
         _services.add(new daris.plugin.services.SvcProjectUserRemove());
         _services.add(new daris.plugin.services.SvcProjectUserSet());
-        
+
         _services.add(new daris.plugin.services.SvcObjectTagAdd());
         _services.add(new daris.plugin.services.SvcObjectTagRemove());
-        
+
         _services.add(new daris.plugin.services.SvcPathExpressionAdd());
         _services.add(new daris.plugin.services.SvcPathExpressionList());
         _services.add(new daris.plugin.services.SvcPathExpressionRemove());

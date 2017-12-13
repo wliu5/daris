@@ -91,7 +91,7 @@ public class SvcShoppingCartContentList extends PluginService {
 
         w.add("size", total);
 
-        if (r.elementExists("cursor")) {
+        if (r.elementExists("cart/cursor")) {
             w.push("cursor");
             w.add("count", pageCount);
             w.add("from", from);

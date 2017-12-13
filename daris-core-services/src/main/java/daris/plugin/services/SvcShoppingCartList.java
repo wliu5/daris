@@ -65,9 +65,15 @@ public class SvcShoppingCartList extends PluginService {
         List<XmlDoc.Element> ces = re.elements("cart");
         if (ces != null) {
             for (XmlDoc.Element ce : ces) {
-                String id = ce.value("id");
+                String id = ce.value("@id");
                 String status = ce.value("status");
-                w.add("cart", new String[] { "id", id, "status", status });
+                String template = ce.value("template");
+                String name = ce.value("name");
+                String description = ce.value("description");
+                String itemCount = ce.value("content-statistics/item-count");
+                String itemSize = ce.value("content-statistics/item-size");
+                w.add("cart", new String[] { "id", id, "status", status, "template", template, "name", name,
+                        "description", description, "count", itemCount, "size", itemSize });
             }
         }
         long total = re.longValue("size", 0);
