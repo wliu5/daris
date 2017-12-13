@@ -1,17 +1,17 @@
-package nig.mf.plugin.pssd.services;
+package daris.plugin.services;
 
 import nig.mf.plugin.pssd.user.self.settings.ShoppingCartUserSelfSettings;
 import arc.mf.plugin.PluginService;
 import arc.xml.XmlDoc.Element;
 import arc.xml.XmlWriter;
 
-public class SvcShoppingCartUserSelfSettingsRemove extends PluginService {
+public class SvcShoppingCartSettingsRemove extends PluginService {
 
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.user.self.settings.remove";
+    public static final String SERVICE_NAME = "daris.shoppingcart.settings.remove";
 
     private Interface _defn;
 
-    public SvcShoppingCartUserSelfSettingsRemove() {
+    public SvcShoppingCartSettingsRemove() {
         _defn = new Interface();
     }
 

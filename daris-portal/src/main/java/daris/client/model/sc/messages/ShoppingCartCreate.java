@@ -8,7 +8,7 @@ import daris.client.model.sc.ShoppingCartRef;
 
 public class ShoppingCartCreate extends ObjectMessage<ShoppingCartRef> {
 
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.create";
+    public static final String SERVICE_NAME = "daris.shoppingcart.create";
 
     private String _name;
     private String _description;

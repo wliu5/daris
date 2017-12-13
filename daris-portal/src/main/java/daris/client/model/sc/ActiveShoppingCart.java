@@ -177,7 +177,7 @@ public class ActiveShoppingCart {
         });
     }
 
-    public static void addContents(final List<Long> assetIds, final Action callback) {
+    public static void addContents(final List<String> assetIds, final Action callback) {
         get(new ObjectResolveHandler<ShoppingCartRef>() {
 
             @Override

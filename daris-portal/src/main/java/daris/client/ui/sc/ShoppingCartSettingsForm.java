@@ -42,7 +42,7 @@ import daris.client.model.sc.ShoppingCart;
 import daris.client.model.sc.ShoppingCartRef;
 import daris.client.model.sc.Status;
 import daris.client.model.sc.messages.ShoppingCartModify;
-import daris.client.model.sc.messages.ShoppingCartUserSelfSettingsSet;
+import daris.client.model.sc.messages.ShoppingCartSettingsSave;
 import daris.client.model.transcode.Transcode;
 import daris.client.model.transcode.TranscodeEnum;
 
@@ -319,7 +319,7 @@ public class ShoppingCartSettingsForm extends ValidatedInterfaceComponent {
             /*
              * save cart settings to user self settings
              */
-            new ShoppingCartUserSelfSettingsSet(_cart).send(new ObjectMessageResponse<Null>() {
+            new ShoppingCartSettingsSave(_cart).send(new ObjectMessageResponse<Null>() {
 
                 @Override
                 public void responded(Null r) {

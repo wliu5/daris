@@ -9,7 +9,7 @@ import daris.client.model.sc.ShoppingCartRef;
 
 public class ShoppingCartContentClear extends ObjectMessage<Null> {
 
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.content.clear";
+    public static final String SERVICE_NAME = "daris.shoppingcart.content.clear";
 
     private ShoppingCartRef _cart;
 

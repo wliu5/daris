@@ -1,4 +1,4 @@
-package nig.mf.plugin.pssd.services;
+package daris.plugin.services;
 
 import java.util.List;
 
@@ -10,12 +10,11 @@ import arc.mf.plugin.dtype.LongType;
 import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
-import daris.plugin.services.SvcPathExpressionList;
 import nig.mf.plugin.pssd.sc.Status;
 
 public class SvcShoppingCartDescribe extends PluginService {
 
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.describe";
+    public static final String SERVICE_NAME = "daris.shoppingcart.describe";
     public static final String SINK_URL_PREFIX = "sink:";
 
     private Interface _defn;
@@ -127,4 +126,5 @@ public class SvcShoppingCartDescribe extends PluginService {
         }
         w.add(ce);
     }
+    
 }

@@ -9,7 +9,7 @@ import daris.client.model.sc.ShoppingCartRef;
 
 public class ShoppingCartOrder extends ObjectMessage<Null> {
 
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.order";
+    public static final String SERVICE_NAME = "daris.shoppingcart.order";
 
     private long _cartId;
 

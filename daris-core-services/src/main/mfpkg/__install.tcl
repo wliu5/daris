@@ -211,7 +211,7 @@ if { [info exists updateSCTemplate] } {
 		set replaceSCT "true"
     }
 }
-om.pssd.shoppingcart.template.create :replace $replaceSCT
+daris.shoppingcart.template.create :replace $replaceSCT
 
 
 #=============================================================================

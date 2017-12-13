@@ -12,6 +12,15 @@ public class ShoppingCartUserSelfSettings {
 
     public static final String ROOT_ELEMENT_NAME = "shoppingcart";
 
+    public static boolean isValid(XmlDoc.Element se, ServiceExecutor executor) {
+        try {
+            validate(executor, se);
+            return true;
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
     public static void validate(ServiceExecutor executor, XmlDoc.Element se) throws Throwable {
         XmlDoc.Element de = se.element("delivery");
         if (de == null) {

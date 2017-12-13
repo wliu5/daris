@@ -1,1 +1,11 @@
-1. Remove services: om.pssd.dicom.ae.access  om.pssd.dicom.ae.add  om.pssd.dicom.ae.destroy  om.pssd.dicom.ae.id  om.pssd.dicom.ae.list  om.pssd.dicom.ae.remove
+1. Remove services: 
+  - om.pssd.dicom.ae.access  
+  - om.pssd.dicom.ae.add  
+  - om.pssd.dicom.ae.destroy  
+  - om.pssd.dicom.ae.id  
+  - om.pssd.dicom.ae.list  
+  - om.pssd.dicom.ae.remove
+
+2. Remove services:
+  - om.pssd.shopping.cart.order
+  

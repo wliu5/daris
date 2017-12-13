@@ -1,4 +1,4 @@
-package nig.mf.plugin.pssd.services;
+package daris.plugin.services;
 
 import nig.mf.plugin.pssd.user.self.settings.ShoppingCartUserSelfSettings;
 import arc.mf.plugin.PluginService;
@@ -7,17 +7,15 @@ import arc.xml.XmlDoc;
 import arc.xml.XmlDoc.Element;
 import arc.xml.XmlWriter;
 
-public class SvcShoppingCartUserSelfSettingsGet extends PluginService {
+public class SvcShoppingCartSettingsLoad extends PluginService {
 
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.user.self.settings.get";
+    public static final String SERVICE_NAME = "daris.shoppingcart.settings.load";
 
     private Interface _defn;
 
-    public SvcShoppingCartUserSelfSettingsGet() {
+    public SvcShoppingCartSettingsLoad() {
         _defn = new Interface();
-        _defn.add(new Interface.Element(
-                "validate",
-                BooleanType.DEFAULT,
+        _defn.add(new Interface.Element("validate", BooleanType.DEFAULT,
                 "Validate the settings and returns only if it is still valid. This is to make sure the returned settings, e.g. destinations/sinks in the settings, are still available. Defaults to true.",
                 0, 1));
     }

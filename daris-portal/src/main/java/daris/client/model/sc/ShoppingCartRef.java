@@ -9,7 +9,7 @@ import com.google.gwt.user.client.Timer;
 
 public class ShoppingCartRef extends ObjectRef<ShoppingCart> implements Comparable<ShoppingCartRef> {
 
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.describe";
+    public static final String SERVICE_NAME = "daris.shoppingcart.describe";
 
     private long _cartId;
     private String _name;

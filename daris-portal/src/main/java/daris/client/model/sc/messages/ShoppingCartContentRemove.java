@@ -13,7 +13,7 @@ import daris.client.model.sc.ShoppingCartRef;
 
 public class ShoppingCartContentRemove extends ObjectMessage<Null> {
 
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.content.remove";
+    public static final String SERVICE_NAME = "daris.shoppingcart.content.remove";
 
     private ShoppingCartRef _cart;
     private List<String> _ids;

@@ -1,21 +1,22 @@
-package nig.mf.plugin.pssd.services;
+package daris.plugin.services;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
-import nig.mf.plugin.pssd.sc.ShoppingCart;
-import nig.mf.plugin.pssd.sc.Status;
 import arc.mf.plugin.PluginService;
 import arc.mf.plugin.dtype.BooleanType;
 import arc.mf.plugin.dtype.IntegerType;
 import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
+import nig.mf.plugin.pssd.sc.Status;
 
 public class SvcShoppingCartCleanup extends PluginService {
 
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.cleanup";
+    public static final String SERVICE_NAME = "daris.shoppingcart.cleanup";
 
     public static enum TimeUnit {
         year, month, week, day, hour, minute, second;
@@ -42,8 +43,9 @@ public class SvcShoppingCartCleanup extends PluginService {
                 "The shopping cart finished before the specified time point.", 1, 1);
         e.add(new Interface.Attribute("unit", new arc.mf.plugin.dtype.EnumType(TimeUnit.values()), "The time unit", 1));
         _defn.add(e);
-        _defn.add(new Interface.Element("list-all", BooleanType.DEFAULT,
-                "set to true to list all shopping carts. Admin only. Defaults to false.", 0, 1));
+        _defn.add(new Interface.Element("all", BooleanType.DEFAULT,
+                "Set to true to clear also the shopping carts belong to other users. For system-administrator only. Defaults to false.",
+                0, 1));
 
     }
 
@@ -69,7 +71,7 @@ public class SvcShoppingCartCleanup extends PluginService {
 
     public void execute(XmlDoc.Element args, Inputs in, Outputs out, XmlWriter w) throws Throwable {
 
-        boolean listAll = args.booleanValue("list-all", false);
+        boolean listAll = args.booleanValue("all", false);
         TimeUnit unit = TimeUnit.fromString(args.value("before/@unit"));
         int n = args.intValue("before");
         Calendar cal = Calendar.getInstance();
@@ -100,19 +102,21 @@ public class SvcShoppingCartCleanup extends PluginService {
         dm.add("size", "infinity");
         dm.add("list-all", listAll);
 
-        int total = 0;
         XmlDoc.Element r = executor().execute("shopping.cart.describe", dm.root());
         List<XmlDoc.Element> ces = r.elements("cart");
+        Set<String> cartIds = new LinkedHashSet<String>();
         if (ces != null) {
             for (XmlDoc.Element ce : ces) {
                 String id = ce.value("@id");
                 Date changed = ce.dateValue("status/@changed");
                 if (changed.before(d)) {
-                    ShoppingCart.destroy(executor(), id);
-                    total++;
+                    cartIds.add(id);
                 }
             }
         }
-        w.add("total-destroyed", total);
+        if (!cartIds.isEmpty()) {
+            SvcShoppingCartDestroy.destroy(executor(), cartIds);
+        }
+        w.add("total-destroyed", cartIds.size());
     }
 }

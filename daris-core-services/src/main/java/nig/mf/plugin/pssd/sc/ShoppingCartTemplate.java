@@ -7,6 +7,7 @@ import nig.mf.plugin.pssd.sink.Sink;
 import arc.mf.plugin.ServiceExecutor;
 import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
+import daris.plugin.services.SvcShoppingCartDestroy;
 
 public class ShoppingCartTemplate {
 
@@ -49,7 +50,7 @@ public class ShoppingCartTemplate {
     public static void destroy(ServiceExecutor executor, boolean force) throws Throwable {
         List<String> cartIds = getCartIds(executor);
         if (cartIds != null && force == true) {
-            ShoppingCart.destroy(executor, cartIds);
+            SvcShoppingCartDestroy.destroy(executor, cartIds);
         }
         executor.execute(SERVICE_TEMPLATE_DESTROY, "<args><name>" + ShoppingCartTemplate.NAME + "</name></args>", null,
                 null);

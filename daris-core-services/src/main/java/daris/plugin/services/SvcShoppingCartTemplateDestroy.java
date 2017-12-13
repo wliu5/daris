@@ -1,4 +1,4 @@
-package nig.mf.plugin.pssd.services;
+package daris.plugin.services;
 
 import nig.mf.plugin.pssd.sc.ShoppingCartTemplate;
 import arc.mf.plugin.PluginService;
@@ -8,7 +8,7 @@ import arc.xml.XmlWriter;
 
 public class SvcShoppingCartTemplateDestroy extends PluginService {
 
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.template.destroy";
+    public static final String SERVICE_NAME = "daris.shoppingcart.template.destroy";
 
     private Interface _defn;
 

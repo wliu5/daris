@@ -11,6 +11,7 @@ import arc.mf.plugin.http.HttpServer;
 import arc.mf.plugin.http.HttpServer.SessionKey;
 import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
+import daris.plugin.services.SvcShoppingCartCreate;
 import nig.mf.plugin.pssd.sc.Archive;
 import nig.mf.plugin.pssd.sc.Transcode;
 import nig.mf.plugin.pssd.servlets.AbstractServlet;
@@ -315,7 +316,7 @@ public class ObjectDownloadModule implements Module {
         }
         dm.add("description", CIDUtil.getType(cid) + " " + cid);
         String sid = server
-                .execute(sessionKey, "om.pssd.shoppingcart.create", dm.root())
+                .execute(sessionKey, SvcShoppingCartCreate.SERVICE_NAME, dm.root())
                 .value("sid");
 
         /*

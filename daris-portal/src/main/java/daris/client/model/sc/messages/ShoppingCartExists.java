@@ -8,7 +8,7 @@ import daris.client.model.sc.ShoppingCartRef;
 
 public class ShoppingCartExists extends ObjectMessage<Boolean> {
     
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.exists";
+    public static final String SERVICE_NAME = "daris.shoppingcart.exists";
 
 	private long _cartId;
 

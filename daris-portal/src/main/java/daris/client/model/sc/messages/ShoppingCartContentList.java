@@ -11,7 +11,7 @@ import daris.client.model.sc.ShoppingCartRef;
 
 public class ShoppingCartContentList extends ObjectMessage<List<ContentItem>> {
 
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.content.list";
+    public static final String SERVICE_NAME = "daris.shoppingcart.content.list";
 
     private ShoppingCartRef _cart;
 

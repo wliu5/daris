@@ -13,13 +13,13 @@ import daris.client.model.sc.DeliveryMethod;
 import daris.client.model.sc.Layout;
 import daris.client.model.sc.ShoppingCart;
 
-public class ShoppingCartUserSelfSettingsSet extends ObjectMessage<Null> {
+public class ShoppingCartSettingsSave extends ObjectMessage<Null> {
 
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.user.self.settings.set";
+    public static final String SERVICE_NAME = "daris.shoppingcart.settings.save";
 
     private ShoppingCart _cart;
 
-    public ShoppingCartUserSelfSettingsSet(ShoppingCart cart) {
+    public ShoppingCartSettingsSave(ShoppingCart cart) {
         _cart = cart;
     }
 

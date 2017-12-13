@@ -16,6 +16,22 @@ import daris.plugin.services.SvcProjectDictionaryDestroy;
 import daris.plugin.services.SvcProjectDictionaryList;
 import daris.plugin.services.SvcProjectDictionaryNamespaceCreate;
 import daris.plugin.services.SvcProjectDictionaryNamespaceDescribe;
+import daris.plugin.services.SvcShoppingCartCleanup;
+import daris.plugin.services.SvcShoppingCartContentAdd;
+import daris.plugin.services.SvcShoppingCartContentClear;
+import daris.plugin.services.SvcShoppingCartContentList;
+import daris.plugin.services.SvcShoppingCartContentRemove;
+import daris.plugin.services.SvcShoppingCartCreate;
+import daris.plugin.services.SvcShoppingCartDescribe;
+import daris.plugin.services.SvcShoppingCartDestinationList;
+import daris.plugin.services.SvcShoppingCartDestroy;
+import daris.plugin.services.SvcShoppingCartExists;
+import daris.plugin.services.SvcShoppingCartOrder;
+import daris.plugin.services.SvcShoppingCartTemplateCreate;
+import daris.plugin.services.SvcShoppingCartTemplateDestroy;
+import daris.plugin.services.SvcShoppingCartSettingsLoad;
+import daris.plugin.services.SvcShoppingCartSettingsRemove;
+import daris.plugin.services.SvcShoppingCartSettingsSave;
 import nig.mf.plugin.pssd.announcement.events.PSSDAnnouncementEvent;
 import nig.mf.plugin.pssd.announcement.events.PSSDAnnouncementEventFilterFactory;
 import nig.mf.plugin.pssd.dicom.NIGDicomAssetEngineFactory;
@@ -69,9 +85,9 @@ public class PSSDPluginModule implements HttpServletPluginModule {
         _services.add(new SvcUserRoleRevoke());
         _services.add(new SvcUserCreate());
 
-        _services.add(new SvcShoppingCartUserSelfSettingsSet());
-        _services.add(new SvcShoppingCartUserSelfSettingsGet());
-        _services.add(new SvcShoppingCartUserSelfSettingsRemove());
+        _services.add(new SvcShoppingCartSettingsSave());
+        _services.add(new SvcShoppingCartSettingsLoad());
+        _services.add(new SvcShoppingCartSettingsRemove());
 
         _services.add(new SvcModelTypesList());
         _services.add(new SvcTypeMetadataSet());

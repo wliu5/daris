@@ -16,7 +16,7 @@ import daris.client.model.sc.Status;
 
 public class ShoppingCartDestroy extends ObjectMessage<Null> {
 
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.destroy";
+    public static final String SERVICE_NAME = "daris.shoppingcart.destroy";
 
     private List<Long> _cartIds;
     private Set<Status> _states;

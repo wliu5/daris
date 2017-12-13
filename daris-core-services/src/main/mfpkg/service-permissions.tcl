@@ -153,47 +153,44 @@ actor.grant :role -type role service-user :type plugin:service :name om.pssd.ex-
 # service: om.pssd.transform.find
 actor.grant :role -type role service-user :type plugin:service :name om.pssd.transform.find
 
-# service: om.pssd.shoppingcart.content.add
-actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.content.add
+# service: daris.shoppingcart.content.add
+actor.grant :role -type role service-user :type plugin:service :name daris.shoppingcart.content.add
 
-# service: om.pssd.shoppingcart.content.add 
-actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.content.add
+# service: daris.shoppingcart.content.remove
+actor.grant :role -type role service-user :type plugin:service :name daris.shoppingcart.content.remove
 
-# service: om.pssd.shoppingcart.content.clear
-actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.content.clear
+# service: daris.shoppingcart.content.clear
+actor.grant :role -type role service-user :type plugin:service :name daris.shoppingcart.content.clear
 
-# service: om.pssd.shoppingcart.content.list
-actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.content.list
+# service: daris.shoppingcart.content.list
+actor.grant :role -type role service-user :type plugin:service :name daris.shoppingcart.content.list
 
-# service: om.pssd.shoppingcart.content.remove
-actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.content.remove
+# service: daris.shoppingcart.create
+actor.grant :type plugin:service :name daris.shoppingcart.create :perm < :access ADMINISTER :resource -type service application.property.* >
+actor.grant :role -type role service-user :type plugin:service :name daris.shoppingcart.create
 
-# service: om.pssd.shoppingcart.create
-actor.grant :type plugin:service :name om.pssd.shoppingcart.create :perm < :access ADMINISTER :resource -type service application.property.* >
-actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.create
+# service: daris.shoppingcart.describe
+actor.grant :type plugin:service :name daris.shoppingcart.describe :perm < :access ADMINISTER :resource -type service application.property.* >
+actor.grant :role -type role service-user :type plugin:service :name daris.shoppingcart.describe
 
-# service: om.pssd.shoppingcart.describe
-actor.grant :type plugin:service :name om.pssd.shoppingcart.describe :perm < :access ADMINISTER :resource -type service application.property.* >
-actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.describe
+# service: daris.shoppingcart.destination.list
+actor.grant :role -type role service-user :type plugin:service :name daris.shoppingcart.destination.list 
 
-# service: om.pssd.shoppingcart.destination.list
-actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.destination.list 
+# service: daris.shoppingcart.destroy 
+actor.grant :role -type role service-user :type plugin:service :name daris.shoppingcart.destroy
 
-# service: om.pssd.shoppingcart.destroy 
-actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.destroy
+# service: daris.shoppingcart.exists
+actor.grant :role -type role service-user :type plugin:service :name daris.shoppingcart.exists
 
-# service: om.pssd.shoppingcart.exists
-actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.exists
+# service:  daris.shoppingcart.order 
+actor.grant :type plugin:service :name daris.shoppingcart.order :perm < :access ADMINISTER :resource -type service application.property.* >
+actor.grant :role -type role service-user :type plugin:service :name daris.shoppingcart.order
 
-# service:  om.pssd.shoppingcart.order 
-actor.grant :type plugin:service :name om.pssd.shoppingcart.order :perm < :access ADMINISTER :resource -type service application.property.* >
-actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.order
+# service: daris.shoppingcart.template.create
+actor.grant :role -type role service-user :type plugin:service :name daris.shoppingcart.template.create
 
-# service: om.pssd.shoppingcart.template.create
-actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.template.create
-
-# service: om.pssd.shoppingcart.template.destroy
-actor.grant :role -type role service-user :type plugin:service :name om.pssd.shoppingcart.template.destroy
+# service: daris.shoppingcart.template.destroy
+actor.grant :role -type role service-user :type plugin:service :name daris.shoppingcart.template.destroy
 
 # service: om.pssd.dicom.ae.list 
 actor.grant :role -type role service-user :type plugin:service :name om.pssd.dicom.ae.list

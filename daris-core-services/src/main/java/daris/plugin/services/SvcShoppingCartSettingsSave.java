@@ -1,4 +1,4 @@
-package nig.mf.plugin.pssd.services;
+package daris.plugin.services;
 
 import nig.mf.plugin.pssd.sc.Archive;
 import nig.mf.plugin.pssd.sc.DeliveryDestination;
@@ -13,13 +13,13 @@ import arc.mf.plugin.dtype.XmlDocType;
 import arc.xml.XmlDoc.Element;
 import arc.xml.XmlWriter;
 
-public class SvcShoppingCartUserSelfSettingsSet extends PluginService {
+public class SvcShoppingCartSettingsSave extends PluginService {
 
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.user.self.settings.set";
+    public static final String SERVICE_NAME = "daris.shoppingcart.settings.save";
 
     private Interface _defn;
 
-    public SvcShoppingCartUserSelfSettingsSet() {
+    public SvcShoppingCartSettingsSave() {
 
         _defn = new Interface();
 
@@ -39,9 +39,7 @@ public class SvcShoppingCartUserSelfSettingsSet extends PluginService {
         Interface.Element arg = new Interface.Element("arg", StringType.DEFAULT, "The arg for the destination (sink).",
                 0, Integer.MAX_VALUE);
         arg.add(new Interface.Attribute("name", StringType.DEFAULT, "The name of the arg.", 1));
-        arg.add(new Interface.Attribute(
-                "in-secure-wallet",
-                BooleanType.DEFAULT,
+        arg.add(new Interface.Attribute("in-secure-wallet", BooleanType.DEFAULT,
                 "Indicates the value of the arg is a secure wallet key and the actual value is kept in secure wallet. Defaults to false.",
                 0));
         delivery.add(arg);
@@ -56,8 +54,10 @@ public class SvcShoppingCartUserSelfSettingsSet extends PluginService {
         // @formatter:on
         Interface.Element archive = new Interface.Element("archive", XmlDocType.DEFAULT,
                 "The archive settings for the shopping-cart output. Note: archive settings is only used when the destination is "
-                        + DeliveryDestination.BROWSER + ".", 1, 1);
-        archive.add(new Interface.Element("type", new EnumType(Archive.Type.stringValues()), "type of the archive.", 1, 1));
+                        + DeliveryDestination.BROWSER + ".",
+                1, 1);
+        archive.add(
+                new Interface.Element("type", new EnumType(Archive.Type.stringValues()), "type of the archive.", 1, 1));
         Interface.Element parameter = new Interface.Element("parameter", StringType.DEFAULT,
                 " Additional parameter for the archive type.", 0, Integer.MAX_VALUE);
         parameter.add(new Interface.Attribute("name", StringType.DEFAULT, "The parameter name.", 1));

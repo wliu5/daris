@@ -3,7 +3,7 @@
 # ============================================================================
 foreach cartId [xvalues cart/@id [shopping.cart.describe  :list-all true :size infinity]] { shopping.cart.destroy :sid $cartId }
 shopping.cart.template.destroy :name pssd
-# om.pssd.shoppingcart.template.destroy :force true
+# daris.shoppingcart.template.destroy :force true
 
 # ============================================================================
 # Include utils.tcl functions

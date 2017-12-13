@@ -1,4 +1,4 @@
-package nig.mf.plugin.pssd.services;
+package daris.plugin.services;
 
 import java.util.Collection;
 
@@ -11,7 +11,7 @@ import arc.xml.XmlWriter;
 
 public class SvcShoppingCartContentClear extends PluginService {
     
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.content.clear";
+    public static final String SERVICE_NAME = "daris.shoppingcart.content.clear";
 
     private Interface _defn;
 

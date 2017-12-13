@@ -1,4 +1,4 @@
-package nig.mf.plugin.pssd.services;
+package daris.plugin.services;
 
 import java.util.Collection;
 
@@ -10,7 +10,7 @@ import arc.xml.XmlWriter;
 
 public class SvcShoppingCartExists extends PluginService {
 
-    public static final String SERVICE_NAME = "om.pssd.shoppingcart.exists";
+    public static final String SERVICE_NAME = "daris.shoppingcart.exists";
 
     private Interface _defn;
 
