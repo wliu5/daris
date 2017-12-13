@@ -91,21 +91,20 @@ public class SvcShoppingCartContentList extends PluginService {
 
         w.add("size", total);
 
-        if (r.elementExists("cart/cursor")) {
-            w.push("cursor");
-            w.add("count", pageCount);
-            w.add("from", from);
-            w.add("to", to);
-            if (prev != null) {
-                w.add("prev", prev);
-            }
-            if (next != null) {
-                w.add("next", next);
-            }
-            w.add("total", new String[] { "complete", Boolean.toString(complete) }, total);
-            w.add("remaining", remaining);
-            w.pop();
+        w.push("cursor");
+        w.add("count", pageCount);
+        w.add("from", from);
+        w.add("to", to);
+        if (prev != null) {
+            w.add("prev", prev);
         }
+        if (next != null) {
+            w.add("next", next);
+        }
+        w.add("total", new String[] { "complete", Boolean.toString(complete) }, total);
+        w.add("remaining", remaining);
+        w.pop();
+
     }
 
     private static void listContentItems(ServiceExecutor executor, List<XmlDoc.Element> ies, XmlWriter w)
