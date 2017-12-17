@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.Vector;
 
 import nig.mf.plugin.util.AssetUtil;
+import nig.mf.pssd.plugin.util.CiteableIdUtil;
 import nig.mf.pssd.plugin.util.DistributedAssetUtil;
 import arc.mf.plugin.*;
 import arc.mf.plugin.dtype.BooleanType;
@@ -33,6 +34,7 @@ public class SvcReplicateCheck extends PluginService {
 		_defn.add(new Interface.Element("list", BooleanType.DEFAULT, "List all the IDs of assets to be replicated. Default to false.", 0, 1));
 		_defn.add(new Interface.Element("rep-inc", IntegerType.DEFAULT, "When debug is true, messages are written to the server log. This parameter specifies the increment to report that assets have been replicated.  Defaults to 1000. ", 0, 1));
 		_defn.add(new Interface.Element("throw-on-fail", BooleanType.DEFAULT, "By default, service will fail if it fails to replicate any asset. Set to false to not fail and wirte a message in the mediaflux-server log instead for every asset that fails to replciate.", 0, 1));
+		_defn.add(new Interface.Element("related", IntegerType.DEFAULT, "Specifies the number of levels of related assets (primary relationship) to be replicated.  Has no impact on the find part of the service, just the replicatioh. Defaults to 0. Specify infinity to traverse all relationships.", 0, 1));
 	}
 	public String name() {
 		return "nig.replicate.check";
@@ -79,6 +81,7 @@ public class SvcReplicateCheck extends PluginService {
 		Boolean includeDestroyed = args.booleanValue("include-destroyed", false);
 		Boolean throwOnFail = args.booleanValue("throw-on-fail", true);
 		Integer repInc = args.intValue("rep-inc", 1000);
+		Integer related = args.intValue("related", 0);
 
 
 		// Find route to peer. Exception if can't reach and build in extra checks to make sure we are 
@@ -143,7 +146,7 @@ public class SvcReplicateCheck extends PluginService {
 					dm.push("peer");
 					dm.add("name", peer);
 					dm.pop();
-					dm.add("related", "0");
+					dm.add("related", related);
 					dm.add("update-doc-types", false);
 					dm.add("update-models", false);
 					dm.add("allow-move", true);
@@ -156,6 +159,8 @@ public class SvcReplicateCheck extends PluginService {
 						if (throwOnFail) {
 							throw new Exception(t);
 						} else {
+							String cid = CiteableIdUtil.idToCid (executor(), id);
+							w.add("id", new String[]{"cid", cid, "status", "error-sending"}, id);
 							log(dateTime, "Failed to send asset " + id + " with error " + t.getMessage());
 						}
 					}
@@ -285,8 +290,14 @@ public class SvcReplicateCheck extends PluginService {
 			System.out.println("value="+res.booleanValue());
 			 */
 
+			String cid = CiteableIdUtil.idToCid(executor, primaryID);
 			if (result.booleanValue()==false) {
-				if (list) w.add("id", new String[]{"exists", "false"},  primaryID);
+				if (list) {
+					XmlDoc.Element asset = AssetUtil.getAsset(executor, null, primaryID);
+					String csize = asset.value("asset/content/size");
+					String type = asset.value("asset/type");
+					w.add("id", new String[]{"exists", "false", "cid", cid, "type", type, "size", csize},  primaryID);
+				}
 				assetList.add(primaryID);
 			} else {
 
