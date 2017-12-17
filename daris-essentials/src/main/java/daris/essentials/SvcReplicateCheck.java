@@ -296,7 +296,7 @@ public class SvcReplicateCheck extends PluginService {
 					XmlDoc.Element asset = AssetUtil.getAsset(executor, null, primaryID);
 					String csize = asset.value("asset/content/size");
 					String type = asset.value("asset/type");
-					if (!type.equals("content/unknown")) type = null;
+					if (type.equals("content/unknown")) type = null;
 					w.add("id", new String[]{"exists", "false", "cid", cid, "type", type, "size", csize},  primaryID);
 				}
 				assetList.add(primaryID);
