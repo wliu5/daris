@@ -120,8 +120,8 @@ public class SvcSubjectClone extends PluginService {
 		XmlDocMaker dm2 = new XmlDocMaker("args");
 		dm2.add("pid", pid);
 		dm2.add("method", mid);
-		if (name!=null) dm.add("name", name);
-		if (virtual!=null) dm.add("virtual", virtual);
+		if (name!=null) dm2.add("name", name);
+		if (virtual!=null) dm2.add("virtual", virtual);
 		if (fillIn!=null) dm2.add(fillIn);
 		if (subjectNumber != null) dm2.add(subjectNumber);
 		//
