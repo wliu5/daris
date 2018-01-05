@@ -114,10 +114,14 @@ public class SvcSubjectClone extends PluginService {
 		String mid = r.value("object/method/id");
 		XmlDoc.Element pub = r.element("object/public");
 		XmlDoc.Element priv = r.element("object/private");
+		Boolean virtual = r.booleanValue("object/virtual");
+		String name = r.value("object/name");
 		//
 		XmlDocMaker dm2 = new XmlDocMaker("args");
 		dm2.add("pid", pid);
 		dm2.add("method", mid);
+		if (name!=null) dm.add("name", name);
+		if (virtual!=null) dm.add("virtual", virtual);
 		if (fillIn!=null) dm2.add(fillIn);
 		if (subjectNumber != null) dm2.add(subjectNumber);
 		//
