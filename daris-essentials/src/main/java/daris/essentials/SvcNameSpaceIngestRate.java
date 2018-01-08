@@ -1,5 +1,7 @@
 package daris.essentials;
 
+import java.util.Collection;
+
 import arc.mf.plugin.*;
 import arc.mf.plugin.dtype.StringType;
 import arc.xml.XmlDoc;
@@ -71,7 +73,7 @@ public class SvcNameSpaceIngestRate extends PluginService {
 
 	public SvcNameSpaceIngestRate() {
 		_defn = new Interface();
-		Interface.Element me = new Interface.Element("namespace", StringType.DEFAULT, "The namespace tree of interest.", 1, 1);
+		Interface.Element me = new Interface.Element("namespace", StringType.DEFAULT, "The namespace tree of interest.", 1, Integer.MAX_VALUE);
 		_defn.add(me);
 		me = new Interface.Element("year", StringType.DEFAULT, "The calendar year of interest (no default)", 1, 1);
 		_defn.add(me);
@@ -104,14 +106,14 @@ public class SvcNameSpaceIngestRate extends PluginService {
 
 	public void execute(XmlDoc.Element args, Inputs in, Outputs out, XmlWriter w) throws Throwable {
 
-		String ns = args.value("namespace");
+		Collection<String> nss = args.values("namespace");
 		String year = args.value("year");
 
 		//
 		for (int i=0;i<12;i++) {
 			PluginTask.checkIfThreadTaskAborted();
 			XmlDocMaker dm = new XmlDocMaker("args");
-			String where = makeWhere(i, year) + " and namespace >='" + ns + "'";
+			String where = makeWhere(i, year) + makeNS (nss);
 			String my = makeMonth (i, year);
 			dm.add("where", where);
 			dm.add("action", "sum");
@@ -156,6 +158,22 @@ public class SvcNameSpaceIngestRate extends PluginService {
 			return null;
 		}
 	}
+
+
+	private String makeNS (Collection<String> nss) {
+		String t = " and (";
+		boolean first = true;
+		for (String ns : nss) {
+			if (first) {
+				t += " namespace>='" + ns + "'";
+				first = false;
+			} else {
+				t += " or namespace>='" + ns + "'";
+			}
+		}
+		t += ")";
+		return t;
+	}
 	
 	private String makeMonth (int i, String year) throws Throwable {
 		if (i==0) {
@@ -186,8 +204,8 @@ public class SvcNameSpaceIngestRate extends PluginService {
 			return null;
 		}
 	}
-	
-	
+
+
 	private String bytesToGBytes (String bytes) throws Throwable {
 		if (bytes==null) return "0 GB";
 		Long s = Long.parseLong(bytes);
