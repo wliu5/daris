@@ -117,12 +117,10 @@ public class SvcNameSpaceIngestRate extends PluginService {
 			dm.add("action", "sum");
 			dm.add("xpath", "content/size");
 			XmlDoc.Element r = executor().execute("asset.query", dm.root());
-			System.out.println("r="+r);
 			w.push("ingest");
 			w.add("month",  my);
 			String n = r.value("value/@nbe");
 			String t = r.value("value");
-			System.out.println("t="+t);
 			w.add("size", new String[]{"n", n}, bytesToGBytes (t));
 			w.pop();
 		}
@@ -191,6 +189,7 @@ public class SvcNameSpaceIngestRate extends PluginService {
 	
 	
 	private String bytesToGBytes (String bytes) throws Throwable {
+		if (bytes==null) return "0 GB";
 		Long s = Long.parseLong(bytes);
 		StorageUnit su = StorageUnit.fromString("GB", StorageUnit.GB); 
 		return su.convertToString(s);
