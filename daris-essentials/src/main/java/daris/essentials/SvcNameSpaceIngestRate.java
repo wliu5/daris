@@ -73,7 +73,7 @@ public class SvcNameSpaceIngestRate extends PluginService {
 
 	public SvcNameSpaceIngestRate() {
 		_defn = new Interface();
-		Interface.Element me = new Interface.Element("namespace", StringType.DEFAULT, "The namespace tree of interest.", 1, Integer.MAX_VALUE);
+		Interface.Element me = new Interface.Element("namespace", StringType.DEFAULT, "The namespace tree of interest. Multiple namespaces are ORed.", 1, Integer.MAX_VALUE);
 		_defn.add(me);
 		me = new Interface.Element("year", StringType.DEFAULT, "The calendar year of interest (no default)", 1, 1);
 		_defn.add(me);
