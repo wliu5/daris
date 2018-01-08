@@ -53,6 +53,7 @@ public class EssentialsPluginModule implements PluginModule {
         //
         _svs.add(new SvcNameSpacesChildDestroy());
         _svs.add(new SvcNameSpaceMetaDataCopy());
+        _svs.add(new SvcNameSpaceIngestRate());
         //
         _svs.add(new SvcReplicateSync());
         _svs.add(new SvcReplicateCheck());
