@@ -72,7 +72,9 @@ public class SvcRSubjectFind extends PluginService {
 		// find identities on pre-existing RSubjects.
 		boolean showRSubjectIdentity = true;
 		boolean showSubjectPrivate = false;
-		SvcObjectFind.addPssdObjects(executor(),w, r, false, forEdit, showRSubjectIdentity, showSubjectPrivate);
+		boolean showMembers = false;
+		boolean isLeaf = false;
+		SvcObjectFind.addPssdObjects(executor(),w, r, isLeaf, showMembers, forEdit, showRSubjectIdentity, showSubjectPrivate);
 
 	}
 	

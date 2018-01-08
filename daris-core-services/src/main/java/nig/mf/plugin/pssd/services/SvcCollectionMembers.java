@@ -3,6 +3,7 @@ package nig.mf.plugin.pssd.services;
 import nig.mf.pssd.plugin.util.DistributedAssetUtil;
 import nig.mf.pssd.plugin.util.DistributedQuery;
 import arc.mf.plugin.PluginService;
+import arc.mf.plugin.PluginService.Interface;
 import arc.mf.plugin.dtype.BooleanType;
 import arc.mf.plugin.dtype.CiteableIdType;
 import arc.mf.plugin.dtype.EnumType;
@@ -27,6 +28,8 @@ public class SvcCollectionMembers extends PluginService {
 				IntegerType.DEFAULT,
 				"Specifies the peer distance for a distributed query. Defaults to infinity in a federated session.  Set to 0 for local only or infinity for all peers (regardless of whether session is federated or not).",
 				0, 1));
+		_defn.add(new Interface.Element("members", BooleanType.DEFAULT,
+				"If is a Project object, show Project members (expensive in time). Defaults to true.", 0, 1));
 		_defn.add(new Interface.Element("asset-type", new EnumType(DistributedQuery.ResultAssetType.stringValues()),
 				"Specify type of asset to find. Defaults to all.", 0, 1));
 		_defn.add(new Interface.Element("filter-policy", new EnumType(new String[] {
@@ -80,6 +83,7 @@ public class SvcCollectionMembers extends PluginService {
 		String text = args.value("text");
 		boolean isleaf = args.booleanValue("isleaf", false);
 		boolean forEdit = args.booleanValue("foredit", false);
+		boolean showMembers = args.booleanValue("members", true);
 		int size = args.intValue("size", 100);
 
 		// Prepare query
@@ -115,6 +119,6 @@ public class SvcCollectionMembers extends PluginService {
 
 		XmlDoc.Element r = DistributedAssetUtil.queryAndFilter(executor(), assetType, filterPolicy, query, dm);
 		// Reformat for PSSD
-		SvcObjectFind.addPssdObjects(executor(), w, r, isleaf, forEdit);
+		SvcObjectFind.addPssdObjects(executor(), w, r, isleaf, showMembers, forEdit);
 	}
 }

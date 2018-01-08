@@ -30,6 +30,7 @@ import nig.util.ObjectUtil;
 import arc.mf.plugin.PluginService;
 import arc.mf.plugin.ServerRoute;
 import arc.mf.plugin.ServiceExecutor;
+import arc.mf.plugin.PluginService.Interface;
 import arc.mf.plugin.dtype.BooleanType;
 import arc.mf.plugin.dtype.EnumType;
 import arc.mf.plugin.dtype.IntegerType;
@@ -66,6 +67,8 @@ public class SvcObjectFind extends PluginService {
 						Study.TYPE.toString(), DataSet.TYPE.toString(), DataObject.TYPE.toString(),
 						RSubject.TYPE.toString() }),
 						"The type of the object(s) to restrict the search, if any.", 0, 1));
+		_defn.add(new Interface.Element("members", BooleanType.DEFAULT,
+				"If is a Project object, show Project members (expensive in time). Defaults to true.", 0, 1));
 		_defn.add(
 				new Interface.Element("text", StringType.DEFAULT, "Arbitrary search text for free text query.", 0, 1));
 		_defn.add(new Interface.Element("idx", LongType.POSITIVE_ONE, "Cursor position. Defaults to 1", 0, 1));
@@ -107,6 +110,7 @@ public class SvcObjectFind extends PluginService {
 		boolean forEdit = args.booleanValue("foredit", false);
 		String pdist = args.value("pdist");
 		String assetType = args.stringValue("asset-type", "all");
+		boolean showMembers = args.booleanValue("members", true);
 
 		// Setup query
 		StringBuilder query = new StringBuilder();
@@ -154,19 +158,19 @@ public class SvcObjectFind extends PluginService {
 		XmlDoc.Element r = executor().execute("asset.query", dm.root());
 
 		// Parse the XML and reformat
-		addPssdObjects(executor(), w, r.elements("asset"), false, forEdit);
+		addPssdObjects(executor(), w, r.elements("asset"), false, showMembers, forEdit);
 	}
 
 	public static void addPssdObjects(ServiceExecutor executor, XmlWriter w, XmlDoc.Element r, boolean isleaf,
-			boolean forEdit) throws Throwable {
+			 boolean showMembers, boolean forEdit) throws Throwable {
 
-		addPssdObjects(executor, w, r.elements("asset"), isleaf, forEdit);
+		addPssdObjects(executor, w, r.elements("asset"), isleaf, showMembers, forEdit);
 	}
 
 	public static void addPssdObjects(ServiceExecutor executor, XmlWriter w, List<XmlDoc.Element> aes, boolean isleaf,
-			boolean forEdit) throws Throwable {
+			boolean showMembers, boolean forEdit) throws Throwable {
 
-		addPssdObjects(executor, w, aes, isleaf, forEdit, false, false, true);
+		addPssdObjects(executor, w, aes, isleaf, showMembers, forEdit, false, false, true);
 	}
 
 	/**
@@ -195,14 +199,14 @@ public class SvcObjectFind extends PluginService {
 	 * @throws Throwable
 	 */
 	public static void addPssdObjects(ServiceExecutor executor, XmlWriter w, XmlDoc.Element r, boolean isleaf,
-			boolean forEdit, boolean showRSubjectIdentity, boolean showSubjectPrivate) throws Throwable {
+			boolean showMembers, boolean forEdit, boolean showRSubjectIdentity, boolean showSubjectPrivate) throws Throwable {
 
-		addPssdObjects(executor, w, r.elements("asset"), isleaf, forEdit, showRSubjectIdentity, showSubjectPrivate,
+		addPssdObjects(executor, w, r.elements("asset"), isleaf, showMembers, forEdit, showRSubjectIdentity, showSubjectPrivate,
 				true);
 	}
 
 	public static void addPssdObjects(ServiceExecutor executor, XmlWriter w, List<XmlDoc.Element> aes, boolean isleaf,
-			boolean forEdit, boolean showRSubjectIdentity, boolean showSubjectPrivate, boolean sortByCid)
+			boolean showMembers, boolean forEdit, boolean showRSubjectIdentity, boolean showSubjectPrivate, boolean sortByCid)
 					throws Throwable {
 
 		if (aes != null) {
@@ -303,7 +307,7 @@ public class SvcObjectFind extends PluginService {
 					boolean addMeta = true;
 					boolean addObject = true;
 					if (type == Project.TYPE) {
-						if (pmmap == null) {
+						if (pmmap == null && showMembers) {
 							// TODO: remove this to improve performance. because
 							// it
 							// launches many services calls to check roles
@@ -1431,7 +1435,9 @@ public class SvcObjectFind extends PluginService {
 		 * we have dropped the daris:pssd-project/member meta-data, we should
 		 * probably drop the presentation of member meta-data (done via roles)
 		 */
-		pmm.describeMembers(w, projectId);
+		if (pmm!=null) {
+			pmm.describeMembers(w, projectId);
+		}
 	}
 
 }

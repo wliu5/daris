@@ -100,9 +100,10 @@ public class RSubject {
 		Boolean isLeaf = false;
 		Boolean forEdit = false;
 		Collection<String> rcids = r.values("asset/meta/daris:pssd-subject/r-subject");
+		Boolean showMembers = false;
 		if (rcids != null) {
 			for (String id : rcids) {
-				SvcObjectDescribe.describeObject(executor, id, proute, null, isLeaf, forEdit, w);
+				SvcObjectDescribe.describeObject(executor, id, proute, null, isLeaf, showMembers, forEdit, w);
 			}
 		}
 

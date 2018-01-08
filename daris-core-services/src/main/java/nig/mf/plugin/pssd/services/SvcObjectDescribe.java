@@ -27,6 +27,8 @@ public class SvcObjectDescribe extends PluginService {
 		_defn.add(me);
 		_defn.add(new Interface.Element("isleaf", BooleanType.DEFAULT,
 				"Identify whether each node is a leaf. Defaults to false.", 0, 1));
+		_defn.add(new Interface.Element("members", BooleanType.DEFAULT,
+				"If is a Project object, show Project members (expensive in time). Defaults to true.", 0, 1));
 		_defn.add(new Interface.Element(
 				"foredit",
 				BooleanType.DEFAULT,
@@ -80,14 +82,15 @@ public class SvcObjectDescribe extends PluginService {
 		String id = args.value("id");
 		String proute = args.value("id/@proute");
 
+		boolean showMembers = args.booleanValue("members", true);
 		boolean isleaf = args.booleanValue("isleaf", false);
 		boolean forEdit = args.booleanValue("foredit", false);
 
-		describeObject(executor(), id, proute, args.element("lock"), isleaf,forEdit, w);
+		describeObject(executor(), id, proute, args.element("lock"), isleaf, showMembers, forEdit, w);
 	}
 
 	public static void describeObject(ServiceExecutor executor, String id, String proute, XmlDoc.Element lock,
-			boolean isLeaf, boolean forEdit, XmlWriter w) throws Throwable {
+			boolean isLeaf, boolean showMembers,  boolean forEdit, XmlWriter w) throws Throwable {
 
 		XmlDocMaker dm = new XmlDocMaker("args");
 		dm.add("cid", id);
@@ -105,6 +108,6 @@ public class SvcObjectDescribe extends PluginService {
 
 		// Get the object and format for PSSD
 		XmlDoc.Element r = executor.execute(new ServerRoute(proute), "asset.get", dm.root());
-		SvcObjectFind.addPssdObjects(executor, w, r, isLeaf, forEdit);
+		SvcObjectFind.addPssdObjects(executor, w, r, isLeaf, showMembers, forEdit);
 	}
 }

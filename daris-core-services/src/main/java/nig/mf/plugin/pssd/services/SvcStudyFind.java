@@ -302,7 +302,7 @@ public class SvcStudyFind extends PluginService {
 	public static void describe(ServiceExecutor executor, XmlWriter w, XmlDoc.Element r, boolean forEdit)
 			throws Throwable {
 
-		SvcObjectFind.addPssdObjects(executor, w, r, false, forEdit);
+		SvcObjectFind.addPssdObjects(executor, w, r, false, false, forEdit);
 	}
 
 }
