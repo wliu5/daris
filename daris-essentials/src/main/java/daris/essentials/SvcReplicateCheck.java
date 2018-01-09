@@ -83,7 +83,6 @@ public class SvcReplicateCheck extends PluginService {
 		Integer repInc = args.intValue("rep-inc", 1000);
 		Integer related = args.intValue("related", 0);
 
-
 		// Find route to peer. Exception if can't reach and build in extra checks to make sure we are 
 		// being very safe
 		ServerRoute sr = DistributedAssetUtil.findPeerRoute(executor(), peer);
@@ -99,10 +98,12 @@ public class SvcReplicateCheck extends PluginService {
 		boolean more = true;
 		Vector<String> assetIDs = new Vector<String>();
 		String schemaID = schemaID(executor());
+
+		w.add("schema-ID", schemaID);
+		w.add("uuid-local", uuidLocal);
 		while (more) {
 			more = find (executor(),  schemaID, dateTime, wheres, peer, sr, uuidLocal, size, 
-					assetIDs, checkAsset, useIndexes, 
-					dbg,  list, includeDestroyed, idx, count, w);
+					assetIDs, checkAsset, useIndexes, dbg,  list, includeDestroyed, idx, count, w);
 			if (dbg) {
 				log(dateTime, "nig.replicate.check : checking for abort \n");
 			}
@@ -150,6 +151,7 @@ public class SvcReplicateCheck extends PluginService {
 					dm.add("update-doc-types", false);
 					dm.add("update-models", false);
 					dm.add("allow-move", true);
+					dm.add("locally-modified-only", false);             // Allows us to replicate foreign assets (that are already replicas on our primary)
 					if (includeDestroyed) dm.add("include-destroyed", true);
 
 					try {
@@ -231,7 +233,9 @@ public class SvcReplicateCheck extends PluginService {
 		dm.add("pdist", 0);
 		dm.add("action", "get-meta");
 		dm.add("use-indexes", useIndexes);
-		System.out.println("dm="+dm.root());
+		if (dbg) {
+			System.out.println("Primary query = " + dm.root());
+		}
 		XmlDoc.Element r = executor().execute("asset.query", dm.root());
 		if (r==null) return false;  
 		Collection<XmlDoc.Element> assets = r.elements("asset");
@@ -256,7 +260,7 @@ public class SvcReplicateCheck extends PluginService {
 			// when replicated to another peer
 			String rid = asset.value("rid");    
 
-			// If primary, set expected rid on remote peer.
+			// If primary, set expected rid on remote peer else retain extant rid from foreign system
 			String rid2 = setRID (id, rid, schemaID, uuidLocal);
 			dm.add("rid", rid2);
 		}
@@ -270,27 +274,39 @@ public class SvcReplicateCheck extends PluginService {
 		Collection<XmlDoc.Element> results = r2.elements("exists");
 
 
-		// Create a list of assets that don't have replcias that we want to replicate
+		// Create a list of assets that don't have replicas that we want to replicate
 		if (dbg) {
 			log(dateTime, "   nig.replicate.check : iterate through " + results.size() + " results and build list for replication.");
 		}
 
+		// Iterate through the remote peer call to asset.exists results. Each asset checked has a return value
 		Integer n = null;
 		for (XmlDoc.Element result : results) {
 
 			// Fetch the rid and pull out the id
 			String rid = result.value("@rid");
-			String[] t = rid.split("\\.");
-			if (n==null) n = t.length;           // They are all the same length
-			String primaryID = t[n-1];
 
-			/*
-			System.out.println("rid="+rid);
-			System.out.println("id="+primaryID);
-			System.out.println("value="+res.booleanValue());
-			 */
-
-			String cid = CiteableIdUtil.idToCid(executor, primaryID);
+			// Now, if the rid is from a foreign server, the id in the rid (uuid.id) is foreign also
+			// Therefore, if the asset is a foreign replica, we must fetch it's true primary
+			// ID on the local server
+			String primaryID = null;
+			if (!rid.equals(uuidLocal)) {
+				dm = new XmlDocMaker("args");
+				dm.add("rid", rid);
+				r = executor.execute ("asset.exists", dm.root());
+				primaryID = r.value("exists/@id");
+				if (primaryID==null) {
+					// This should not occur because we know the asset exists
+					throw new Exception("Failed to find primary asset ID for foreign replica with rid="+rid);
+				}
+			} else {
+				String[] t = rid.split("\\.");
+				if (n==null) n = t.length;           // They are all the same length
+				primaryID = t[n-1];
+			}
+			
+			// Now take action depending on if the asset exists on the DR or not
+			String cid = CiteableIdUtil.idToCid(executor, primaryID);               // May be null
 			if (result.booleanValue()==false) {
 				if (list) {
 					XmlDoc.Element asset = AssetUtil.getAsset(executor, null, primaryID);
