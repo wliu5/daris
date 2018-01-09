@@ -1,6 +1,7 @@
 package daris.essentials;
 
 import java.util.Collection;
+import java.util.Set;
 
 import arc.mf.plugin.*;
 import arc.mf.plugin.dtype.StringType;
@@ -75,7 +76,7 @@ public class SvcNameSpaceIngestRate extends PluginService {
 		_defn = new Interface();
 		Interface.Element me = new Interface.Element("namespace", StringType.DEFAULT, "The namespace tree of interest. Multiple namespaces are ORed.", 1, Integer.MAX_VALUE);
 		_defn.add(me);
-		me = new Interface.Element("year", StringType.DEFAULT, "The calendar year of interest (no default)", 1, 1);
+		me = new Interface.Element("year", StringType.DEFAULT, "The calendar year of interest (no default)", 1, Integer.MAX_VALUE);
 		_defn.add(me);
 	}
 
@@ -107,24 +108,25 @@ public class SvcNameSpaceIngestRate extends PluginService {
 	public void execute(XmlDoc.Element args, Inputs in, Outputs out, XmlWriter w) throws Throwable {
 
 		Collection<String> nss = args.values("namespace");
-		String year = args.value("year");
-
+		Collection<String> years = args.values("year");				
 		//
-		for (int i=0;i<12;i++) {
-			PluginTask.checkIfThreadTaskAborted();
-			XmlDocMaker dm = new XmlDocMaker("args");
-			String where = makeWhere(i, year) + makeNS (nss);
-			String my = makeMonth (i, year);
-			dm.add("where", where);
-			dm.add("action", "sum");
-			dm.add("xpath", "content/size");
-			XmlDoc.Element r = executor().execute("asset.query", dm.root());
-			w.push("ingest");
-			w.add("month",  my);
-			String n = r.value("value/@nbe");
-			String t = r.value("value");
-			w.add("size", new String[]{"n", n}, bytesToGBytes (t));
-			w.pop();
+		for (String year : years) {
+			for (int i=0;i<12;i++) {
+				PluginTask.checkIfThreadTaskAborted();
+				XmlDocMaker dm = new XmlDocMaker("args");
+				String where = makeWhere(i, year) + makeNS (nss);
+				String my = makeMonth (i, year);
+				dm.add("where", where);
+				dm.add("action", "sum");
+				dm.add("xpath", "content/size");
+				XmlDoc.Element r = executor().execute("asset.query", dm.root());
+				w.push("ingest");
+				w.add("month",  my);
+				String n = r.value("value/@nbe");
+				String t = r.value("value");
+				w.add("size", new String[]{"n", n}, bytesToGBytes (t));
+				w.pop();
+			}
 		}
 	}
 
@@ -174,7 +176,7 @@ public class SvcNameSpaceIngestRate extends PluginService {
 		t += ")";
 		return t;
 	}
-	
+
 	private String makeMonth (int i, String year) throws Throwable {
 		if (i==0) {
 			return "Jan-" + year;
