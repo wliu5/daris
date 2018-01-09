@@ -99,7 +99,9 @@ public class SvcReplicateCheck extends PluginService {
 		Vector<String> assetIDs = new Vector<String>();
 		String schemaID = schemaID(executor());
 
-		w.add("schema-ID", schemaID);
+		if (schemaID!=null) {
+			w.add("schema-ID", schemaID);
+		}
 		w.add("uuid-local", uuidLocal);
 		while (more) {
 			more = find (executor(),  schemaID, dateTime, wheres, peer, sr, uuidLocal, size, 
