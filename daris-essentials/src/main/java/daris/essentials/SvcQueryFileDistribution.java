@@ -11,7 +11,7 @@ import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
 
-public class SvcNameSpaceFileDistribution extends PluginService {
+public class SvcQueryFileDistribution extends PluginService {
 
 	private static String[] units = {"KB", "MB", "GB", "TB", "PB"};
 	private static Integer cursorSize_ = 10000;
@@ -38,14 +38,14 @@ public class SvcNameSpaceFileDistribution extends PluginService {
 
 	private Interface _defn;
 
-	public SvcNameSpaceFileDistribution() {
+	public SvcQueryFileDistribution() {
 		_defn = new Interface();
 		Interface.Element me = new Interface.Element("where", StringType.DEFAULT, "Predicate to select assets", 1, 1);
 		_defn.add(me);
 	}
 
 	public String name() {
-		return "nig.namespace.file.size.distribution";
+		return "nig.file.size.distribution";
 	}
 
 	public String description() {

@@ -8,7 +8,7 @@ import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
 
-public class SvcNameSpaceIngestRate extends PluginService {
+public class SvcQueryIngestRate extends PluginService {
 
 	public static enum StorageUnit {
 		MB, GB, TB, PB;
@@ -71,7 +71,7 @@ public class SvcNameSpaceIngestRate extends PluginService {
 
 	private Interface _defn;
 
-	public SvcNameSpaceIngestRate() {
+	public SvcQueryIngestRate() {
 		_defn = new Interface();
 		Interface.Element me = new Interface.Element("where", StringType.DEFAULT, "Predicate to select assets", 1, 1);
 		_defn.add(me);
@@ -80,11 +80,11 @@ public class SvcNameSpaceIngestRate extends PluginService {
 	}
 
 	public String name() {
-		return "nig.namespace.ingest.rate";
+		return "nig.ingest.rate";
 	}
 
 	public String description() {
-		return "Specialised service to list storage data ingest rates (i.e. by looking at ctime)  per month.";
+		return "Specialised service to list storage data ingest rates (i.e. by looking at ctime) per month for the selected assets.";
 	}
 
 	public Interface definition() {
