@@ -61,9 +61,9 @@ public class SvcNameSpaceFileDistribution extends PluginService {
 		String where = args.value("where") + " and asset has content";
 		init();
 		
-		// Set logarithmic bin width. We use a doubling of size starting with 1024 bytes.
+		// Set logarithmic bin width. We use a doubling of size 
 		logBinWidth_ = Math.log10(2.0);
-		w.add("log-bin-width", logBinWidth_);
+
 		// Generate Histogram container
 		HashMap<Integer,Long> bins = new HashMap<Integer, Long>();
 		
