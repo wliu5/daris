@@ -14,7 +14,7 @@ import arc.xml.XmlWriter;
 public class SvcQueryFileDistribution extends PluginService {
 
 	private static String[] units = {"KB", "MB", "GB", "TB", "PB"};
-	private static Integer cursorSize_ = 10000;
+	private static Integer cursorSize_ = 50000;
 	
 	private class ValHolder {
 		private Double min_;
@@ -137,6 +137,7 @@ public class SvcQueryFileDistribution extends PluginService {
 
 	private Boolean accumulate (ServiceExecutor executor,  String where, Double logBinWidth, HashMap<Integer,Long> bins, 
 			AtomicInteger idx, ValHolder vh, XmlWriter w) throws Throwable {
+		System.out.println("idx="+idx);
 		PluginTask.checkIfThreadTaskAborted();
 		XmlDocMaker dm = new XmlDocMaker("args");
 		dm.add("where", where);
