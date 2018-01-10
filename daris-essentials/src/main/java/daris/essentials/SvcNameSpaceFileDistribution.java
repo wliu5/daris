@@ -3,6 +3,7 @@ package daris.essentials;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import arc.mf.plugin.*;
 import arc.mf.plugin.dtype.StringType;
@@ -12,15 +13,28 @@ import arc.xml.XmlWriter;
 
 public class SvcNameSpaceFileDistribution extends PluginService {
 
-	private Integer idx_ = 1;
-	private Integer size_ = 5000;
-	private Double logBinWidth_ = 0.0;
-	private Double minSize_ = 1.0E12;
-	private Double maxSize_ = 0.0;
-	private Integer nAssets_ = 0;
-	private Integer maxBin_ = 0;
-	//
 	private static String[] units = {"KB", "MB", "GB", "TB", "PB"};
+	private static Integer cursorSize_ = 10000;
+	
+	private class ValHolder {
+		private Double min_;
+		private Double max_;
+		private Long n_;
+		public ValHolder (Double min, Double max, Long n) {
+			min_ = min;
+			max_ = max;
+			n_ = n;
+		}
+		public void set (Double min, Double max, Long n) {
+			min_ = min;
+			max_ = max;
+			n_ = n;
+		}
+		Double min () {return min_;};
+		Double max () {return max_;};
+		Long n () {return n_;};		
+	}
+	
 
 	private Interface _defn;
 
@@ -31,7 +45,7 @@ public class SvcNameSpaceFileDistribution extends PluginService {
 	}
 
 	public String name() {
-		return "nig.namespace.file.distribution";
+		return "nig.namespace.file.size.distribution";
 	}
 
 	public String description() {
@@ -57,37 +71,39 @@ public class SvcNameSpaceFileDistribution extends PluginService {
 
 	public void execute(XmlDoc.Element args, Inputs in, Outputs out, XmlWriter w) throws Throwable {
 
-		// Initialise
+		// Parse
 		String where = args.value("where") + " and asset has content";
-		init();
 		
 		// Set logarithmic bin width. We use a doubling of size 
-		logBinWidth_ = Math.log10(2.0);
+		Double logBinWidth = Math.log10(2.0);
+		//
 
 		// Generate Histogram container
 		HashMap<Integer,Long> bins = new HashMap<Integer, Long>();
-		
-		
+			
 		// Iterate through assets and accumulate
 		Boolean more = true;
+		ValHolder vh = new ValHolder(1.0E15, -1.0, 0L);
+		AtomicInteger idx = new AtomicInteger(1);
 		while (more) {
-			more = accumulate (executor(), where, bins, w);
+			more = accumulate (executor(), where, logBinWidth, bins, idx, vh, w);
 		}
-		w.add("number-assets", nAssets_);
-		w.add("minimum-file-size", minSize_);
-		w.add("maximum-file-size", maxSize_);
+		w.add("number-assets", vh.n());
+		w.add("minimum-file-size", vh.min());
+		w.add("maximum-file-size", vh.max());
 		
 		// FInd maximum bin from HashMap (not sorted)
+		Integer maxBin = 0;
 		Set<Integer> keySet = bins.keySet();
 		for (Integer key : keySet) {
-			if (key>maxBin_) maxBin_ = key;
+			if (key>maxBin) maxBin = key;
 		}	
 		
 		// Print histogram
 		Long humanSize = 1L;
 		int group = 0;
 		String unit = units[0];
-		for (int i=10; i<=maxBin_; i++) {
+		for (int i=10; i<=maxBin; i++) {
 			long actualSize = (long)Math.pow(2,i);
 			
 			// size takes values 1,2,4,8,16,32,64,128,256,512 and repeats
@@ -120,22 +136,13 @@ public class SvcNameSpaceFileDistribution extends PluginService {
 	}
 
 
-	private void init () {
-		idx_ = 1;
-		size_ = 5000;
-		logBinWidth_ = 0.0;
-		minSize_ = 1.0E12;
-		maxSize_ = 0.0;
-		nAssets_ = 0;
-		maxBin_ = 0;
-	}
-	private Boolean accumulate (ServiceExecutor executor, String where, HashMap<Integer,Long> bins, XmlWriter w) throws Throwable {
-
+	private Boolean accumulate (ServiceExecutor executor, String where, Double logBinWidth, HashMap<Integer,Long> bins, 
+			AtomicInteger idx, ValHolder vh, XmlWriter w) throws Throwable {
 		PluginTask.checkIfThreadTaskAborted();
 		XmlDocMaker dm = new XmlDocMaker("args");
 		dm.add("where", where);
-		dm.add("idx", idx_);
-		dm.add("size", size_);
+		dm.add("idx", idx.intValue());
+		dm.add("size", cursorSize_);
 		dm.add("action", "get-value");
 		dm.add("xpath", "content/size");
 		XmlDoc.Element r = executor.execute("asset.query", dm.root());
@@ -145,31 +152,29 @@ public class SvcNameSpaceFileDistribution extends PluginService {
 		XmlDoc.Element cursor = r.element("cursor");
 		boolean more = !(cursor.booleanValue("total/@complete"));
 		if (more) {
-			idx_ = cursor.intValue("next");
+			idx.set(cursor.intValue("next"));
 		}
 		// Accumulate into logarithmic histogram
 		for (XmlDoc.Element asset : assets) {
 			Double size = asset.doubleValue("value");
 			Double ls = Math.log10(size);
-			Integer iBin = setBin (ls);
+			Integer iBin = setBin (ls, logBinWidth);
 			if (bins.containsKey(iBin)) {
 				Long n = bins.get(iBin) + 1;
 				bins.put(iBin, n);
 			} else {
 				bins.put(iBin, 1L);
 			}
-			nAssets_++;
-
-			maxSize_ = Math.max(maxSize_, size);
-			minSize_ = Math.min(minSize_, size);
+			// Update
+			vh.set(Math.min(vh.min(), size), Math.max(vh.max(), size), (1L+vh.n()));
 		}
 		return more;
 	}
 
-	int setBin (Double logValue) {
+	int setBin (Double logValue, Double logBinWidth) {
 		// We arrange the bins so that any size < 1024 is in the bottom bin [10]
 		// Then the bin increments by one per power of 2 (1024 [10], 2048 [11] etc)
-		int idx = (int)(1.0 + Math.floor(logValue / logBinWidth_));
+		int idx = (int)(1.0 + Math.floor(logValue / logBinWidth));
 		if (idx<10) idx = 10;
 		return idx;		
 	}
