@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Date;
 
 import arc.mf.plugin.*;
-import arc.mf.plugin.PluginService.Interface.Attribute;
 import arc.mf.plugin.dtype.CiteableIdType;
 import arc.mf.plugin.dtype.IntegerType;
 import arc.mf.plugin.dtype.StringType;

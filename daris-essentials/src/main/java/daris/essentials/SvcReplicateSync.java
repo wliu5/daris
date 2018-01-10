@@ -199,7 +199,6 @@ public class SvcReplicateSync extends PluginService {
 		if (listPaths) {
 			w.push("paths");
 			Set<String> keys = paths.keySet();
-			Iterator<String> it = keys.iterator();
 			for (String key : keys) {
 				Integer value = paths.get(key);
 				w.add("path", new String[]{"number", ""+value}, key);

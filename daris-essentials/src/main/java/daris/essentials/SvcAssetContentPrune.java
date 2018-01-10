@@ -7,7 +7,6 @@ import arc.mf.plugin.PluginService;
 import arc.mf.plugin.PluginTask;
 import arc.mf.plugin.PluginService.Interface.Element;
 import arc.mf.plugin.ServiceExecutor;
-import arc.mf.plugin.dtype.AssetType;
 import arc.mf.plugin.dtype.BooleanType;
 import arc.mf.plugin.dtype.StringType;
 import arc.xml.XmlDoc;

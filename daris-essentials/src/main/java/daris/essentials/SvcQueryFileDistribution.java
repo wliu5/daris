@@ -76,8 +76,6 @@ public class SvcQueryFileDistribution extends PluginService {
 		
 		// Set logarithmic bin width. We use a doubling of size 
 		Double logBinWidth = Math.log10(2.0);
-		//
-		Integer nAssets = count (executor(), where);
 		
 		// Generate Histogram container
 		HashMap<Integer,Long> bins = new HashMap<Integer, Long>();
@@ -87,7 +85,7 @@ public class SvcQueryFileDistribution extends PluginService {
 		ValHolder vh = new ValHolder(1.0E15, -1.0, 0L);
 		AtomicInteger idx = new AtomicInteger(1);
 		while (more) {
-			more = accumulate (executor(), nAssets, where, logBinWidth, bins, idx, vh, w);
+			more = accumulate (executor(), where, logBinWidth, bins, idx, vh, w);
 		}
 		w.add("number-assets", vh.n());
 		w.add("minimum-file-size", vh.min());
@@ -137,7 +135,7 @@ public class SvcQueryFileDistribution extends PluginService {
 	}
 
 
-	private Boolean accumulate (ServiceExecutor executor,  Integer nAssets, String where, Double logBinWidth, HashMap<Integer,Long> bins, 
+	private Boolean accumulate (ServiceExecutor executor,  String where, Double logBinWidth, HashMap<Integer,Long> bins, 
 			AtomicInteger idx, ValHolder vh, XmlWriter w) throws Throwable {
 		PluginTask.checkIfThreadTaskAborted();
 		XmlDocMaker dm = new XmlDocMaker("args");
@@ -168,11 +166,6 @@ public class SvcQueryFileDistribution extends PluginService {
 			}
 			// Update
 			vh.set(Math.min(vh.min(), size), Math.max(vh.max(), size), (1L+vh.n()));
-			
-			// Sanity check as  these may be very long lived executions.
-			if (vh.n()>nAssets) {
-				throw new Exception ("The accumulation loop has found too many assets - abandoning");
-			}
 		}
 		return more;
 	}
@@ -185,12 +178,4 @@ public class SvcQueryFileDistribution extends PluginService {
 		return idx;		
 	}
 	
-	
-	private Integer count (ServiceExecutor executor, String where) throws Throwable {
-		XmlDocMaker dm = new XmlDocMaker("args");
-		dm.add("where", where);
-		dm.add("action", "count");
-		XmlDoc.Element r = executor.execute("asset.query", dm.root());
-		return r.intValue("value");
-	}
 }
