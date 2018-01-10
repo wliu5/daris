@@ -1,7 +1,6 @@
 package daris.essentials;
 
 import java.util.Collection;
-import java.util.Set;
 
 import arc.mf.plugin.*;
 import arc.mf.plugin.dtype.StringType;
@@ -74,7 +73,7 @@ public class SvcNameSpaceIngestRate extends PluginService {
 
 	public SvcNameSpaceIngestRate() {
 		_defn = new Interface();
-		Interface.Element me = new Interface.Element("namespace", StringType.DEFAULT, "The namespace tree of interest. Multiple namespaces are ORed.", 1, Integer.MAX_VALUE);
+		Interface.Element me = new Interface.Element("where", StringType.DEFAULT, "Predicate to select assets", 1, 1);
 		_defn.add(me);
 		me = new Interface.Element("year", StringType.DEFAULT, "The calendar year of interest (no default)", 1, Integer.MAX_VALUE);
 		_defn.add(me);
@@ -85,7 +84,7 @@ public class SvcNameSpaceIngestRate extends PluginService {
 	}
 
 	public String description() {
-		return "Specialised service to list storage data rates of ingest per month.";
+		return "Specialised service to list storage data ingest rates (i.e. by looking at ctime)  per month.";
 	}
 
 	public Interface definition() {
@@ -93,7 +92,7 @@ public class SvcNameSpaceIngestRate extends PluginService {
 	}
 
 	public Access access() {
-		return ACCESS_ADMINISTER;
+		return ACCESS_ACCESS;
 	}
 
 	public int executeMode() {
@@ -107,14 +106,14 @@ public class SvcNameSpaceIngestRate extends PluginService {
 
 	public void execute(XmlDoc.Element args, Inputs in, Outputs out, XmlWriter w) throws Throwable {
 
-		Collection<String> nss = args.values("namespace");
+		String where = args.value("where");
 		Collection<String> years = args.values("year");				
 		//
 		for (String year : years) {
 			for (int i=0;i<12;i++) {
 				PluginTask.checkIfThreadTaskAborted();
 				XmlDocMaker dm = new XmlDocMaker("args");
-				String where = makeWhere(i, year) + makeNS (nss);
+				where += " and " + makeWhere(i, year);
 				String my = makeMonth (i, year);
 				dm.add("where", where);
 				dm.add("action", "sum");
@@ -161,21 +160,6 @@ public class SvcNameSpaceIngestRate extends PluginService {
 		}
 	}
 
-
-	private String makeNS (Collection<String> nss) {
-		String t = " and (";
-		boolean first = true;
-		for (String ns : nss) {
-			if (first) {
-				t += " namespace>='" + ns + "'";
-				first = false;
-			} else {
-				t += " or namespace>='" + ns + "'";
-			}
-		}
-		t += ")";
-		return t;
-	}
 
 	private String makeMonth (int i, String year) throws Throwable {
 		if (i==0) {
