@@ -238,8 +238,10 @@ public class SvcShoppingCartCreate extends PluginService {
         if (settings.archiveType != null) {
             if (usse.elementExists("archive/parameter")) {
                 List<XmlDoc.Element> pes = usse.elements("archive/parameter");
-                for (XmlDoc.Element pe : pes) {
-                    settings.archiveParams.put(pe.value("@name"), pe.value());
+                if (pes != null) {
+                    for (XmlDoc.Element pe : pes) {
+                        settings.archiveParams.put(pe.value("@name"), pe.value());
+                    }
                 }
             }
         }
@@ -266,7 +268,7 @@ public class SvcShoppingCartCreate extends PluginService {
         Map<String, String> deliveryArgs = new LinkedHashMap<String, String>();
         Map<String, String> secureWalletDeliveryArgs = new LinkedHashMap<String, String>();
         Archive.Type archiveType;
-        Map<String, String> archiveParams;
+        Map<String, String> archiveParams = new LinkedHashMap<String, String>();
         Layout.Type layoutType;
         String layoutPattern;
 
