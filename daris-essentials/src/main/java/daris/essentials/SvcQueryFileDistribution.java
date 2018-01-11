@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import arc.mf.plugin.*;
+import arc.mf.plugin.dtype.BooleanType;
 import arc.mf.plugin.dtype.StringType;
 import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
@@ -15,7 +16,7 @@ public class SvcQueryFileDistribution extends PluginService {
 
 	private static String[] units = {"KB", "MB", "GB", "TB", "PB"};
 	private static Integer cursorSize_ = 50000;
-	
+
 	private class ValHolder {
 		private Double min_;
 		private Double max_;
@@ -34,13 +35,15 @@ public class SvcQueryFileDistribution extends PluginService {
 		Double max () {return max_;};
 		Long n () {return n_;};		
 	}
-	
+
 
 	private Interface _defn;
 
 	public SvcQueryFileDistribution() {
 		_defn = new Interface();
 		Interface.Element me = new Interface.Element("where", StringType.DEFAULT, "Predicate to select assets", 1, 1);
+		_defn.add(me);
+		me = new Interface.Element("show-accum", BooleanType.DEFAULT, "Show some accumulation loop information (default false).", 0, 1);
 		_defn.add(me);
 	}
 
@@ -73,38 +76,41 @@ public class SvcQueryFileDistribution extends PluginService {
 
 		// Parse
 		String where = args.value("where") + " and asset has content";
-		
+		Boolean showAccum = args.booleanValue("show-accum", false);
+
 		// Set logarithmic bin width. We use a doubling of size 
 		Double logBinWidth = Math.log10(2.0);
-		
+
 		// Generate Histogram container
 		HashMap<Integer,Long> bins = new HashMap<Integer, Long>();
-			
+
 		// Iterate through assets and accumulate
 		Boolean more = true;
 		ValHolder vh = new ValHolder(1.0E15, -1.0, 0L);
 		AtomicInteger idx = new AtomicInteger(1);
+		if (showAccum) w.push("accumulation");
 		while (more) {
-			more = accumulate (executor(), where, logBinWidth, bins, idx, vh, w);
+			more = accumulate (executor(), showAccum, where, logBinWidth, bins, idx, vh, w);
 		}
+		if (showAccum) w.pop();
 		w.add("number-assets", vh.n());
 		w.add("minimum-file-size", vh.min());
 		w.add("maximum-file-size", vh.max());
-		
+
 		// FInd maximum bin from HashMap (not sorted)
 		Integer maxBin = 0;
 		Set<Integer> keySet = bins.keySet();
 		for (Integer key : keySet) {
 			if (key>maxBin) maxBin = key;
 		}	
-		
+
 		// Print histogram
 		Long humanSize = 1L;
 		int group = 0;
 		String unit = units[0];
 		for (int i=10; i<=maxBin; i++) {
 			long actualSize = (long)Math.pow(2,i);
-			
+
 			// size takes values 1,2,4,8,16,32,64,128,256,512 and repeats
 			// in groups for KB, MB, GB etc
 			int j = i % 10;
@@ -116,7 +122,7 @@ public class SvcQueryFileDistribution extends PluginService {
 			} else {
 				humanSize *= 2;
 			}
-			
+
 			// Set units
 			if (group>=units.length) {
 				// These would be large !
@@ -124,7 +130,7 @@ public class SvcQueryFileDistribution extends PluginService {
 			} else {
 				unit = units[group];
 			}
-			
+
 			// Print
 			if (bins.containsKey(i)) {
 				w.add("bin", new String[]{"actual-bin-size", ""+actualSize, "human-bin-size", ""+humanSize + unit}, bins.get(i));
@@ -135,9 +141,14 @@ public class SvcQueryFileDistribution extends PluginService {
 	}
 
 
-	private Boolean accumulate (ServiceExecutor executor,  String where, Double logBinWidth, HashMap<Integer,Long> bins, 
+	private Boolean accumulate (ServiceExecutor executor,  Boolean showAccum, String where, Double logBinWidth, HashMap<Integer,Long> bins, 
 			AtomicInteger idx, ValHolder vh, XmlWriter w) throws Throwable {
+		if (showAccum) {
+			w.push("cycle");
+			w.add("start-index", idx.get());
+		}
 		System.out.println("idx="+idx);
+		Long time1 = System.currentTimeMillis();
 		PluginTask.checkIfThreadTaskAborted();
 		XmlDocMaker dm = new XmlDocMaker("args");
 		dm.add("where", where);
@@ -168,6 +179,14 @@ public class SvcQueryFileDistribution extends PluginService {
 			// Update
 			vh.set(Math.min(vh.min(), size), Math.max(vh.max(), size), (1L+vh.n()));
 		}
+		Long time2 = System.currentTimeMillis();
+		System.out.println("number assets, time taken="+assets.size() + "," + (time2-time1));
+		if (showAccum) {
+			w.add("number-assets", assets.size());
+			w.add("time-taken", time2-time1);
+			w.pop();
+		}
+
 		return more;
 	}
 
@@ -178,5 +197,5 @@ public class SvcQueryFileDistribution extends PluginService {
 		if (idx<10) idx = 10;
 		return idx;		
 	}
-	
+
 }
