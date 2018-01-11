@@ -134,7 +134,6 @@ public class SubjectHandler {
 
 
 	private static String setName (DicomIngestControls ic, StudyMetadata studyMeta) throws Throwable {
-		System.out.println("Call setName");
 		DicomPersonName pn = studyMeta.patientName();
 		String name = null;
 		if (ic.setSubjectNameFromFirst()) {
@@ -148,7 +147,6 @@ public class SubjectHandler {
 		} else if (ic.setSubjectNameFromIDandLast()) {
 			name = studyMeta.patientID() + "-" + pn.last();
 		}
-		System.out.println("name="+name);
 
 		//
 		String r = ic.setSubjectNameFromIndexRange();
