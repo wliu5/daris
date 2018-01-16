@@ -55,7 +55,7 @@ public class DictionaryUtils {
         executor.execute("dictionary.entry.remove", dm.root());
     }
 
-    public static boolean dictionaryNamespaceExists(ServiceExecutor executor, String cid) throws Throwable {
+    public static boolean projectDictionaryNamespaceExists(ServiceExecutor executor, String cid) throws Throwable {
         XmlDocMaker dm = new XmlDocMaker("args");
         dm.add("namespace", Project.projectSpecificDictionaryNamespaceOf(cid));
         return executor.execute("dictionary.namespace.exists", dm.root()).booleanValue("exists", false);

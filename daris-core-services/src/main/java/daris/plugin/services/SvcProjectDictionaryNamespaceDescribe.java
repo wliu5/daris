@@ -35,7 +35,7 @@ public class SvcProjectDictionaryNamespaceDescribe extends PluginService {
     public void execute(Element args, Inputs arg1, Outputs arg2, XmlWriter w) throws Throwable {
         String projectCid = args.value("cid");
         String dictNS = Project.projectSpecificDictionaryNamespaceOf(projectCid);
-        boolean exists = DictionaryUtils.dictionaryNamespaceExists(executor(), projectCid);
+        boolean exists = DictionaryUtils.projectDictionaryNamespaceExists(executor(), projectCid);
         w.add("namespace", new String[] { "exists", Boolean.toString(exists) }, dictNS);
     }
 

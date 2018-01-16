@@ -8,9 +8,12 @@ import arc.mf.plugin.dtype.StringType;
 import arc.xml.XmlDoc.Element;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
-import daris.plugin.DaRIS;
 
 public class SvcProjectRoleUserCandidateAdd extends PluginService {
+
+    public static final String PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK = "[daris.project.role-user.candidate]";
+
+    public static final String PROJECT_ROLE_USER_CANDIDATE_DICTIONARY = "daris:daris.project.role-user.candidate";
 
     public static final String SERVICE_NAME = "daris.project.role-user.candidate.add";
 
@@ -38,6 +41,14 @@ public class SvcProjectRoleUserCandidateAdd extends PluginService {
 
     @Override
     public void execute(Element args, Inputs arg1, Outputs arg2, XmlWriter arg3) throws Throwable {
+        /*
+         * create dictionary if not exist
+         */
+        createDictionary(executor());
+
+        /*
+         * add roles to the dictionary
+         */
         Collection<String> roles = args.values("role");
         addProjectRoleUserCandidates(executor(), roles);
     }
@@ -60,16 +71,24 @@ public class SvcProjectRoleUserCandidateAdd extends PluginService {
         String desc = executor
                 .execute("authorization.role.describe", "<args><role>" + role + "</role></args>", null, null)
                 .value("role/description");
-        if (desc == null || !desc.endsWith(DaRIS.PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK)) {
+        if (desc == null || desc.indexOf(PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK) == -1) {
             XmlDocMaker dm = new XmlDocMaker("args");
             dm.add("role", role);
             if (desc == null) {
-                desc = DaRIS.PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK;
+                desc = role + PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK;
             } else {
-                desc += DaRIS.PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK;
+                desc += PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK;
             }
             dm.add("description", desc);
             executor.execute("authorization.role.modify", dm.root());
+        }
+        DictionaryUtils.addDictionaryEntry(executor, PROJECT_ROLE_USER_CANDIDATE_DICTIONARY, role, null);
+    }
+
+    static void createDictionary(ServiceExecutor executor) throws Throwable {
+        if (!DictionaryUtils.dictionaryExists(executor, PROJECT_ROLE_USER_CANDIDATE_DICTIONARY)) {
+            DictionaryUtils.createDictionary(executor, PROJECT_ROLE_USER_CANDIDATE_DICTIONARY,
+                    "DaRIS project role user candicates.");
         }
     }
 

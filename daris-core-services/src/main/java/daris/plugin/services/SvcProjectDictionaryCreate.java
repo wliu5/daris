@@ -57,7 +57,7 @@ public class SvcProjectDictionaryCreate extends PluginService {
             throw new Exception("DaRIS project " + cid + " does not exist.");
         }
 
-        if (!DictionaryUtils.dictionaryNamespaceExists(executor(), cid)) {
+        if (!DictionaryUtils.projectDictionaryNamespaceExists(executor(), cid)) {
             throw new Exception("Dictionary namespace: " + dictionaryNamespace + " does not exist. Run "
                     + SvcProjectDictionaryNamespaceCreate.SERVICE_NAME + " to create the dictionary namespace.");
         }

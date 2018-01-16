@@ -1,6 +1,7 @@
 package daris.plugin.services;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import arc.mf.plugin.PluginService;
@@ -9,39 +10,38 @@ import arc.xml.XmlDoc;
 import arc.xml.XmlDoc.Element;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
-import daris.plugin.DaRIS;
 
 public class SvcProjectRoleUserCandidateList extends PluginService {
 
     public static final String SERVICE_NAME = "daris.project.role-user.candidate.list";
 
     public static List<String> getProjectRoleUserCandidates(ServiceExecutor executor) throws Throwable {
-        List<String> result = new ArrayList<String>();
-        int idx = 1;
-        int size = 1000;
-        int remaining = -1;
-        while (remaining != 0) {
-            XmlDocMaker dm = new XmlDocMaker("args");
-            dm.add("count", true);
-            dm.add("idx", idx);
-            dm.add("size", size);
-            XmlDoc.Element xe = executor.execute("authorization.role.describe", dm.root());
-            List<XmlDoc.Element> res = xe.elements("role");
-            if (res != null) {
-                for (XmlDoc.Element re : res) {
-                    String description = re.value("description");
-                    if (description != null && description.endsWith(DaRIS.PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK)) {
-                        result.add(re.value("name"));
-                    }
-                }
-            }
-            idx += size;
-            remaining = xe.intValue("cursor/remaining", 0);
-        }
-        if (result.isEmpty()) {
+        if (!DictionaryUtils.dictionaryExists(executor,
+                SvcProjectRoleUserCandidateAdd.PROJECT_ROLE_USER_CANDIDATE_DICTIONARY)) {
             return null;
         }
-        return result;
+        XmlDocMaker dm = new XmlDocMaker("args");
+        dm.add("dictionary", SvcProjectRoleUserCandidateAdd.PROJECT_ROLE_USER_CANDIDATE_DICTIONARY);
+        dm.add("size", "infinity");
+        Collection<String> terms = executor.execute("dictionary.entries.list", dm.root()).values("term");
+        if (terms == null || terms.isEmpty()) {
+            return null;
+        }
+        dm = new XmlDocMaker("args");
+        for (String term : terms) {
+            dm.add("role", term);
+        }
+        XmlDoc.Element re = executor.execute("authorization.role.exists", dm.root());
+        List<String> roles = new ArrayList<String>();
+        for (String term : terms) {
+            if (re.booleanValue("exists[@role='" + term + "']")) {
+                roles.add(term);
+            }
+        }
+        if (roles.isEmpty()) {
+            return null;
+        }
+        return roles;
     }
 
     public static String getActorId(ServiceExecutor executor, String role) throws Throwable {

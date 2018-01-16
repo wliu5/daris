@@ -8,7 +8,6 @@ import arc.mf.plugin.dtype.StringType;
 import arc.xml.XmlDoc.Element;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
-import daris.plugin.DaRIS;
 
 public class SvcProjectRoleUserCandidateRemove extends PluginService {
 
@@ -57,15 +56,32 @@ public class SvcProjectRoleUserCandidateRemove extends PluginService {
     }
 
     public static void removeProjectRoleUserCandidate(ServiceExecutor executor, String role) throws Throwable {
-        String desc = executor
-                .execute("authorization.role.describe", "<args><role>" + role + "</role></args>", null, null)
-                .value("role/description");
-        if (desc != null && desc.endsWith(DaRIS.PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK)) {
-            XmlDocMaker dm = new XmlDocMaker("args");
-            dm.add("role", role);
-            desc = desc.substring(0, desc.length() - DaRIS.PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK.length());
-            dm.add("description", desc);
-            executor.execute("authorization.role.modify", dm.root());
+        if (executor.execute("authorization.role.exists", "<args><role>" + role + "</role></args>", null, null)
+                .booleanValue("exists")) {
+            String desc = executor
+                    .execute("authorization.role.describe", "<args><role>" + role + "</role></args>", null, null)
+                    .value("role/description");
+            if (desc != null) {
+                int idx = desc.indexOf(SvcProjectRoleUserCandidateAdd.PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK);
+                if (idx >= 0) {
+                    XmlDocMaker dm = new XmlDocMaker("args");
+                    dm.add("role", role);
+                    desc = desc.replace(SvcProjectRoleUserCandidateAdd.PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK, "");
+                    if (desc.isEmpty()) {
+                        desc = role;
+                    }
+                    dm.add("description", desc);
+                    executor.execute("authorization.role.modify", dm.root());
+                }
+            }
+        }
+        if (DictionaryUtils.dictionaryExists(executor,
+                SvcProjectRoleUserCandidateAdd.PROJECT_ROLE_USER_CANDIDATE_DICTIONARY)) {
+            if (DictionaryUtils.dictionaryEntryExists(executor,
+                    SvcProjectRoleUserCandidateAdd.PROJECT_ROLE_USER_CANDIDATE_DICTIONARY, role, null)) {
+                DictionaryUtils.removeDictionaryEntry(executor,
+                        SvcProjectRoleUserCandidateAdd.PROJECT_ROLE_USER_CANDIDATE_DICTIONARY, role, null);
+            }
         }
     }
 
