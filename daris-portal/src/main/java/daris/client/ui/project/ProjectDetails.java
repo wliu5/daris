@@ -38,6 +38,7 @@ import arc.mf.client.util.Action;
 import arc.mf.dtype.ConstantType;
 import arc.mf.dtype.EnumerationType;
 import arc.mf.model.authentication.UserRef;
+import arc.mf.object.Null;
 import arc.mf.object.ObjectMessageResponse;
 import daris.client.model.method.MethodEnum;
 import daris.client.model.method.MethodRef;
@@ -45,10 +46,8 @@ import daris.client.model.object.DObjectRef;
 import daris.client.model.project.CidRootNameEnumerationDataSource;
 import daris.client.model.project.DataUse;
 import daris.client.model.project.Project;
-import daris.client.model.project.ProjectMember;
 import daris.client.model.project.ProjectNamespaceEnumerationDataSource;
 import daris.client.model.project.ProjectRole;
-import daris.client.model.project.ProjectRoleMember;
 import daris.client.model.repository.RepositoryRef;
 import daris.client.model.user.RoleUser;
 import daris.client.ui.object.DObjectDetails;
@@ -62,9 +61,9 @@ public class ProjectDetails extends DObjectDetails {
     public static final String TAB_NAME_ROLE_MEMBER = "Role Members";
     public static final String TAB_DESC_ROLE_MEMBER = "Role Members";
 
-    private ProjectMemberGrid _memberGrid;
+    private ProjectUserGrid _memberGrid;
 
-    private ProjectRoleMemberGrid _roleMemberGrid;
+    private ProjectRoleUserGrid _roleMemberGrid;
 
     public ProjectDetails(Project o, FormEditMode mode) {
 
@@ -152,13 +151,10 @@ public class ProjectDetails extends DObjectDetails {
          */
         final Project po = (Project) object();
 
-        Field<String> namespaceField = new Field<String>(new FieldDefinition(
-                "namespace",
-                mode() == FormEditMode.CREATE ? new EnumerationType<String>(
-                        new ProjectNamespaceEnumerationDataSource())
+        Field<String> namespaceField = new Field<String>(new FieldDefinition("namespace",
+                mode() == FormEditMode.CREATE ? new EnumerationType<String>(new ProjectNamespaceEnumerationDataSource())
                         : ConstantType.DEFAULT,
-                "The asset namespace of the project.", null,
-                mode() == FormEditMode.CREATE ? 1 : 0, 1));
+                "The asset namespace of the project.", null, mode() == FormEditMode.CREATE ? 1 : 0, 1));
         namespaceField.setValue(po.namespace(), false);
         if (mode() == FormEditMode.CREATE) {
             // can only set namespace when creating the project
@@ -170,8 +166,7 @@ public class ProjectDetails extends DObjectDetails {
                 }
 
                 @Override
-                public void itemPropertyChanged(FormItem<String> f,
-                        Property property) {
+                public void itemPropertyChanged(FormItem<String> f, Property property) {
 
                 }
             });
@@ -182,13 +177,10 @@ public class ProjectDetails extends DObjectDetails {
          * cid-root-name
          */
         if (mode() == FormEditMode.CREATE) {
-            Field<String> cidRootNameField = new Field<String>(
-                    new FieldDefinition(
-                            "cid-root-name",
-                            new EnumerationType<String>(
-                                    new CidRootNameEnumerationDataSource()),
-                            "Specify the named citable ID root for the collection. Defaults to 'pssd.project'. Using other named roots allows projects to be created in a CID sandbox, perhaps for testing.",
-                            null, 1, 1));
+            Field<String> cidRootNameField = new Field<String>(new FieldDefinition("cid-root-name",
+                    new EnumerationType<String>(new CidRootNameEnumerationDataSource()),
+                    "Specify the named citable ID root for the collection. Defaults to 'pssd.project'. Using other named roots allows projects to be created in a CID sandbox, perhaps for testing.",
+                    null, 1, 1));
             cidRootNameField.setValue(po.cidRootName(), false);
             cidRootNameField.addListener(new FormItemListener<String>() {
 
@@ -198,8 +190,7 @@ public class ProjectDetails extends DObjectDetails {
                 }
 
                 @Override
-                public void itemPropertyChanged(FormItem<String> f,
-                        Property property) {
+                public void itemPropertyChanged(FormItem<String> f, Property property) {
 
                 }
             });
@@ -211,19 +202,13 @@ public class ProjectDetails extends DObjectDetails {
         /*
          * methods
          */
-        FieldGroup methodsFieldGroup = new FieldGroup(
-                new FieldDefinition(
-                        "Methods",
-                        ConstantType.DEFAULT,
-                        "Specifies the list of Methods that can be used with this project. Methods control Subject and Study meta-data.",
-                        null, 1, 1));
+        FieldGroup methodsFieldGroup = new FieldGroup(new FieldDefinition("Methods", ConstantType.DEFAULT,
+                "Specifies the list of Methods that can be used with this project. Methods control Subject and Study meta-data.",
+                null, 1, 1));
         if (po.hasMethods()) {
             for (MethodRef m : po.methods()) {
-                Field<MethodRef> methodField = new Field<MethodRef>(
-                        new FieldDefinition(
-                                "method",
-                                new EnumerationType<MethodRef>(new MethodEnum()),
-                                "method", null, 1, Integer.MAX_VALUE));
+                Field<MethodRef> methodField = new Field<MethodRef>(new FieldDefinition("method",
+                        new EnumerationType<MethodRef>(new MethodEnum()), "method", null, 1, Integer.MAX_VALUE));
                 FieldRenderOptions fro = new FieldRenderOptions();
                 fro.setWidth(500);
                 methodField.setRenderOptions(fro);
@@ -232,11 +217,8 @@ public class ProjectDetails extends DObjectDetails {
             }
         } else {
             if (mode() == FormEditMode.CREATE || mode() == FormEditMode.UPDATE) {
-                Field<MethodRef> methodField = new Field<MethodRef>(
-                        new FieldDefinition(
-                                "method",
-                                new EnumerationType<MethodRef>(new MethodEnum()),
-                                "method", null, 1, Integer.MAX_VALUE));
+                Field<MethodRef> methodField = new Field<MethodRef>(new FieldDefinition("method",
+                        new EnumerationType<MethodRef>(new MethodEnum()), "method", null, 1, Integer.MAX_VALUE));
                 FieldRenderOptions fro = new FieldRenderOptions();
                 fro.setWidth(500);
                 methodField.setRenderOptions(fro);
@@ -267,16 +249,14 @@ public class ProjectDetails extends DObjectDetails {
 
                 @Override
                 @SuppressWarnings("rawtypes")
-                public void addedField(FieldSet s, FormItem f, int idx,
-                        boolean lastUpdate) {
+                public void addedField(FieldSet s, FormItem f, int idx, boolean lastUpdate) {
 
                     po.setMethods(getMethods(s));
                 }
 
                 @Override
                 @SuppressWarnings("rawtypes")
-                public void removedField(FieldSet s, FormItem f, int idx,
-                        boolean lastUpdate) {
+                public void removedField(FieldSet s, FormItem f, int idx, boolean lastUpdate) {
 
                     po.setMethods(getMethods(s));
                 }
@@ -296,8 +276,7 @@ public class ProjectDetails extends DObjectDetails {
 
                 @Override
                 @SuppressWarnings("rawtypes")
-                public void updatedFieldState(FieldSet s, FormItem f,
-                        FormItem.Property p) {
+                public void updatedFieldState(FieldSet s, FormItem f, FormItem.Property p) {
 
                 }
             });
@@ -307,15 +286,12 @@ public class ProjectDetails extends DObjectDetails {
         /*
          * data-use
          */
-        Field<DataUse> dataUseField = new Field<DataUse>(
-                new FieldDefinition(
-                        "data-use",
-                        DataUse.asEnumerationType(),
-                        "Specifies the type of consent for the use of data for this project: "
-                                + " 1) 'specific' means use the data only for the original specific intent, "
-                                + " 2) 'extended' means use the data for related projects and "
-                                + " 3) 'unspecified' means use the data for any research",
-                        null, 1, 1));
+        Field<DataUse> dataUseField = new Field<DataUse>(new FieldDefinition("data-use", DataUse.asEnumerationType(),
+                "Specifies the type of consent for the use of data for this project: "
+                        + " 1) 'specific' means use the data only for the original specific intent, "
+                        + " 2) 'extended' means use the data for related projects and "
+                        + " 3) 'unspecified' means use the data for any research",
+                null, 1, 1));
         dataUseField.setValue(po.dataUse());
         if (mode() != FormEditMode.READ_ONLY) {
             dataUseField.addListener(new FormItemListener<DataUse>() {
@@ -327,8 +303,7 @@ public class ProjectDetails extends DObjectDetails {
                 }
 
                 @Override
-                public void itemPropertyChanged(FormItem<DataUse> f,
-                        FormItem.Property p) {
+                public void itemPropertyChanged(FormItem<DataUse> f, FormItem.Property p) {
 
                 }
             });
@@ -350,7 +325,7 @@ public class ProjectDetails extends DObjectDetails {
          * create member grid & tab
          */
         final Project po = (Project) object();
-        _memberGrid = new ProjectMemberGrid(po, mode());
+        _memberGrid = new ProjectUserGrid(po, mode());
         _memberGrid.refresh();
         if (mode().equals(FormEditMode.READ_ONLY)) {
             setTab(TAB_NAME_MEMBER, TAB_DESC_MEMBER, _memberGrid);
@@ -381,66 +356,48 @@ public class ProjectDetails extends DObjectDetails {
             vpl.add(_memberGrid);
             final UserSelect userSelect = new UserSelect();
             userSelect.fitToParent();
-            userSelect
-                    .setRowContextMenuHandler(new ListGridRowContextMenuHandler<UserRef>() {
-                        @Override
-                        public void show(final UserRef user,
-                                ContextMenuEvent event) {
+            userSelect.setRowContextMenuHandler(new ListGridRowContextMenuHandler<UserRef>() {
+                @Override
+                public void show(final UserRef user, ContextMenuEvent event) {
 
-                            final int x = _memberGrid.absoluteRight();
-                            final int y = _memberGrid.absoluteTop()
-                                    + _memberGrid.height() / 2;
-                            Menu menu = new Menu("User");
-                            menu.setShowTitle(true);
-                            menu.add(new ActionEntry("Add to members",
-                                    new Action() {
+                    final int x = _memberGrid.absoluteRight();
+                    final int y = _memberGrid.absoluteTop() + _memberGrid.height() / 2;
+                    Menu menu = new Menu("User");
+                    menu.setShowTitle(true);
+                    menu.add(new ActionEntry("Add to members", new Action() {
+
+                        @Override
+                        public void execute() {
+
+                            ProjectMemberRoleSelector.showAt(x, y,
+                                    new ProjectMemberRoleSelector.RoleSelectionListener() {
 
                                         @Override
-                                        public void execute() {
+                                        public void roleSelected(ProjectRole role, DataUse dataUse) {
 
-                                            ProjectMemberRoleSelector
-                                                    .showAt(x,
-                                                            y,
-                                                            new ProjectMemberRoleSelector.RoleSelectionListener() {
+                                            if (role != null) {
+                                                po.addUser(new Project.User(user, role, dataUse));
+                                                if (mode().equals(FormEditMode.UPDATE)) {
+                                                    po.commitUsers(new ObjectMessageResponse<Null>() {
 
-                                                                @Override
-                                                                public void roleSelected(
-                                                                        ProjectRole role,
-                                                                        DataUse dataUse) {
-
-                                                                    if (role != null) {
-                                                                        po.addMember(new ProjectMember(
-                                                                                user,
-                                                                                role,
-                                                                                dataUse));
-                                                                        if (mode()
-                                                                                .equals(FormEditMode.UPDATE)) {
-                                                                            po.commitMembers(new ObjectMessageResponse<Boolean>() {
-
-                                                                                @Override
-                                                                                public void responded(
-                                                                                        Boolean r) {
-
-                                                                                    if (r) {
-                                                                                        _memberGrid
-                                                                                                .refresh();
-                                                                                    }
-                                                                                }
-                                                                            });
-                                                                        } else {
-                                                                            _memberGrid
-                                                                                    .refresh();
-                                                                        }
-                                                                    }
-                                                                }
-                                                            });
+                                                        @Override
+                                                        public void responded(Null r) {
+                                                            _memberGrid.refresh();
+                                                        }
+                                                    });
+                                                } else {
+                                                    _memberGrid.refresh();
+                                                }
+                                            }
                                         }
-                                    }));
-                            ActionContextMenu am = new ActionContextMenu(menu);
-                            NativeEvent ne = event.getNativeEvent();
-                            am.showAt(ne);
+                                    });
                         }
-                    });
+                    }));
+                    ActionContextMenu am = new ActionContextMenu(menu);
+                    NativeEvent ne = event.getNativeEvent();
+                    am.showAt(ne);
+                }
+            });
             userSelect.addDropTarget(new DropTarget() {
 
                 @Override
@@ -450,8 +407,7 @@ public class ProjectDetails extends DObjectDetails {
                 }
 
                 @Override
-                public DragResponder dragResponderAt(int x, int y,
-                        EventTarget target) {
+                public DragResponder dragResponderAt(int x, int y, EventTarget target) {
 
                     return this;
                 }
@@ -464,21 +420,20 @@ public class ProjectDetails extends DObjectDetails {
                         @Override
                         public DropCheck checkCanDrop(Object data) {
 
-                            if (po.members() == null) {
+                            if (po.users() == null) {
                                 return DropCheck.CANNOT;
                             }
-                            if (po.members().size() <= 1) {
+                            if (po.users().size() <= 1) {
                                 return DropCheck.CANNOT;
                             }
-                            if (data instanceof ProjectMember) {
+                            if (data instanceof Project.User) {
                                 return DropCheck.CAN;
                             }
                             return DropCheck.CANNOT;
                         }
 
                         @Override
-                        public void drop(BaseWidget target, List<Object> data,
-                                final DropListener dl) {
+                        public void drop(BaseWidget target, List<Object> data, final DropListener dl) {
 
                             if (data == null) {
                                 dl.dropped(DropCheck.CANNOT);
@@ -486,22 +441,19 @@ public class ProjectDetails extends DObjectDetails {
                             }
                             boolean changed = false;
                             for (Object o : data) {
-                                if (o instanceof ProjectMember) {
-                                    po.removeMember((ProjectMember) o);
+                                if (o instanceof Project.User) {
+                                    po.removeUser((Project.User) o);
                                     changed = true;
                                 }
                             }
                             if (changed) {
                                 if (mode().equals(FormEditMode.UPDATE)) {
-                                    po.commitMembers(new ObjectMessageResponse<Boolean>() {
+                                    po.commitUsers(new ObjectMessageResponse<Null>() {
 
                                         @Override
-                                        public void responded(Boolean r) {
-
-                                            if (r) {
-                                                _memberGrid.refresh();
-                                                dl.dropped(DropCheck.CAN);
-                                            }
+                                        public void responded(Null r) {
+                                            _memberGrid.refresh();
+                                            dl.dropped(DropCheck.CAN);
                                         }
                                     });
                                 } else {
@@ -545,7 +497,7 @@ public class ProjectDetails extends DObjectDetails {
          * create role-member tab & grid
          */
         final Project po = (Project) object();
-        _roleMemberGrid = new ProjectRoleMemberGrid(po, mode());
+        _roleMemberGrid = new ProjectRoleUserGrid(po, mode());
         _roleMemberGrid.refresh();
         if (mode().equals(FormEditMode.READ_ONLY)) {
             setTab(TAB_NAME_ROLE_MEMBER, TAB_DESC_ROLE_MEMBER, _roleMemberGrid);
@@ -575,67 +527,50 @@ public class ProjectDetails extends DObjectDetails {
             _roleMemberGrid.fitToParent();
             vpl.add(_roleMemberGrid);
             final RoleUserListGrid roleUserGrid = new RoleUserListGrid();
-            roleUserGrid
-                    .setRowContextMenuHandler(new ListGridRowContextMenuHandler<RoleUser>() {
+            roleUserGrid.setRowContextMenuHandler(new ListGridRowContextMenuHandler<RoleUser>() {
+
+                @Override
+                public void show(final RoleUser roleUser, ContextMenuEvent event) {
+
+                    final int x = _roleMemberGrid.absoluteRight();
+                    final int y = _roleMemberGrid.absoluteTop() + _roleMemberGrid.height() / 2;
+                    Menu menu = new Menu("Role User");
+                    menu.setShowTitle(true);
+                    menu.add(new ActionEntry("Add to role members", new Action() {
 
                         @Override
-                        public void show(final RoleUser roleUser,
-                                ContextMenuEvent event) {
+                        public void execute() {
 
-                            final int x = _roleMemberGrid.absoluteRight();
-                            final int y = _roleMemberGrid.absoluteTop()
-                                    + _roleMemberGrid.height() / 2;
-                            Menu menu = new Menu("Role User");
-                            menu.setShowTitle(true);
-                            menu.add(new ActionEntry("Add to role members",
-                                    new Action() {
+                            ProjectMemberRoleSelector.showAt(x, y,
+                                    new ProjectMemberRoleSelector.RoleSelectionListener() {
 
                                         @Override
-                                        public void execute() {
+                                        public void roleSelected(ProjectRole role, DataUse dataUse) {
 
-                                            ProjectMemberRoleSelector
-                                                    .showAt(x,
-                                                            y,
-                                                            new ProjectMemberRoleSelector.RoleSelectionListener() {
+                                            if (role != null) {
+                                                po.addRoleUser(new Project.RoleUser(roleUser.name(), roleUser.id(),
+                                                        role, dataUse));
+                                                if (mode().equals(FormEditMode.UPDATE)) {
+                                                    po.commitUsers(new ObjectMessageResponse<Null>() {
 
-                                                                @Override
-                                                                public void roleSelected(
-                                                                        ProjectRole role,
-                                                                        DataUse dataUse) {
-
-                                                                    if (role != null) {
-                                                                        po.addRoleMember(new ProjectRoleMember(
-                                                                                roleUser,
-                                                                                role,
-                                                                                dataUse));
-                                                                        if (mode()
-                                                                                .equals(FormEditMode.UPDATE)) {
-                                                                            po.commitMembers(new ObjectMessageResponse<Boolean>() {
-
-                                                                                @Override
-                                                                                public void responded(
-                                                                                        Boolean r) {
-
-                                                                                    if (r) {
-                                                                                        _roleMemberGrid
-                                                                                                .refresh();
-                                                                                    }
-                                                                                }
-                                                                            });
-                                                                        } else {
-                                                                            _roleMemberGrid
-                                                                                    .refresh();
-                                                                        }
-                                                                    }
-                                                                }
-                                                            });
+                                                        @Override
+                                                        public void responded(Null r) {
+                                                            _roleMemberGrid.refresh();
+                                                        }
+                                                    });
+                                                } else {
+                                                    _roleMemberGrid.refresh();
+                                                }
+                                            }
                                         }
-                                    }));
-                            ActionContextMenu am = new ActionContextMenu(menu);
-                            NativeEvent ne = event.getNativeEvent();
-                            am.showAt(ne);
+                                    });
                         }
-                    });
+                    }));
+                    ActionContextMenu am = new ActionContextMenu(menu);
+                    NativeEvent ne = event.getNativeEvent();
+                    am.showAt(ne);
+                }
+            });
             roleUserGrid.addDropTarget(new DropTarget() {
 
                 @Override
@@ -645,8 +580,7 @@ public class ProjectDetails extends DObjectDetails {
                 }
 
                 @Override
-                public DragResponder dragResponderAt(int x, int y,
-                        EventTarget target) {
+                public DragResponder dragResponderAt(int x, int y, EventTarget target) {
 
                     return this;
                 }
@@ -659,21 +593,20 @@ public class ProjectDetails extends DObjectDetails {
                         @Override
                         public DropCheck checkCanDrop(Object data) {
 
-                            if (po.members() == null) {
+                            if (po.users() == null) {
                                 return DropCheck.CANNOT;
                             }
-                            if (po.members().size() <= 1) {
+                            if (po.users().size() <= 1) {
                                 return DropCheck.CANNOT;
                             }
-                            if (data instanceof ProjectRoleMember) {
+                            if (data instanceof Project.RoleUser) {
                                 return DropCheck.CAN;
                             }
                             return DropCheck.CANNOT;
                         }
 
                         @Override
-                        public void drop(BaseWidget target, List<Object> data,
-                                final DropListener dl) {
+                        public void drop(BaseWidget target, List<Object> data, final DropListener dl) {
 
                             if (data == null) {
                                 dl.dropped(DropCheck.CANNOT);
@@ -681,22 +614,18 @@ public class ProjectDetails extends DObjectDetails {
                             }
                             boolean changed = false;
                             for (Object o : data) {
-                                if (o instanceof ProjectRoleMember) {
-                                    po.removeRoleMember((ProjectRoleMember) o);
+                                if (o instanceof Project.RoleUser) {
+                                    po.removeRoleUser((Project.RoleUser) o);
                                     changed = true;
                                 }
                             }
                             if (changed) {
                                 if (mode().equals(FormEditMode.UPDATE)) {
-                                    po.commitMembers(new ObjectMessageResponse<Boolean>() {
-
+                                    po.commitUsers(new ObjectMessageResponse<Null>() {
                                         @Override
-                                        public void responded(Boolean r) {
-
-                                            if (r) {
-                                                _roleMemberGrid.refresh();
-                                                dl.dropped(DropCheck.CAN);
-                                            }
+                                        public void responded(Null r) {
+                                            _roleMemberGrid.refresh();
+                                            dl.dropped(DropCheck.CAN);
                                         }
                                     });
                                 } else {

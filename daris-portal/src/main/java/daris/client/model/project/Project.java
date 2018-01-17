@@ -1,11 +1,18 @@
 package daris.client.model.project;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
 import arc.mf.client.util.ActionListener;
+import arc.mf.client.util.ObjectUtil;
 import arc.mf.client.xml.XmlElement;
 import arc.mf.client.xml.XmlWriter;
+import arc.mf.model.authentication.Authority;
+import arc.mf.model.authentication.Domain;
+import arc.mf.model.authentication.DomainRef;
+import arc.mf.model.authentication.UserRef;
+import arc.mf.object.Null;
 import arc.mf.object.ObjectMessageResponse;
 import daris.client.model.IDUtil;
 import daris.client.model.method.MethodRef;
@@ -14,10 +21,9 @@ import daris.client.model.object.DObjectRef;
 import daris.client.model.object.messages.DObjectCreate;
 import daris.client.model.object.messages.DObjectUpdate;
 import daris.client.model.project.messages.ProjectCreate;
-import daris.client.model.project.messages.ProjectMemberReplace;
 import daris.client.model.project.messages.ProjectMetadataDescribe;
-import daris.client.model.project.messages.ProjectRoleMemberReplace;
 import daris.client.model.project.messages.ProjectUpdate;
+import daris.client.model.project.messages.ProjectUserSet;
 
 public class Project extends DObject {
 
@@ -34,8 +40,8 @@ public class Project extends DObject {
 
     private DataUse _dataUse;
     private List<MethodRef> _methods;
-    private List<ProjectMember> _members;
-    private List<ProjectRoleMember> _roleMembers;
+    private List<Project.User> _users;
+    private List<Project.RoleUser> _roleUsers;
 
     public Project() {
 
@@ -63,32 +69,31 @@ public class Project extends DObject {
             if (!mthdes.isEmpty()) {
                 _methods = new Vector<MethodRef>(mthdes.size());
                 for (XmlElement mde : mthdes) {
-                    _methods.add(new MethodRef(mde.value("id"),
-                            mde.value("name"), mde.value("description")));
+                    _methods.add(new MethodRef(mde.value("id"), mde.value("name"), mde.value("description")));
                 }
             }
         }
         /*
          * members
          */
-        List<XmlElement> mbes = oe.elements("member");
-        if (mbes != null) {
-            if (!mbes.isEmpty()) {
-                _members = new Vector<ProjectMember>(mbes.size());
-                for (XmlElement mbe : mbes) {
-                    _members.add(new ProjectMember(mbe));
+        List<XmlElement> ues = oe.elements("user");
+        if (ues != null) {
+            if (!ues.isEmpty()) {
+                _users = new ArrayList<Project.User>(ues.size());
+                for (XmlElement ue : ues) {
+                    _users.add(new Project.User(ue));
                 }
             }
         }
         /*
          * role-members
          */
-        List<XmlElement> rmbes = oe.elements("role-member");
-        if (rmbes != null) {
-            if (!rmbes.isEmpty()) {
-                _roleMembers = new Vector<ProjectRoleMember>(rmbes.size());
-                for (XmlElement rmbe : rmbes) {
-                    _roleMembers.add(new ProjectRoleMember(rmbe));
+        List<XmlElement> rues = oe.elements("role-user");
+        if (rues != null) {
+            if (!rues.isEmpty()) {
+                _roleUsers = new ArrayList<Project.RoleUser>(rues.size());
+                for (XmlElement rue : rues) {
+                    _roleUsers.add(new Project.RoleUser(rue));
                 }
             }
         }
@@ -136,88 +141,88 @@ public class Project extends DObject {
         _cidRootName = cidRootName;
     }
 
-    public List<ProjectMember> members() {
+    public List<Project.User> users() {
 
-        return _members;
+        return _users;
     }
 
-    public void addMember(ProjectMember pm) {
+    public void addUser(Project.User pu) {
 
-        if (_members == null) {
-            _members = new Vector<ProjectMember>();
+        if (_users == null) {
+            _users = new ArrayList<Project.User>();
         }
         int index = -1;
-        for (int i = 0; i < _members.size(); i++) {
-            ProjectMember member = _members.get(i);
-            if (member.user().equals(pm.user())) {
+        for (int i = 0; i < _users.size(); i++) {
+            Project.User user = _users.get(i);
+            if (user.user().equals(pu.user())) {
                 index = i;
                 break;
             }
         }
         if (index != -1) {
-            _members.remove(index);
+            _users.remove(index);
         }
-        _members.add(pm);
+        _users.add(pu);
     }
 
-    public void removeMember(ProjectMember pm) {
+    public void removeUser(Project.User pu) {
 
-        if (pm == null) {
+        if (pu == null) {
             return;
         }
-        if (_members != null) {
-            ProjectMember rm = null;
-            for (ProjectMember m : _members) {
-                if (m.user().equals(pm.user())) {
-                    rm = m;
+        if (_users != null) {
+            Project.User rm = null;
+            for (Project.User user : _users) {
+                if (user.user().equals(pu.user())) {
+                    rm = user;
                     break;
                 }
             }
             if (rm != null) {
-                _members.remove(rm);
+                _users.remove(rm);
             }
         }
     }
 
-    public List<ProjectRoleMember> roleMembers() {
+    public List<Project.RoleUser> roleUsers() {
 
-        return _roleMembers;
+        return _roleUsers;
     }
 
-    public void addRoleMember(ProjectRoleMember prm) {
+    public void addRoleUser(Project.RoleUser pru) {
 
-        if (_roleMembers == null) {
-            _roleMembers = new Vector<ProjectRoleMember>();
+        if (_roleUsers == null) {
+            _roleUsers = new ArrayList<Project.RoleUser>();
         }
         int index = -1;
-        for (int i = 0; i < _roleMembers.size(); i++) {
-            ProjectRoleMember rm = _roleMembers.get(i);
-            if (rm.member().equals(prm.member())) {
+        for (int i = 0; i < _roleUsers.size(); i++) {
+            Project.RoleUser ru = _roleUsers.get(i);
+            if (ru.name().equals(pru.name())) {
                 index = i;
                 break;
             }
         }
         if (index != -1) {
-            _roleMembers.remove(index);
+            _roleUsers.remove(index);
         }
-        _roleMembers.add(prm);
+        _roleUsers.add(pru);
     }
 
-    public void removeRoleMember(ProjectRoleMember prm) {
+    public void removeRoleUser(Project.RoleUser pru) {
 
-        if (prm == null) {
+        if (pru == null) {
             return;
         }
-        if (_roleMembers != null) {
-            ProjectRoleMember rrm = null;
-            for (ProjectRoleMember rm : _roleMembers) {
-                if (rm.member().equals(prm.member())) {
-                    rrm = rm;
+        if (_roleUsers != null) {
+            Project.RoleUser rm = null;
+            for (Project.RoleUser ru : _roleUsers) {
+                if (ru.name().equals(pru.name())) {
+                    rm = ru;
                     break;
                 }
             }
-            if (rrm != null) {
-                _roleMembers.remove(rrm);
+            if (rm != null) {
+                _roleUsers.remove(rm);
             }
         }
     }
@@ -249,38 +254,33 @@ public class Project extends DObject {
                 w.pop();
             }
         }
-        if (_members != null) {
-            for (ProjectMember pm : _members) {
-                w.push("member");
-                if (pm.user().domain().authority() != null
-                        && pm.user().domain().authority().name() != null) {
-                    if (pm.user().domain().authority().protocol() != null) {
-                        w.add("authority",
-                                new String[] { "protocol",
-                                        pm.user().domain().authority()
-                                                .protocol() },
-                                pm.user().domain().authority().name());
+        if (_users != null) {
+            for (Project.User user : _users) {
+                w.push("user");
+                if (user.user().domain().authority() != null && user.user().domain().authority().name() != null) {
+                    if (user.user().domain().authority().protocol() != null) {
+                        w.add("authority", new String[] { "protocol", user.user().domain().authority().protocol() },
+                                user.user().domain().authority().name());
                     } else {
-                        w.add("authority",
-                                pm.user().domain().authority().name());
+                        w.add("authority", user.user().domain().authority().name());
                     }
                 }
-                w.add("domain", pm.user().domain());
-                w.add("user", pm.user().name());
-                w.add("role", pm.role());
-                if (pm.dataUse() != null) {
-                    w.add("data-use", pm.dataUse());
+                w.add("domain", user.user().domain());
+                w.add("user", user.user().name());
+                w.add("role", user.role());
+                if (user.dataUse() != null) {
+                    w.add("data-use", user.dataUse());
                 }
                 w.pop();
             }
         }
-        if (_roleMembers != null) {
-            for (ProjectRoleMember prm : _roleMembers) {
-                w.push("role-member");
-                w.add("member", prm.member().name());
-                w.add("role", prm.role());
-                if (prm.dataUse() != null) {
-                    w.add("data-use", prm.dataUse());
+        if (_roleUsers != null) {
+            for (Project.RoleUser roleUser : _roleUsers) {
+                w.push("role-user");
+                w.add("name", roleUser.name());
+                w.add("role", roleUser.role());
+                if (roleUser.dataUse() != null) {
+                    w.add("data-use", roleUser.dataUse());
                 }
                 w.pop();
             }
@@ -309,77 +309,72 @@ public class Project extends DObject {
                 w.pop();
             }
         }
-        if (_members != null) {
-            for (ProjectMember pm : _members) {
-                w.push("member");
-                if (pm.user().domain().authority() != null
-                        && pm.user().domain().authority().name() != null) {
-                    if (pm.user().domain().authority().protocol() != null) {
-                        w.add("authority",
-                                new String[] { "protocol",
-                                        pm.user().domain().authority()
-                                                .protocol() },
-                                pm.user().domain().authority().name());
+        if (_users != null) {
+            for (Project.User user : _users) {
+                w.push("user");
+                if (user.user().domain().authority() != null && user.user().domain().authority().name() != null) {
+                    if (user.user().domain().authority().protocol() != null) {
+                        w.add("authority", new String[] { "protocol", user.user().domain().authority().protocol() },
+                                user.user().domain().authority().name());
                     } else {
-                        w.add("authority",
-                                pm.user().domain().authority().name());
+                        w.add("authority", user.user().domain().authority().name());
                     }
                 }
-                w.add("domain", pm.user().domain());
-                w.add("user", pm.user().name());
-                w.add("role", pm.role());
-                if (pm.dataUse() != null) {
-                    w.add("data-use", pm.dataUse());
+                w.add("domain", user.user().domain());
+                w.add("user", user.user().name());
+                w.add("role", user.role());
+                if (user.dataUse() != null) {
+                    w.add("data-use", user.dataUse());
                 }
                 w.pop();
             }
         }
-        if (_roleMembers != null) {
-            for (ProjectRoleMember prm : _roleMembers) {
-                w.push("role-member");
-                w.add("member", prm.member().name());
-                w.add("role", prm.role());
-                if (prm.dataUse() != null) {
-                    w.add("data-use", prm.dataUse());
+        if (_roleUsers != null) {
+            for (Project.RoleUser roleUser : _roleUsers) {
+                w.push("role-user");
+                w.add("name", roleUser.name());
+                w.add("role", roleUser.role());
+                if (roleUser.dataUse() != null) {
+                    w.add("data-use", roleUser.dataUse());
                 }
                 w.pop();
             }
         }
     }
 
-    public boolean hasMembers() {
+    public boolean hasUsers() {
 
-        if (_members != null) {
-            return !_members.isEmpty();
+        if (_users != null) {
+            return !_users.isEmpty();
         }
         return false;
     }
 
-    public boolean hasRoleMembers() {
+    public boolean hasRoleUsers() {
 
-        if (_roleMembers != null) {
-            return !_roleMembers.isEmpty();
+        if (_roleUsers != null) {
+            return !_roleUsers.isEmpty();
         }
         return false;
     }
 
     public boolean hasMembersOrRoleMembers() {
 
-        return hasMembers() || hasRoleMembers();
+        return hasUsers() || hasRoleUsers();
     }
 
-    public boolean hasAdminMember() {
+    public boolean hasAdminUser() {
 
-        if (hasMembers()) {
-            for (ProjectMember pm : _members) {
-                if (pm.role().equals(ProjectRole.PROJECT_ADMINISTRATOR)) {
+        if (hasUsers()) {
+            for (Project.User user : _users) {
+                if (user.role().equals(ProjectRole.PROJECT_ADMINISTRATOR)) {
                     return true;
                 }
             }
         }
-        if (hasRoleMembers()) {
-            for (ProjectRoleMember rm : _roleMembers) {
-                if (rm.role().equals(ProjectRole.PROJECT_ADMINISTRATOR)) {
+        if (hasRoleUsers()) {
+            for (Project.RoleUser roleUser : _roleUsers) {
+                if (roleUser.role().equals(ProjectRole.PROJECT_ADMINISTRATOR)) {
                     return true;
                 }
             }
@@ -387,14 +382,14 @@ public class Project extends DObject {
         return false;
     }
 
-    public void commitMembers(ObjectMessageResponse<Boolean> rh) {
+    public void commitUsers(ObjectMessageResponse<Null> rh) {
 
-        new ProjectMemberReplace(this).send(rh);
+        new ProjectUserSet(this).send(rh);
     }
 
-    public void commitRoleMembers(ObjectMessageResponse<Boolean> rh) {
+    public void commitRoleUsers(ObjectMessageResponse<Null> rh) {
 
-        new ProjectRoleMemberReplace(this).send(rh);
+        new ProjectUserSet(this).send(rh);
     }
 
     /**
@@ -403,19 +398,17 @@ public class Project extends DObject {
      * @param o
      *            the project to be created.
      */
-    public static void setMetaForEdit(final Project o,
-            final ActionListener al) {
+    public static void setMetaForEdit(final Project o, final ActionListener al) {
 
-        new ProjectMetadataDescribe()
-                .send(new ObjectMessageResponse<XmlElement>() {
+        new ProjectMetadataDescribe().send(new ObjectMessageResponse<XmlElement>() {
 
-                    @Override
-                    public void responded(XmlElement metaForEdit) {
+            @Override
+            public void responded(XmlElement metaForEdit) {
 
-                        o.setMetaForEdit(metaForEdit);
-                        al.executed(true);
-                    }
-                });
+                o.setMetaForEdit(metaForEdit);
+                al.executed(true);
+            }
+        });
     }
 
     public static String adminRoleFromId(String cid) {
@@ -431,8 +424,7 @@ public class Project extends DObject {
         if (projectCid == null) {
             return null;
         }
-        return Project.SPECIFIC_SUBJECT_ADMINISTRATOR_ROLE_NAME_ROOT + "."
-                + projectCid;
+        return Project.SPECIFIC_SUBJECT_ADMINISTRATOR_ROLE_NAME_ROOT + "." + projectCid;
     }
 
     public static String memberRoleFromeId(String cid) {
@@ -449,6 +441,253 @@ public class Project extends DObject {
             return null;
         }
         return SPECIFIC_GUEST_ROLE_NAME_ROOT + "." + projectCid;
+    }
+
+    public static class User implements Comparable<User> {
+
+        private UserRef _user;
+        private ProjectRole _role;
+        private DataUse _dataUse;
+
+        public User(XmlElement ue) {
+
+            long userId = -1;
+            try {
+                userId = ue.longValue("@id");
+            } catch (Throwable e) {
+            }
+            String authorityName = ue.value("@authority");
+            String authorityProtocol = ue.value("@protocol");
+            Authority authority = authorityName == null ? Domain.AUTHORITY_MEDIAFLUX
+                    : new Authority(authorityProtocol, authorityName);
+            DomainRef domain = new DomainRef(authority, ue.value("@domain"), Domain.Type.LOCAL, null);
+            _user = new UserRef(userId, domain, ue.value("@user"));
+            String userEmail = ue.value("email");
+            if (userEmail != null) {
+                _user.setEmail(userEmail);
+            }
+            String userName = ue.value("@name");
+            if (userName != null) {
+                _user.setPersonName(userName);
+            }
+            _role = ProjectRole.parse(ue.value("@role"));
+            _dataUse = DataUse.parse(ue.value("@data-use"));
+        }
+
+        public User(UserRef user, ProjectRole role, DataUse dataUse) {
+
+            _user = user;
+            assert role != null;
+            _role = role;
+            if (_role.equals(ProjectRole.PROJECT_ADMINISTRATOR) || _role.equals(ProjectRole.SUBJECT_ADMINISTRATOR)) {
+                _dataUse = null;
+            } else {
+                _dataUse = dataUse;
+            }
+        }
+
+        public UserRef user() {
+
+            return _user;
+        }
+
+        public ProjectRole role() {
+
+            return _role;
+        }
+
+        public DataUse dataUse() {
+
+            return _dataUse;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o != null && (o instanceof Project.User)) {
+                Project.User pu = (Project.User) o;
+                return _user.equals(pu.user()) && _role.equals(pu.role()) && ObjectUtil.equals(_dataUse, pu.dataUse());
+            }
+            return false;
+        }
+
+        public boolean isSameUser(Project.User pu) {
+
+            if (pu == null) {
+                return false;
+            }
+            return _user.equals(pu.user());
+        }
+
+        @Override
+        public String toString() {
+
+            String s = ":member";
+            if (_user.domain().authority() != null && _user.domain().authority().name() != null) {
+                s += " -authority \"" + _user.domain().authority().name() + "\"";
+            }
+            s += " -domain \"" + _user.domain() + "\"";
+            s += " -user \"" + _user.name() + "\"";
+            s += " -role \"" + _role.toString() + "\"";
+            if (_dataUse != null) {
+                s += " -data-use \"" + _dataUse.toString() + "\"";
+            }
+            return s;
+        }
+
+        public String toHTML() {
+
+            String html = "<table><thead><tr><th align=\"center\" colspan=\"2\">Member</th></tr><thead>";
+            html += "<tbody>";
+
+            if (_user.domain().authority() != null && _user.domain().authority().name() != null) {
+                html += "<tr><td><b>authority:</b></td><td>" + _user.domain().authority().name() + "</td></tr>";
+            }
+
+            html += "<tr><td><b>domain:</b></td><td>" + _user.domain() + "</td></tr>";
+            html += "<tr><td><b>user:</b></td><td>" + _user.name() + "</td></tr>";
+            html += "<tr><td><b>role:</b></td><td>" + _role + "</td></tr>";
+            if (_dataUse != null) {
+                html += "<tr><td><b>dataUse:</b></td><td>" + _dataUse + "</td></tr>";
+            }
+            html += "</tbody></table>";
+            return html;
+        }
+
+        @Override
+        public int compareTo(User o) {
+
+            if (o == null) {
+                return 1;
+            }
+            if (_role.ordinal() > o.role().ordinal()) {
+                return 1;
+            }
+            if (_role.ordinal() < o.role().ordinal()) {
+                return -1;
+            }
+            return _user.actorName().compareTo(o.user().actorName());
+        }
+
+        public void setRole(ProjectRole role) {
+
+            _role = role;
+        }
+
+        public void setDataUse(DataUse dataUse) {
+
+            if (_role.equals(ProjectRole.PROJECT_ADMINISTRATOR) || _role.equals(ProjectRole.SUBJECT_ADMINISTRATOR)) {
+                _dataUse = null;
+            } else {
+                _dataUse = dataUse;
+            }
+        }
+
+    }
+
+    public static class RoleUser implements Comparable<RoleUser> {
+
+        private long _roleId;
+        private String _roleName;
+        private ProjectRole _role;
+        private DataUse _dataUse;
+
+        public RoleUser(XmlElement rue) {
+            try {
+                _roleId = rue.longValue("@id");
+            } catch (Throwable e) {
+
+            }
+            _roleName = rue.value("@name");
+
+            _role = ProjectRole.parse(rue.value("@role"));
+            _dataUse = DataUse.parse(rue.value("@data-use"));
+        }
+
+        public RoleUser(String roleName, long roleId, ProjectRole projectRole, DataUse dataUse) {
+
+            _roleName = roleName;
+            _roleId = roleId;
+            _role = projectRole;
+            _dataUse = dataUse;
+        }
+
+        public String name() {
+
+            return _roleName;
+        }
+
+        public long id() {
+            return _roleId;
+        }
+
+        public ProjectRole role() {
+
+            return _role;
+        }
+
+        public void setRole(ProjectRole role) {
+
+            _role = role;
+        }
+
+        public DataUse dataUse() {
+
+            return _dataUse;
+        }
+
+        public void setDataUse(DataUse dataUse) {
+
+            if (_role.equals(ProjectRole.PROJECT_ADMINISTRATOR) || _role.equals(ProjectRole.SUBJECT_ADMINISTRATOR)) {
+                _dataUse = null;
+            } else {
+                _dataUse = dataUse;
+            }
+        }
+
+        @Override
+        public String toString() {
+
+            String s = ":role-user -id " + id() + " -name " + name() + " -role " + _role;
+            if (_dataUse != null) {
+                s += " -data-use " + _dataUse;
+            }
+            return s;
+        }
+
+        public String toHTML() {
+
+            String html = "<table><thead><tr><th align=\"center\" colspan=\"2\">Role Member</th></tr><thead>";
+            html += "<tbody>";
+            html += "<tr><td><b>id:</b></td><td>" + id() + "</td></tr>";
+            html += "<tr><td><b>name:</b></td><td>" + name() + "</td></tr>";
+            html += "<tr><td><b>role:</b></td><td>" + _role + "</td></tr>";
+            if (_dataUse != null) {
+                html += "<tr><td><b>data-use:</b></td><td>" + _dataUse + "</td></tr>";
+            }
+            html += "</tbody></table>";
+            return html;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null) {
+                return false;
+            }
+            if (o instanceof RoleUser) {
+                RoleUser ru = (RoleUser) o;
+                return _roleName.equals(ru.name()) && _role.equals(ru.role())
+                        && ObjectUtil.equals(_dataUse, ru.dataUse());
+            }
+            return false;
+        }
+
+        @Override
+        public int compareTo(RoleUser o) {
+            if (o == null) {
+                return 1;
+            }
+            return String.CASE_INSENSITIVE_ORDER.compare(_roleName, o.name());
+        }
     }
 
 }

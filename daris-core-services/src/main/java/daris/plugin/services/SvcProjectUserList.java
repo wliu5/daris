@@ -1,12 +1,12 @@
 package daris.plugin.services;
 
-import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 import arc.mf.plugin.PluginService;
+import arc.mf.plugin.ServerRoute;
 import arc.mf.plugin.ServiceExecutor;
 import arc.mf.plugin.dtype.AssetType;
 import arc.mf.plugin.dtype.CiteableIdType;
@@ -29,7 +29,12 @@ public class SvcProjectUserList extends PluginService {
 
         _defn = new Interface();
         _defn.add(new Interface.Element("id", AssetType.DEFAULT, "The asset id of the project.", 0, 1));
-        _defn.add(new Interface.Element("cid", CiteableIdType.DEFAULT, "The citeable id of the project.", 0, 1));
+        Interface.Element cid = new Interface.Element("cid", CiteableIdType.DEFAULT, "The citeable id of the project.",
+                0, 1);
+        cid.add(new Interface.Attribute("proute", CiteableIdType.DEFAULT,
+                "In afederation, must specify the route to the peer that manages this citable id. If not supplied, the object is assumed to be local.",
+                0));
+        _defn.add(cid);
         _defn.add(new Interface.Element("include", new EnumType(new String[] { "user", "role-user", "all" }),
                 "Type of user to include. Defaults to all.", 0, 1));
 
@@ -52,13 +57,25 @@ public class SvcProjectUserList extends PluginService {
 
     @Override
     public void execute(Element args, Inputs arg1, Outputs arg2, XmlWriter w) throws Throwable {
-        SimpleEntry<String, String> ids = AssetUtils.getAssetIdentifiers(executor(), args);
-        String cid = ids.getValue();
+
+        String assetId = args.value("id");
+        String cid = args.value("cid");
+        if (assetId == null && cid == null) {
+            throw new IllegalArgumentException("Missing cid or id.");
+        }
+        if (assetId != null && cid != null) {
+            throw new IllegalArgumentException("Expecting cid or id. Found both.");
+        }
+        if (assetId != null) {
+            cid = AssetUtils.getCiteableId(executor(), assetId);
+        }
+        String proute = args.value("cid/@proute");
+        ServerRoute sroute = proute == null ? null : new ServerRoute(proute);
 
         String include = args.stringValue("include", "all");
 
         if (include.equals("all") || include.equals("user")) {
-            List<XmlDoc.Element> ues = getProjectUsers(executor(), cid);
+            List<XmlDoc.Element> ues = getProjectUsers(executor(), sroute, cid);
             if (ues != null) {
                 for (XmlDoc.Element ue : ues) {
                     String authority = ue.value("@authority");
@@ -91,10 +108,10 @@ public class SvcProjectUserList extends PluginService {
         }
 
         if (include.equals("all") || include.equals("role-user")) {
-            Set<String> rus = getProjectRoleUsers(executor(), cid);
+            Set<String> rus = getProjectRoleUsers(executor(), sroute, cid);
             if (rus != null) {
                 for (String ru : rus) {
-                    XmlDoc.Element ae = executor().execute("actor.describe",
+                    XmlDoc.Element ae = executor().execute(sroute, "actor.describe",
                             "<args><type>role</type><name>" + ru + "</name></args>", null, null).element("actor");
                     String actorId = ae.value("@id");
                     Set<String> roles = filterValues(ae.values("role"), ProjectRole.PROJECT_SPECIFIC_ROLE_PREFIX,
@@ -132,23 +149,25 @@ public class SvcProjectUserList extends PluginService {
         return SERVICE_NAME;
     }
 
-    public static List<XmlDoc.Element> getProjectUsers(ServiceExecutor executor, String cid) throws Throwable {
+    public static List<XmlDoc.Element> getProjectUsers(ServiceExecutor executor, ServerRoute sroute, String cid)
+            throws Throwable {
         XmlDocMaker dm = new XmlDocMaker("args");
         dm.add("role", new String[] { "type", "role" }, ProjectRole.guestRoleName(cid));
         dm.add("permissions", true);
-        return executor.execute("user.describe", dm.root()).elements("user");
+        return executor.execute(sroute, "user.describe", dm.root()).elements("user");
     }
 
-    public static Set<String> getProjectRoleUsers(ServiceExecutor executor, String cid) throws Throwable {
+    public static Set<String> getProjectRoleUsers(ServiceExecutor executor, ServerRoute sroute, String cid)
+            throws Throwable {
         XmlDocMaker dm = new XmlDocMaker("args");
         dm.add("type", "role");
         dm.add("role", new String[] { "type", "role" }, ProjectRole.guestRoleName(cid));
-        Collection<String> roles = executor.execute("actors.granted", dm.root()).values("actor/@name");
+        Collection<String> roles = executor.execute(sroute, "actors.granted", dm.root()).values("actor/@name");
         if (roles == null || roles.isEmpty()) {
             return null;
         }
 
-        List<String> candidates = SvcProjectRoleUserCandidateList.getProjectRoleUserCandidates(executor);
+        List<String> candidates = SvcRoleUserList.getRoleUsers(executor);
         if (candidates == null || candidates.isEmpty()) {
             return null;
         }

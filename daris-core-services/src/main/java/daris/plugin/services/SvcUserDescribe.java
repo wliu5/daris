@@ -1,8 +1,10 @@
-package nig.mf.plugin.pssd.services;
+package daris.plugin.services;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import arc.mf.plugin.PluginService;
 import arc.mf.plugin.ServerRoute;
@@ -13,10 +15,7 @@ import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
 import nig.mf.plugin.pssd.ModelUser;
-import nig.mf.plugin.pssd.Project;
-import nig.mf.plugin.pssd.ProjectMember;
 import nig.mf.plugin.pssd.user.Authority;
-import nig.mf.plugin.pssd.user.UserCredential;
 import nig.mf.pssd.Role;
 import nig.util.ObjectUtil;
 
@@ -29,25 +28,20 @@ public class SvcUserDescribe extends PluginService {
     public SvcUserDescribe() {
 
         _defn = new Interface();
-        Interface.Element ie = new Interface.Element("authority",
-                StringType.DEFAULT,
+        Interface.Element ie = new Interface.Element("authority", StringType.DEFAULT,
                 "The authority of interest for users. Defaults to all.", 0, 1);
         ie.add(new Interface.Attribute("protocol", StringType.DEFAULT,
                 "The protocol of the identity authority. If unspecified, defaults to federated user within the same type of repository.",
                 0));
         _defn.add(ie);
         _defn.add(new Interface.Element("domain", StringType.DEFAULT,
-                "The authentication domain for users. If not specified, all domains are included.",
-                0, 1));
+                "The authentication domain for users. If not specified, all domains are included.", 0, 1));
         _defn.add(new Interface.Element("user", StringType.DEFAULT,
-                "The user to describe. If not specified, all users are described.",
-                0, 1));
-        _defn.add(new Interface.Element("exclude-system-domain",
-                BooleanType.DEFAULT,
+                "The user to describe. If not specified, all users are described.", 0, 1));
+        _defn.add(new Interface.Element("exclude-system-domain", BooleanType.DEFAULT,
                 "Exclude 'system' domain users?  Defaults to true.", 0, 1));
         _defn.add(new Interface.Element("list-projects", BooleanType.DEFAULT,
-                "List the (local only) projects to which the user(s) have access? Defaults to false.",
-                0, 1));
+                "List the (local only) projects to which the user(s) have access? Defaults to false.", 0, 1));
     }
 
     public String name() {
@@ -70,12 +64,10 @@ public class SvcUserDescribe extends PluginService {
         return ACCESS_ACCESS;
     }
 
-    public void execute(XmlDoc.Element args, Inputs in, Outputs out,
-            XmlWriter w) throws Throwable {
+    public void execute(XmlDoc.Element args, Inputs in, Outputs out, XmlWriter w) throws Throwable {
 
         boolean listProjects = args.booleanValue("list-projects", false);
-        Boolean excludeSystemDomain = args.booleanValue("exclude-system-domain",
-                true);
+        Boolean excludeSystemDomain = args.booleanValue("exclude-system-domain", true);
         XmlDoc.Element authority = args.element("authority");
         String domain = args.value("domain");
         if ("system".equals(domain) && excludeSystemDomain) {
@@ -84,8 +76,7 @@ public class SvcUserDescribe extends PluginService {
         }
         String user = args.value("user");
         if (user != null && domain == null) {
-            throw new IllegalArgumentException(
-                    "Both user and domain must be given if user is given.");
+            throw new IllegalArgumentException("Both user and domain must be given if user is given.");
         }
 
         XmlDocMaker dm = new XmlDocMaker("args");
@@ -99,24 +90,21 @@ public class SvcUserDescribe extends PluginService {
             dm.add("user", user);
         }
         dm.add("size", "infinity");
-        dm.add("role", new String[] { "type", "role" },
-                ModelUser.modelUserRoleName());
-        List<XmlDoc.Element> ues = executor()
-                .execute("user.describe", dm.root()).elements("user");
-        List<XmlDoc.Element> domains = executor()
-                .execute("authentication.domain.list").elements("domain");
+        if (listProjects) {
+            dm.add("permissions", new String[] { "levels", "infinity" }, true);
+        }
+        dm.add("role", new String[] { "type", "role" }, ModelUser.modelUserRoleName());
+        List<XmlDoc.Element> ues = executor().execute("user.describe", dm.root()).elements("user");
+        List<XmlDoc.Element> domains = executor().execute("authentication.domain.list").elements("domain");
         if (ues != null) {
             for (XmlDoc.Element ue : ues) {
-                describeUser(executor(), w, ue, listProjects,
-                        excludeSystemDomain, domains);
+                describeUser(executor(), w, ue, listProjects, excludeSystemDomain, domains);
             }
         }
     }
 
-    private void describeUser(ServiceExecutor executor, XmlWriter w,
-            XmlDoc.Element userElement, boolean listProjects,
-            boolean excludeSystemDomain, List<XmlDoc.Element> domains)
-                    throws Throwable {
+    private void describeUser(ServiceExecutor executor, XmlWriter w, XmlDoc.Element userElement, boolean listProjects,
+            boolean excludeSystemDomain, List<XmlDoc.Element> domains) throws Throwable {
 
         String protocol = userElement.value("@protocol");
         String authority = userElement.value("@authority");
@@ -130,31 +118,24 @@ public class SvcUserDescribe extends PluginService {
         String id = userElement.value("@id");
         if (authority != null) {
             if (protocol != null) {
-                w.push("user",
-                        new String[] { "id", id, "authority", authority,
-                                "protocol", protocol, "domain", domain,
-                                "domain-type", domainType, "user", user });
+                w.push("user", new String[] { "id", id, "authority", authority, "protocol", protocol, "domain", domain,
+                        "domain-type", domainType, "user", user });
             } else {
-                w.push("user",
-                        new String[] { "id", id, "authority", authority,
-                                "domain", domain, "domain-type", domainType,
-                                "user", user });
+                w.push("user", new String[] { "id", id, "authority", authority, "domain", domain, "domain-type",
+                        domainType, "user", user });
             }
         } else {
-            w.push("user", new String[] { "id", id, "domain", domain,
-                    "domain-type", domainType, "user", user });
+            w.push("user", new String[] { "id", id, "domain", domain, "domain-type", domainType, "user", user });
         }
 
         // Add generic roles
         ServerRoute route = null;
-        if (ModelUser.hasRole(route, executor,
-                Authority.instantiate(authority, protocol), domain, user,
+        if (ModelUser.hasRole(route, executor, Authority.instantiate(authority, protocol), domain, user,
                 Role.projectCreatorRoleName())) {
             w.add("role", Role.PROJECT_CREATOR_ROLE_NAME);
         }
 
-        if (ModelUser.hasRole(route, executor,
-                Authority.instantiate(authority, protocol), domain, user,
+        if (ModelUser.hasRole(route, executor, Authority.instantiate(authority, protocol), domain, user,
                 Role.subjectCreatorRoleName())) {
             w.add("role", Role.SUBJECT_CREATOR_ROLE_NAME);
         }
@@ -176,30 +157,29 @@ public class SvcUserDescribe extends PluginService {
 
         // Add local projects accessed by this user
         if (listProjects) {
-            UserCredential cred = new UserCredential(
-                    Authority.instantiate(authority, protocol), domain, user);
-            ProjectMember pM = new ProjectMember(cred);
-            Collection<Project.ProjectCIDAndRole> ps = pM
-                    .projectsAccessed(executor);
-            if (ps != null) {
-                for (Project.ProjectCIDAndRole pur : ps) {
-                    w.add("project", new String[] { "role", pur.role() },
-                            pur.projectId());
+            Map<String, SimpleEntry<String, String>> userRoleAndDataUses = SvcRoleUserDescribe
+                    .getProjectUserRoleAndDataUse(userElement);
+            if (userRoleAndDataUses != null) {
+                Set<String> projects = userRoleAndDataUses.keySet();
+                for (String project : projects) {
+                    SimpleEntry<String, String> entry = userRoleAndDataUses.get(project);
+                    String projectUserRole = entry.getKey();
+                    String projectDataUse = entry.getValue();
+                    w.add("project", new String[] { "role", projectUserRole, "data-use", projectDataUse }, project);
                 }
             }
         }
         w.pop();
     }
 
-    static String getDomainType(List<XmlDoc.Element> des, String protocol,
-            String authority, String domain) throws Throwable {
+    static String getDomainType(List<XmlDoc.Element> des, String protocol, String authority, String domain)
+            throws Throwable {
         if (des != null) {
             for (XmlDoc.Element de : des) {
                 if (de.value().equals(domain)) {
                     String p = de.value("@protocol");
                     String a = de.value("@authority");
-                    if (ObjectUtil.equals(p, protocol)
-                            && ObjectUtil.equals(a, authority)) {
+                    if (ObjectUtil.equals(p, protocol) && ObjectUtil.equals(a, authority)) {
                         return de.value("@type");
                     }
                 }
@@ -208,8 +188,7 @@ public class SvcUserDescribe extends PluginService {
         return "local";
     }
 
-    public static String parseEmail(XmlDoc.Element userElement)
-            throws Throwable {
+    public static String parseEmail(XmlDoc.Element userElement) throws Throwable {
         String email = userElement.stringValue("e-mail");
         if (email == null) {
             email = userElement.stringValue("asset/meta/mf-user/email");
@@ -217,11 +196,9 @@ public class SvcUserDescribe extends PluginService {
         return email;
     }
 
-    public static List<String[]> parseNames(XmlDoc.Element userElement)
-            throws Throwable {
+    public static List<String[]> parseNames(XmlDoc.Element userElement) throws Throwable {
         List<String[]> resultNames = new ArrayList<String[]>();
-        List<XmlDoc.Element> nes = userElement
-                .elements("asset/meta/mf-user/name");
+        List<XmlDoc.Element> nes = userElement.elements("asset/meta/mf-user/name");
         if (nes != null) {
             for (XmlDoc.Element ne : nes) {
                 resultNames.add(new String[] { ne.value(), ne.value("@type") });

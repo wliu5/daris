@@ -19,6 +19,8 @@ import daris.plugin.services.SvcProjectDictionaryNamespaceDescribe;
 import daris.plugin.services.SvcShoppingCartSettingsLoad;
 import daris.plugin.services.SvcShoppingCartSettingsRemove;
 import daris.plugin.services.SvcShoppingCartSettingsSave;
+import daris.plugin.services.SvcUserDescribe;
+import daris.plugin.services.SvcUserList;
 import nig.mf.plugin.pssd.announcement.events.PSSDAnnouncementEvent;
 import nig.mf.plugin.pssd.announcement.events.PSSDAnnouncementEventFilterFactory;
 import nig.mf.plugin.pssd.dicom.NIGDicomAssetEngineFactory;
@@ -58,8 +60,6 @@ public class PSSDPluginModule implements HttpServletPluginModule {
         _services.add(new SvcRoleTypeDescribe());
         _services.add(new SvcRoleList());
         _services.add(new SvcRoleCleanup());
-        _services.add(new SvcRoleUserList());
-        _services.add(new SvcRoleUserDescribe());
 
         _services.add(new SvcUserList());
         _services.add(new SvcUserDescribe());
@@ -388,9 +388,10 @@ public class PSSDPluginModule implements HttpServletPluginModule {
         _services.add(new daris.plugin.services.SvcObjectChildrenCount());
         _services.add(new daris.plugin.services.SvcObjectChildrenList());
         _services.add(new daris.plugin.services.SvcObjectPathFind());
-        _services.add(new daris.plugin.services.SvcProjectRoleUserCandidateAdd());
-        _services.add(new daris.plugin.services.SvcProjectRoleUserCandidateList());
-        _services.add(new daris.plugin.services.SvcProjectRoleUserCandidateRemove());
+        _services.add(new daris.plugin.services.SvcRoleUserAdd());
+        _services.add(new daris.plugin.services.SvcRoleUserDescribe());
+        _services.add(new daris.plugin.services.SvcRoleUserList());
+        _services.add(new daris.plugin.services.SvcRoleUserRemove());
         _services.add(new daris.plugin.services.SvcProjectUserAdd());
         _services.add(new daris.plugin.services.SvcProjectUserList());
         _services.add(new daris.plugin.services.SvcProjectUserRemove());

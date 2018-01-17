@@ -1,12 +1,12 @@
 package daris.client.model.project;
 
-public class ProjectMember {
+public class ProjectUser {
 
     private String _domain;
     private String _user;
     private ProjectSpecificRole _role;
 
-    public ProjectMember(String domain, String user, ProjectSpecificRole role) {
+    public ProjectUser(String domain, String user, ProjectSpecificRole role) {
         _domain = domain;
         _user = user;
         _role = role;

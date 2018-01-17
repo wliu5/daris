@@ -10,7 +10,7 @@ import arc.mf.plugin.ServerRoute;
 import arc.mf.plugin.ServiceExecutor;
 import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
-import nig.mf.plugin.pssd.services.SvcUserDescribe;
+import daris.plugin.services.SvcUserDescribe;
 import nig.mf.plugin.pssd.user.UserCredential;
 import nig.mf.plugin.pssd.util.PSSDUtils;
 import nig.mf.pssd.ProjectRole;

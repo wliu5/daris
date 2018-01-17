@@ -9,13 +9,13 @@ import arc.xml.XmlDoc.Element;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
 
-public class SvcProjectRoleUserCandidateRemove extends PluginService {
+public class SvcRoleUserRemove extends PluginService {
 
-    public static final String SERVICE_NAME = "daris.project.role-user.candidate.remove";
+    public static final String SERVICE_NAME = "daris.role-user.remove";
 
     private Interface _defn;
 
-    public SvcProjectRoleUserCandidateRemove() {
+    public SvcRoleUserRemove() {
         _defn = new Interface();
         _defn.add(new Interface.Element("role", StringType.DEFAULT, "The role name.", 1, Integer.MAX_VALUE));
     }
@@ -32,7 +32,7 @@ public class SvcProjectRoleUserCandidateRemove extends PluginService {
 
     @Override
     public String description() {
-        return "Remove project role-user candidate.";
+        return "Revoke permission from the role (user) so that the role is no longer a candicate of DaRIS role-user.";
     }
 
     @Override
@@ -62,11 +62,11 @@ public class SvcProjectRoleUserCandidateRemove extends PluginService {
                     .execute("authorization.role.describe", "<args><role>" + role + "</role></args>", null, null)
                     .value("role/description");
             if (desc != null) {
-                int idx = desc.indexOf(SvcProjectRoleUserCandidateAdd.PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK);
+                int idx = desc.indexOf(SvcRoleUserAdd.PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK);
                 if (idx >= 0) {
                     XmlDocMaker dm = new XmlDocMaker("args");
                     dm.add("role", role);
-                    desc = desc.replace(SvcProjectRoleUserCandidateAdd.PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK, "");
+                    desc = desc.replace(SvcRoleUserAdd.PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK, "");
                     if (desc.isEmpty()) {
                         desc = role;
                     }
@@ -76,11 +76,11 @@ public class SvcProjectRoleUserCandidateRemove extends PluginService {
             }
         }
         if (DictionaryUtils.dictionaryExists(executor,
-                SvcProjectRoleUserCandidateAdd.PROJECT_ROLE_USER_CANDIDATE_DICTIONARY)) {
+                SvcRoleUserAdd.PROJECT_ROLE_USER_CANDIDATE_DICTIONARY)) {
             if (DictionaryUtils.dictionaryEntryExists(executor,
-                    SvcProjectRoleUserCandidateAdd.PROJECT_ROLE_USER_CANDIDATE_DICTIONARY, role, null)) {
+                    SvcRoleUserAdd.PROJECT_ROLE_USER_CANDIDATE_DICTIONARY, role, null)) {
                 DictionaryUtils.removeDictionaryEntry(executor,
-                        SvcProjectRoleUserCandidateAdd.PROJECT_ROLE_USER_CANDIDATE_DICTIONARY, role, null);
+                        SvcRoleUserAdd.PROJECT_ROLE_USER_CANDIDATE_DICTIONARY, role, null);
             }
         }
     }

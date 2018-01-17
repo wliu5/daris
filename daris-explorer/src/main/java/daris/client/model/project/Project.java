@@ -14,8 +14,8 @@ public class Project extends DObject {
 
     private DataUse _dataUse;
     private List<MethodRef> _methods;
-    private List<ProjectMember> _members;
-    private List<ProjectRoleMember> _roleMembers;
+    private List<ProjectUser> _users;
+    private List<ProjectRoleUser> _roleUsers;
 
     public Project(Element oe) throws Throwable {
         super(oe);
@@ -31,28 +31,28 @@ public class Project extends DObject {
                 _methods.add(method);
             }
         }
-        if (oe.elementExists("member")) {
-            List<XmlDoc.Element> mes = oe.elements("member");
-            _members = new ArrayList<ProjectMember>(mes.size());
+        if (oe.elementExists("user")) {
+            List<XmlDoc.Element> mes = oe.elements("user");
+            _users = new ArrayList<ProjectUser>(mes.size());
             for (XmlDoc.Element me : mes) {
                 String domain = me.value("@domain");
                 String user = me.value("@user");
                 ProjectSpecificRole role = ProjectSpecificRole
                         .fromString(me.value("@role"));
-                ProjectMember member = new ProjectMember(domain, user, role);
-                _members.add(member);
+                ProjectUser member = new ProjectUser(domain, user, role);
+                _users.add(member);
             }
         }
-        if (oe.elementExists("role-member")) {
-            List<XmlDoc.Element> rmes = oe.elements("role-member");
-            _roleMembers = new ArrayList<ProjectRoleMember>(rmes.size());
+        if (oe.elementExists("role-user")) {
+            List<XmlDoc.Element> rmes = oe.elements("role-user");
+            _roleUsers = new ArrayList<ProjectRoleUser>(rmes.size());
             for (XmlDoc.Element rme : rmes) {
-                String member = rme.value("@member");
+                String member = rme.value("@name");
                 ProjectSpecificRole role = ProjectSpecificRole
                         .fromString(rme.value("@role"));
-                ProjectRoleMember roleMember = new ProjectRoleMember(member,
+                ProjectRoleUser roleMember = new ProjectRoleUser(member,
                         role);
-                _roleMembers.add(roleMember);
+                _roleUsers.add(roleMember);
             }
         }
     }
@@ -72,11 +72,11 @@ public class Project extends DObject {
         return _methods != null && !_methods.isEmpty();
     }
 
-    public List<ProjectMember> members() {
-        if (_members == null) {
+    public List<ProjectUser> users() {
+        if (_users == null) {
             return null;
         }
-        return Collections.unmodifiableList(_members);
+        return Collections.unmodifiableList(_users);
     }
 
     public DataUse dataUse() {
