@@ -336,6 +336,8 @@ grantRoleRole daris:pssd.dicom-ingest dicom-ingest
 # daris:pssd.dicom-ingest role will not return the roles in namespace daris.
 actor.grant :type role :name daris:pssd.dicom-ingest :perm < :resource -type role:namespace daris: :access ADMINISTER > 
 
+actor.grant :type role :name daris:pssd.dicom-ingest :perm < :resource -type dictionary:namespace daris :access ACCESS >
+
 # ============================================================================
 # Detect if "Transform framework" is installed. If it is, set the roles...
 # ============================================================================

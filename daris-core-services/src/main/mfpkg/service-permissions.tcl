@@ -331,3 +331,5 @@ actor.grant :role -type role service-user :type plugin:service :name daris.path.
 actor.grant :role -type role service-user :type plugin:service :name daris.path.expression.list
 actor.grant :role -type role service-user :type plugin:service :name daris.path.expression.remove
 
+actor.grant :role -type role service-user :type plugin:service :name daris.project.user.list
+actor.grant :perm < :resource -type dictionary:namespace daris: :access ACCESS > :type plugin:service :name daris.project.user.list
