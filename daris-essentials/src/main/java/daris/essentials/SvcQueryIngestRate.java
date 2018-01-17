@@ -80,7 +80,7 @@ public class SvcQueryIngestRate extends PluginService {
 	}
 
 	public String name() {
-		return "nig.ingest.rate";
+		return "nig.query.ingest.rate";
 	}
 
 	public String description() {
