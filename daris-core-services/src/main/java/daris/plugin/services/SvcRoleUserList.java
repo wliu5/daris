@@ -11,17 +11,17 @@ import arc.xml.XmlDoc.Element;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
 
-public class SvcProjectRoleUserCandidateList extends PluginService {
+public class SvcRoleUserList extends PluginService {
 
-    public static final String SERVICE_NAME = "daris.project.role-user.candidate.list";
+    public static final String SERVICE_NAME = "daris.role-user.list";
 
-    public static List<String> getProjectRoleUserCandidates(ServiceExecutor executor) throws Throwable {
+    public static List<String> getRoleUsers(ServiceExecutor executor) throws Throwable {
         if (!DictionaryUtils.dictionaryExists(executor,
-                SvcProjectRoleUserCandidateAdd.PROJECT_ROLE_USER_CANDIDATE_DICTIONARY)) {
+                SvcRoleUserAdd.PROJECT_ROLE_USER_CANDIDATE_DICTIONARY)) {
             return null;
         }
         XmlDocMaker dm = new XmlDocMaker("args");
-        dm.add("dictionary", SvcProjectRoleUserCandidateAdd.PROJECT_ROLE_USER_CANDIDATE_DICTIONARY);
+        dm.add("dictionary", SvcRoleUserAdd.PROJECT_ROLE_USER_CANDIDATE_DICTIONARY);
         dm.add("size", "infinity");
         Collection<String> terms = executor.execute("dictionary.entries.list", dm.root()).values("term");
         if (terms == null || terms.isEmpty()) {
@@ -53,7 +53,7 @@ public class SvcProjectRoleUserCandidateList extends PluginService {
 
     private Interface _defn;
 
-    public SvcProjectRoleUserCandidateList() {
+    public SvcRoleUserList() {
         _defn = new Interface();
     }
 
@@ -74,11 +74,11 @@ public class SvcProjectRoleUserCandidateList extends PluginService {
 
     @Override
     public void execute(Element args, Inputs arg1, Outputs arg2, XmlWriter w) throws Throwable {
-        List<String> roles = getProjectRoleUserCandidates(executor());
+        List<String> roles = getRoleUsers(executor());
         if (roles != null) {
             for (String role : roles) {
                 String actorId = getActorId(executor(), role);
-                w.add("role", new String[] { "id", actorId }, role);
+                w.add("role-user", new String[] { "id", actorId }, role);
             }
         }
     }

@@ -1,8 +1,13 @@
 package daris.client.ui.project;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
+
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ContextMenuEvent;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
 
 import arc.gui.form.FormEditMode;
 import arc.gui.gwt.data.DataLoadAction;
@@ -31,77 +36,72 @@ import arc.mf.client.util.ObjectUtil;
 import arc.mf.client.util.StateChangeListener;
 import arc.mf.client.util.Transformer;
 import arc.mf.client.util.Validity;
+import arc.mf.object.Null;
 import arc.mf.object.ObjectMessageResponse;
-
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ContextMenuEvent;
-import com.google.gwt.event.dom.client.DoubleClickEvent;
-
 import daris.client.model.project.DataUse;
 import daris.client.model.project.Project;
 import daris.client.model.project.ProjectRole;
-import daris.client.model.project.ProjectRoleMember;
-import daris.client.model.project.messages.ProjectRoleMemberList;
+import daris.client.model.project.messages.ProjectRoleUserList;
 import daris.client.model.user.RoleUser;
 import daris.client.ui.DObjectGUIRegistry;
 
-public class ProjectRoleMemberGrid extends ListGrid<ProjectRoleMember> implements DropHandler, MustBeValid,
-        StateChangeListener {
+public class ProjectRoleUserGrid extends ListGrid<Project.RoleUser>
+        implements DropHandler, MustBeValid, StateChangeListener {
 
-    private static class ProjectRoleMemberTransformer extends
-            Transformer<ProjectRoleMember, ListGridEntry<ProjectRoleMember>> {
+    private static class ProjectRoleUserTransformer
+            extends Transformer<Project.RoleUser, ListGridEntry<Project.RoleUser>> {
 
-        public static final ProjectRoleMemberTransformer INSTANCE = new ProjectRoleMemberTransformer();
+        public static final ProjectRoleUserTransformer INSTANCE = new ProjectRoleUserTransformer();
 
-        private ProjectRoleMemberTransformer() {
+        private ProjectRoleUserTransformer() {
 
         }
 
         @Override
-        protected ListGridEntry<ProjectRoleMember> doTransform(ProjectRoleMember prm) throws Throwable {
+        protected ListGridEntry<Project.RoleUser> doTransform(Project.RoleUser pru) throws Throwable {
 
-            ListGridEntry<ProjectRoleMember> prme = new ListGridEntry<ProjectRoleMember>(prm);
-            prme.set("id", prm.member().id());
-            prme.set("member", prm.member().name());
-            prme.set("role", prm.role());
-            prme.set("dataUse", prm.dataUse());
+            ListGridEntry<Project.RoleUser> prme = new ListGridEntry<Project.RoleUser>(pru);
+            prme.set("id", pru.id());
+            prme.set("name", pru.name());
+            prme.set("role", pru.role());
+            prme.set("dataUse", pru.dataUse());
             return prme;
         }
     }
 
-    private static class ProjectRoleMemberListTransformer extends
-            Transformer<List<ProjectRoleMember>, List<ListGridEntry<ProjectRoleMember>>> {
-        public static final ProjectRoleMemberListTransformer INSTANCE = new ProjectRoleMemberListTransformer();
+    private static class ProjectRoleUserListTransformer
+            extends Transformer<List<Project.RoleUser>, List<ListGridEntry<Project.RoleUser>>> {
+        public static final ProjectRoleUserListTransformer INSTANCE = new ProjectRoleUserListTransformer();
 
-        private ProjectRoleMemberListTransformer() {
+        private ProjectRoleUserListTransformer() {
 
         };
 
         @Override
-        protected List<ListGridEntry<ProjectRoleMember>> doTransform(List<ProjectRoleMember> prms) throws Throwable {
+        protected List<ListGridEntry<Project.RoleUser>> doTransform(List<Project.RoleUser> prus) throws Throwable {
 
-            if (prms != null) {
-                if (!prms.isEmpty()) {
-                    List<ListGridEntry<ProjectRoleMember>> prmes = new Vector<ListGridEntry<ProjectRoleMember>>(
-                            prms.size());
-                    for (ProjectRoleMember pm : prms) {
-                        prmes.add(ProjectRoleMemberTransformer.INSTANCE.transform(pm));
+            if (prus != null) {
+                if (!prus.isEmpty()) {
+                    List<ListGridEntry<Project.RoleUser>> entries = new ArrayList<ListGridEntry<Project.RoleUser>>(
+                            prus.size());
+                    for (Project.RoleUser pru : prus) {
+                        entries.add(ProjectRoleUserTransformer.INSTANCE.transform(pru));
                     }
-                    return prmes;
+                    return entries;
                 }
             }
             return null;
         }
     }
 
-    private static class ProjectRoleMemberDataSource implements DataSource<ListGridEntry<ProjectRoleMember>> {
+    private static class ProjectRoleUserDataSource implements DataSource<ListGridEntry<Project.RoleUser>> {
 
-        private Project _o;
+        private Project _project;
         private FormEditMode _mode;
 
-        private ProjectRoleMemberDataSource(Project o, FormEditMode mode) {
+        private ProjectRoleUserDataSource(Project project, FormEditMode mode) {
 
-            _o = o;
+            _project = project;
             _mode = mode;
         }
 
@@ -122,23 +122,23 @@ public class ProjectRoleMemberGrid extends ListGrid<ProjectRoleMember> implement
 
         @Override
         public void load(final Filter f, final long start, final long end,
-                final DataLoadHandler<ListGridEntry<ProjectRoleMember>> lh) {
+                final DataLoadHandler<ListGridEntry<Project.RoleUser>> lh) {
 
             if (_mode.equals(FormEditMode.CREATE)) {
-                if (_o.roleMembers() == null) {
+                if (_project.roleUsers() == null) {
                     lh.loaded(0, 0, 0, null, null);
                 } else {
-                    doLoad(f, start, end, _o.roleMembers(), lh);
+                    doLoad(f, start, end, _project.roleUsers(), lh);
                 }
             } else {
-                new ProjectRoleMemberList(_o).send(new ObjectMessageResponse<List<ProjectRoleMember>>() {
+                new ProjectRoleUserList(_project).send(new ObjectMessageResponse<List<Project.RoleUser>>() {
 
                     @Override
-                    public void responded(List<ProjectRoleMember> prms) {
+                    public void responded(List<Project.RoleUser> prus) {
 
-                        if (prms != null) {
-                            if (!prms.isEmpty()) {
-                                doLoad(f, start, end, prms, lh);
+                        if (prus != null) {
+                            if (!prus.isEmpty()) {
+                                doLoad(f, start, end, prus, lh);
                                 return;
                             }
                         }
@@ -148,27 +148,27 @@ public class ProjectRoleMemberGrid extends ListGrid<ProjectRoleMember> implement
             }
         }
 
-        private void doLoad(Filter f, long start, long end, List<ProjectRoleMember> prms,
-                final DataLoadHandler<ListGridEntry<ProjectRoleMember>> lh) {
+        private void doLoad(Filter f, long start, long end, List<Project.RoleUser> prus,
+                final DataLoadHandler<ListGridEntry<Project.RoleUser>> lh) {
 
-            if (prms != null) {
-                Collections.sort(prms);
+            if (prus != null) {
+                Collections.sort(prus);
             }
-            List<ListGridEntry<ProjectRoleMember>> prmes = ProjectRoleMemberListTransformer.INSTANCE.transform(prms);
-            int total = prms.size();
+            List<ListGridEntry<Project.RoleUser>> entries = ProjectRoleUserListTransformer.INSTANCE.transform(prus);
+            int total = prus.size();
             int start0 = (int) start;
             int end0 = (int) end;
             if (start0 > 0 || end0 < total) {
                 if (start0 >= total) {
-                    prmes = null;
+                    entries = null;
                 } else {
                     if (end0 > total) {
                         end0 = total;
                     }
-                    prmes = prmes.subList(start0, end0);
+                    entries = entries.subList(start0, end0);
                 }
             }
-            lh.loaded(start0, end0, prmes == null ? 0 : total, prmes, DataLoadAction.REPLACE);
+            lh.loaded(start0, end0, entries == null ? 0 : total, entries, DataLoadAction.REPLACE);
         }
     }
 
@@ -176,13 +176,13 @@ public class ProjectRoleMemberGrid extends ListGrid<ProjectRoleMember> implement
 
     private FormEditMode _mode;
 
-    public ProjectRoleMemberGrid(Project o, FormEditMode mode) {
+    public ProjectRoleUserGrid(Project project, FormEditMode mode) {
 
-        super(new ProjectRoleMemberDataSource(o, mode), ScrollPolicy.AUTO);
-        _o = o;
+        super(new ProjectRoleUserDataSource(project, mode), ScrollPolicy.AUTO);
+        _o = project;
         _mode = mode;
+        addColumnDefn("name", "Name").setWidth(120);
         addColumnDefn("role", "Role").setWidth(120);
-        addColumnDefn("member", "Member").setWidth(120);
         addColumnDefn("dataUse", "Data Use").setWidth(80);
 
         fitToParent();
@@ -196,10 +196,10 @@ public class ProjectRoleMemberGrid extends ListGrid<ProjectRoleMember> implement
         setLoadingMessage("");
         setCursorSize(Integer.MAX_VALUE);
 
-        setRowToolTip(new ToolTip<ProjectRoleMember>() {
+        setRowToolTip(new ToolTip<Project.RoleUser>() {
 
             @Override
-            public void generate(ProjectRoleMember prm, ToolTipHandler th) {
+            public void generate(Project.RoleUser prm, ToolTipHandler th) {
 
                 th.setTip(new HTML(prm.toHTML()));
 
@@ -207,20 +207,20 @@ public class ProjectRoleMemberGrid extends ListGrid<ProjectRoleMember> implement
         });
 
         /*
-		 * 
-		 */
+         * 
+         */
         setObjectRegistry(DObjectGUIRegistry.get());
 
         /*
          * make drop target, and enable row drag (to delete member)
          */
         if (!_mode.equals(FormEditMode.READ_ONLY)) {
-            setRowDoubleClickHandler(new ListGridRowDoubleClickHandler<ProjectRoleMember>() {
+            setRowDoubleClickHandler(new ListGridRowDoubleClickHandler<Project.RoleUser>() {
 
                 @Override
-                public void doubleClicked(final ProjectRoleMember prm, DoubleClickEvent event) {
+                public void doubleClicked(final Project.RoleUser pru, DoubleClickEvent event) {
 
-                    if (prm == null) {
+                    if (pru == null) {
                         return;
                     }
                     int x = event.getClientX();
@@ -231,9 +231,9 @@ public class ProjectRoleMemberGrid extends ListGrid<ProjectRoleMember> implement
                         public void roleSelected(ProjectRole role, DataUse dataUse) {
 
                             if (role != null) {
-                                prm.setRole(role);
-                                prm.setDataUse(dataUse);
-                                _o.addRoleMember(prm);
+                                pru.setRole(role);
+                                pru.setDataUse(dataUse);
+                                _o.addRoleUser(pru);
                                 commitChangesAndRefresh();
                             }
                         }
@@ -241,25 +241,25 @@ public class ProjectRoleMemberGrid extends ListGrid<ProjectRoleMember> implement
                 }
             });
 
-            setRowContextMenuHandler(new ListGridRowContextMenuHandler<ProjectRoleMember>() {
+            setRowContextMenuHandler(new ListGridRowContextMenuHandler<Project.RoleUser>() {
 
                 @Override
-                public void show(final ProjectRoleMember prm, ContextMenuEvent event) {
+                public void show(final Project.RoleUser pru, ContextMenuEvent event) {
 
                     final int x = event.getNativeEvent().getClientX();
                     final int y = event.getNativeEvent().getClientY();
-                    Menu menu = new Menu("Role Member");
+                    Menu menu = new Menu("Role User");
                     menu.setShowTitle(true);
                     menu.add(new ActionEntry("Remove", new Action() {
 
                         @Override
                         public void execute() {
 
-                            _o.removeRoleMember(prm);
+                            _o.removeRoleUser(pru);
                             commitChangesAndRefresh();
                         }
                     }));
-                    menu.add(new ActionEntry("Set role and data-use", new Action() {
+                    menu.add(new ActionEntry("Set project role and data-use", new Action() {
 
                         @Override
                         public void execute() {
@@ -271,11 +271,11 @@ public class ProjectRoleMemberGrid extends ListGrid<ProjectRoleMember> implement
                                         public void roleSelected(ProjectRole role, DataUse dataUse) {
 
                                             if (role != null) {
-                                                if (!role.equals(prm.role())
-                                                        || !ObjectUtil.equals(dataUse, prm.dataUse())) {
-                                                    prm.setRole(role);
-                                                    prm.setDataUse(dataUse);
-                                                    _o.addRoleMember(prm);
+                                                if (!role.equals(pru.role())
+                                                        || !ObjectUtil.equals(dataUse, pru.dataUse())) {
+                                                    pru.setRole(role);
+                                                    pru.setDataUse(dataUse);
+                                                    _o.addRoleUser(pru);
                                                     commitChangesAndRefresh();
                                                 }
                                             }
@@ -301,7 +301,7 @@ public class ProjectRoleMemberGrid extends ListGrid<ProjectRoleMember> implement
             @Override
             public void execute() {
 
-                ProjectRoleMemberGrid.this.refresh();
+                ProjectRoleUserGrid.this.refresh();
             }
         });
     }
@@ -309,14 +309,11 @@ public class ProjectRoleMemberGrid extends ListGrid<ProjectRoleMember> implement
     private void commitChanges(final Action postAction) {
 
         if (_mode.equals(FormEditMode.UPDATE)) {
-            _o.commitMembers(new ObjectMessageResponse<Boolean>() {
+            _o.commitUsers(new ObjectMessageResponse<Null>() {
 
                 @Override
-                public void responded(Boolean r) {
-
-                    if (r) {
-                        postAction.execute();
-                    }
+                public void responded(Null r) {
+                    postAction.execute();
                 }
             });
         } else {
@@ -332,7 +329,7 @@ public class ProjectRoleMemberGrid extends ListGrid<ProjectRoleMember> implement
         if (_mode.equals(FormEditMode.READ_ONLY)) {
             return DropCheck.CANNOT;
         }
-        if (o instanceof RoleUser || o instanceof ProjectRoleMember) {
+        if (o instanceof RoleUser || o instanceof Project.RoleUser) {
             return DropCheck.CAN;
         }
         return DropCheck.CANNOT;
@@ -360,19 +357,19 @@ public class ProjectRoleMemberGrid extends ListGrid<ProjectRoleMember> implement
                 }
                 for (Object o : objects) {
                     if (o instanceof RoleUser) {
-                        _o.addRoleMember(new ProjectRoleMember(((RoleUser) o), role, dataUse));
-                    } else if (o instanceof ProjectRoleMember) {
-                        ProjectRoleMember prm = ((ProjectRoleMember) o);
-                        prm.setRole(role);
-                        prm.setDataUse(dataUse);
-                        _o.addRoleMember(prm);
+                        _o.addRoleUser(new Project.RoleUser(((RoleUser) o).name(), ((RoleUser) o).id(), role, dataUse));
+                    } else if (o instanceof Project.RoleUser) {
+                        Project.RoleUser pru = ((Project.RoleUser) o);
+                        pru.setRole(role);
+                        pru.setDataUse(dataUse);
+                        _o.addRoleUser(pru);
                     }
                 }
-//                if (_mode == FormEditMode.UPDATE) {
-                    commitChangesAndRefresh();
-//                } else if (_mode == FormEditMode.CREATE) {
-//                    notifyOfChangeInState();
-//                }
+                // if (_mode == FormEditMode.UPDATE) {
+                commitChangesAndRefresh();
+                // } else if (_mode == FormEditMode.CREATE) {
+                // notifyOfChangeInState();
+                // }
                 dl.dropped(DropCheck.CAN);
             }
 
@@ -391,7 +388,7 @@ public class ProjectRoleMemberGrid extends ListGrid<ProjectRoleMember> implement
         if (_mode.equals(FormEditMode.READ_ONLY)) {
             return false;
         }
-        if (_mode.equals(FormEditMode.CREATE) && _o.hasRoleMembers()) {
+        if (_mode.equals(FormEditMode.CREATE) && _o.hasRoleUsers()) {
             return true;
         }
         return false;
@@ -437,7 +434,7 @@ public class ProjectRoleMemberGrid extends ListGrid<ProjectRoleMember> implement
                 }
             };
         }
-        if (!_o.hasAdminMember()) {
+        if (!_o.hasAdminUser()) {
             return new Validity() {
 
                 @Override

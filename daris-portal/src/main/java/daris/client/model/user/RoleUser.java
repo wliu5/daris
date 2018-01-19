@@ -3,15 +3,15 @@ package daris.client.model.user;
 public class RoleUser implements Comparable<RoleUser> {
 
     public static final String TYPE_NAME = "role";
-    private String _id;
+    private long _id;
     private String _name;
 
-    public RoleUser(String roleName, String id) {
+    public RoleUser(String roleName, long id) {
         _id = id;
         _name = roleName;
     }
 
-    public String id() {
+    public long id() {
 
         return _id;
     }
@@ -24,7 +24,7 @@ public class RoleUser implements Comparable<RoleUser> {
     @Override
     public int hashCode() {
 
-        return _id.hashCode();
+        return (int) _id;
     }
 
     @Override
@@ -33,7 +33,7 @@ public class RoleUser implements Comparable<RoleUser> {
         if (o != null) {
             if (o instanceof RoleUser) {
                 RoleUser ru = (RoleUser) o;
-                return (ru.id().equals(_id) && ru.name().equals(_name));
+                return (ru.id() == _id && ru.name().equals(_name));
             }
         }
         return false;

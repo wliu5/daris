@@ -107,16 +107,7 @@ public class SvcProjectUserSet extends PluginService {
                 String projectCid = ae.value("cid");
                 DataUse projectDataUse = DataUse.fromString(ae.value("meta/daris:pssd-project/data-use"));
 
-                /*
-                 * remove all users
-                 */
-                SvcProjectUserRemove.removeAllUsers(executor, projectCid);
-
-                /*
-                 * add new users
-                 */
-                SvcProjectUserAdd.addUsers(executor, projectCid, projectDataUse, args.elements("user"),
-                        args.elements("role-user"), false);
+                setProjectUsers(executor, projectCid, args, projectDataUse);
 
                 /*
                  * generate system event
@@ -129,12 +120,27 @@ public class SvcProjectUserSet extends PluginService {
 
     }
 
+    public static void setProjectUsers(ServiceExecutor executor, String projectCid, XmlDoc.Element args,
+            DataUse projectDataUse) throws Throwable {
+
+        /*
+         * remove all users
+         */
+        SvcProjectUserRemove.removeAllUsers(executor, projectCid);
+
+        /*
+         * add new users
+         */
+        SvcProjectUserAdd.addUsers(executor, projectCid, projectDataUse, args.elements("user"),
+                args.elements("role-user"), false);
+    }
+
     static void generateSystemEvent(ServiceExecutor executor, String projectCid) throws Throwable {
         int nbc = SvcObjectChildrenCount.countChildren(executor, projectCid);
         SystemEventChannel.generate(new PSSDObjectEvent(Action.MODIFY, projectCid, nbc));
     }
 
-    private static void checkOneAdmin(ServiceExecutor executor, XmlDoc.Element args) throws Throwable {
+    public static void checkOneAdmin(ServiceExecutor executor, XmlDoc.Element args) throws Throwable {
         /*
          * check if there is at least one admin
          */

@@ -1,4 +1,4 @@
-package daris.client.ui.user;
+package daris.client.ui.project;
 
 import arc.gui.gwt.dnd.DragWidget;
 import arc.gui.gwt.dnd.DropHandler;
@@ -10,20 +10,21 @@ import arc.gui.object.register.ObjectGUI;
 import arc.gui.object.register.ObjectUpdateHandle;
 import arc.gui.object.register.ObjectUpdateListener;
 import arc.gui.window.Window;
-import daris.client.model.user.RoleUser;
+import arc.mf.model.authentication.Authority;
+import daris.client.model.project.Project;
 
-public class RoleUserGUI implements ObjectGUI {
+public class ProjectUserGUI implements ObjectGUI {
 
-    public static final RoleUserGUI INSTANCE = new RoleUserGUI();
+    public static final ProjectUserGUI INSTANCE = new ProjectUserGUI();
 
-    private RoleUserGUI() {
+    private ProjectUserGUI() {
 
     }
 
     @Override
     public String idToString(Object o) {
 
-        return String.valueOf(((RoleUser) o).id());
+        return ((Project.User) o).toString();
     }
 
     @Override
@@ -63,25 +64,25 @@ public class RoleUserGUI implements ObjectGUI {
     @Override
     public DragWidget dragWidget(Object o) {
 
-        RoleUser ru = (RoleUser) o;
-        return new DragWidget(RoleUser.TYPE_NAME, new Label(ru.name()));
+        Project.User pu = (Project.User) o;
+        Authority authority = pu.user().domain().authority();
+        String authorityName = authority == null ? null : authority.name();
+        return new DragWidget("user", new Label(
+                (authorityName == null ? "" : (authorityName + ":")) + pu.user().domain() + ":" + pu.user().name()));
     }
 
     @Override
     public Menu actionMenu(Window w, Object o, SelectedObjectSet selected, boolean readOnly) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public Menu memberActionMenu(Window w, Object o, SelectedObjectSet selected, boolean readOnly) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public ObjectUpdateHandle createUpdateMonitor(Object o, ObjectUpdateListener ul) {
-        // TODO Auto-generated method stub
         return null;
     }
 

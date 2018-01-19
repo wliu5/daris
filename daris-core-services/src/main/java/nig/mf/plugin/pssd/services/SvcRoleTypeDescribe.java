@@ -4,6 +4,7 @@ import nig.mf.pssd.Role;
 import arc.mf.plugin.PluginService;
 import arc.xml.XmlDoc;
 import arc.xml.XmlWriter;
+import daris.plugin.services.SvcUserDescribe;
 
 public class SvcRoleTypeDescribe extends PluginService {
     private Interface _defn;

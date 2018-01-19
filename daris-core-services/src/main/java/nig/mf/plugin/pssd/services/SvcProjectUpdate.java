@@ -23,6 +23,7 @@ import arc.mf.plugin.event.SystemEventChannel;
 import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
+import daris.plugin.services.SvcProjectUserSet;
 
 // TODO: remove member and role-member functionality
 
@@ -41,9 +42,7 @@ public class SvcProjectUpdate extends PluginService {
 
         Interface.Element me = new Interface.Element("method", XmlDocType.DEFAULT, "Method utilized by this project.",
                 0, Integer.MAX_VALUE);
-        me.add(new Interface.Attribute(
-                "action",
-                new EnumType(new String[] { "merge", "remove", "replace", "clear" }),
+        me.add(new Interface.Attribute("action", new EnumType(new String[] { "merge", "remove", "replace", "clear" }),
                 "Action to perform when updating the project methods. Defaults to 'merge'. When removing, only the id is utilized.",
                 0));
         me.add(new Interface.Element("id", CiteableIdType.DEFAULT, "The identity of the method.", 0, 1));
@@ -52,56 +51,51 @@ public class SvcProjectUpdate extends PluginService {
         _defn.add(me);
 
         // Project team user members
-        me = new Interface.Element("member", XmlDocType.DEFAULT, "User to become a member of this project.", 0,
-                Integer.MAX_VALUE);
-        me.add(new Interface.Attribute(
-                "action",
-                new EnumType(new String[] { "merge", "remove", "replace" }),
+        me = new Interface.Element("user", XmlDocType.DEFAULT, "A user of this project.", 0, Integer.MAX_VALUE);
+        me.add(new Interface.Attribute("action", new EnumType(new String[] { "merge", "remove", "replace" }),
                 "Action to perform when updating the project members. Defaults to 'replace'. With 'merge', the user is matched on authority, domain and user.  Then the 'role' and 'data-use' fields are updated as specified. You can't update who the member is. If the member is not found it is added.",
                 0));
         //
         Interface.Element ie = new Interface.Element("authority", StringType.DEFAULT,
                 "The authority of interest. Defaults to local.", 0, 1);
-        ie.add(new Interface.Attribute(
-                "protocol",
-                StringType.DEFAULT,
+        ie.add(new Interface.Attribute("protocol", StringType.DEFAULT,
                 "The protocol of the identity authority. If unspecified, defaults to federated user within the same type of repository.",
                 0));
         me.add(ie);
         me.add(new Interface.Element("domain", StringType.DEFAULT, "The domain name of the member.", 1, 1));
         me.add(new Interface.Element("user", StringType.DEFAULT, "The user name within the domain.", 1, 1));
-        me.add(new Interface.Element("role", new EnumType(new String[] { Project.ADMINISTRATOR_ROLE_NAME,
-                Project.SUBJECT_ADMINISTRATOR_ROLE_NAME, Project.MEMBER_ROLE_NAME, Project.GUEST_ROLE_NAME }),
+        me.add(new Interface.Element("role",
+                new EnumType(new String[] { Project.ADMINISTRATOR_ROLE_NAME, Project.SUBJECT_ADMINISTRATOR_ROLE_NAME,
+                        Project.MEMBER_ROLE_NAME, Project.GUEST_ROLE_NAME }),
                 "The project role bestowed on the user member. Note: to add/update a member, role must be specified.",
                 1, 1));
-        me.add(new Interface.Element("data-use", new EnumType(new String[] { Project.CONSENT_SPECIFIC_ROLE_NAME,
-                Project.CONSENT_EXTENDED_ROLE_NAME, Project.CONSENT_UNSPECIFIED_ROLE_NAME }),
+        me.add(new Interface.Element("data-use",
+                new EnumType(new String[] { Project.CONSENT_SPECIFIC_ROLE_NAME, Project.CONSENT_EXTENDED_ROLE_NAME,
+                        Project.CONSENT_UNSPECIFIED_ROLE_NAME }),
                 "Specify how this member (only if role is 'member' or 'guest') will use data from this project", 0, 1));
         _defn.add(me);
 
         // Project team role-members
-        me = new Interface.Element("role-member", XmlDocType.DEFAULT, "Role to become a member of this project.", 0,
+        me = new Interface.Element("role-user", XmlDocType.DEFAULT, "Role to become a user of this project.", 0,
                 Integer.MAX_VALUE);
-        me.add(new Interface.Attribute(
-                "action",
-                new EnumType(new String[] { "merge", "remove", "replace" }),
+        me.add(new Interface.Attribute("action", new EnumType(new String[] { "merge", "remove", "replace" }),
                 "Action to perform when updating the project members. Defaults to 'replace'. With 'merge', the role (member) name.  Then the 'role' and 'data-use' fields are updated as specified. You can't update who the role member is. If the role member is not found it is added.",
                 0));
-        me.add(new Interface.Element("member", StringType.DEFAULT, "The role to become a member of the Project.", 1, 1));
-        me.add(new Interface.Element(
-                "role",
+        me.add(new Interface.Element("name", StringType.DEFAULT, "The name of the role to become a project user.", 1,
+                1));
+        me.add(new Interface.Element("role",
                 new EnumType(new String[] { Project.ADMINISTRATOR_ROLE_NAME, Project.SUBJECT_ADMINISTRATOR_ROLE_NAME,
                         Project.MEMBER_ROLE_NAME, Project.GUEST_ROLE_NAME }),
                 "The project role bestowed on the role member. Note: to add/update a role-member, role must be specified.",
                 1, 1));
-        me.add(new Interface.Element("data-use", new EnumType(new String[] { Project.CONSENT_SPECIFIC_ROLE_NAME,
-                Project.CONSENT_EXTENDED_ROLE_NAME, Project.CONSENT_UNSPECIFIED_ROLE_NAME }),
+        me.add(new Interface.Element("data-use",
+                new EnumType(new String[] { Project.CONSENT_SPECIFIC_ROLE_NAME, Project.CONSENT_EXTENDED_ROLE_NAME,
+                        Project.CONSENT_UNSPECIFIED_ROLE_NAME }),
                 "Specify how this member (only if role is 'member' or 'guest') will use data from this project", 0, 1));
         _defn.add(me);
 
         // Project data-use
-        me = new Interface.Element(
-                "data-use",
+        me = new Interface.Element("data-use",
                 new EnumType(new String[] { Project.CONSENT_SPECIFIC_ROLE_NAME, Project.CONSENT_EXTENDED_ROLE_NAME,
                         Project.CONSENT_UNSPECIFIED_ROLE_NAME }),
                 "Specifies the type of consent for the use of data for this project: 1) 'specific' means use the data only for the original specific intent, 2) 'extended' means use the data for related projects and 3) 'unspecified' means use the data for any research. Team member's data-use specifications will be silently adjusted to be consistent with this specification.",
@@ -159,19 +153,19 @@ public class SvcProjectUpdate extends PluginService {
         }
 
         // Creator must have project creation role..
-        if (!(ModelUser.hasRole(null, executor(), Project.projectAdministratorRoleName(dID.getCiteableID())) || ModelUser
-                .hasRole(null, executor(), Role.objectAdminRoleName()))) {
-            throw new Exception("User not authorised: requires '"
-                    + Project.projectAdministratorRoleName(dID.getCiteableID()) + "' or '"
-                    + Role.objectAdminRoleName() + " role");
+        if (!(ModelUser.hasRole(null, executor(), Project.projectAdministratorRoleName(dID.getCiteableID()))
+                || ModelUser.hasRole(null, executor(), Role.objectAdminRoleName()))) {
+            throw new Exception(
+                    "User not authorised: requires '" + Project.projectAdministratorRoleName(dID.getCiteableID())
+                            + "' or '" + Role.objectAdminRoleName() + " role");
         }
 
         // Update the Project asset
         updateProjectAsset(executor(), args, cid);
 
         // Generate system event
-        SystemEventChannel.generate(new PSSDObjectEvent(Action.MODIFY, dID.getCiteableID(), SvcCollectionMemberCount
-                .countMembers(executor(), dID.getCiteableID())));
+        SystemEventChannel.generate(new PSSDObjectEvent(Action.MODIFY, dID.getCiteableID(),
+                SvcCollectionMemberCount.countMembers(executor(), dID.getCiteableID())));
     }
 
     public static void updateProjectAsset(ServiceExecutor executor, XmlDoc.Element args, String cid) throws Throwable {
@@ -212,8 +206,9 @@ public class SvcProjectUpdate extends PluginService {
         if (currentDataUse == null)
             currentDataUse = Project.CONSENT_SPECIFIC_ROLE_NAME;
         String dataUse = args.value("data-use");
-        if (dataUse == null)
+        if (dataUse == null) {
             dataUse = currentDataUse;
+        }
 
         // Prepare the update Method meta-data
         Collection<XmlDoc.Element> currentMethods = r.elements("asset/meta/daris:pssd-project/method");
@@ -239,9 +234,9 @@ public class SvcProjectUpdate extends PluginService {
 
         // Finally update the Project roles of the user and role members
         // We want to do this last in case something else goes wrong earlier
-        Collection<XmlDoc.Element> updateMembers = args.elements("member");
-        Collection<XmlDoc.Element> updateRoleMembers = args.elements("role-member");
-        updateMembers(executor, cid, updateMembers, updateRoleMembers, dataUse);
+        if (args.elementExists("user") || args.elementExists("role-user")) {
+            setProjectUsers(executor, cid, args, dataUse);
+        }
     }
 
     private static Collection<XmlDoc.Element> updateMethods(Collection<XmlDoc.Element> currentMethods,
@@ -337,12 +332,9 @@ public class SvcProjectUpdate extends PluginService {
 
     }
 
-    private static void updateMembers(ServiceExecutor executor, String cid, Collection<XmlDoc.Element> updateMembers,
-            Collection<XmlDoc.Element> updateRoleMembers, String projectDataUse) throws Throwable {
-
-        if (updateMembers == null && updateRoleMembers == null)
-            return;
-        SvcProjectMembersReplace.checkOneAdmin(updateMembers, updateRoleMembers);
-        SvcProjectMembersReplace.replace(executor, true, projectDataUse, updateMembers, updateRoleMembers, cid, null);
+    private static void setProjectUsers(ServiceExecutor executor, String cid, XmlDoc.Element args,
+            String projectDataUse) throws Throwable {
+        SvcProjectUserSet.checkOneAdmin(executor, args);
+        SvcProjectUserSet.setProjectUsers(executor, cid, args, daris.plugin.model.DataUse.fromString(projectDataUse));
     }
 }

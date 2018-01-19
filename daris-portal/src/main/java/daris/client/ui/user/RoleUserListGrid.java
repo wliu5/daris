@@ -50,7 +50,6 @@ public class RoleUserListGrid extends ListGrid<RoleUser> {
                                         ru);
                                 entry.set("id", ru.id());
                                 entry.set("name", ru.name());
-                                entry.set("member", ru.name());
                                 entries.add(entry);
                             }
                             lh.loaded(start, end, entries.size(), entries,

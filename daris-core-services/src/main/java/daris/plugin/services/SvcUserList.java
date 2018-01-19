@@ -1,4 +1,4 @@
-package nig.mf.plugin.pssd.services;
+package daris.plugin.services;
 
 import java.util.List;
 
@@ -85,7 +85,7 @@ public class SvcUserList extends PluginService {
                             new String[] { "id", user.value("@id"), "authority",
                                     user.value("@authority"), "@protocol",
                                     user.value("protocol"), "domain",
-                                    user.value("@domain") },
+                                    user.value("@domain"), "name", user.value("name"), "email", user.value("e-mail")},
                             user.value("@user"));
                 }
             }

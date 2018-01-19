@@ -31,7 +31,7 @@ public class RoleUserList extends ObjectMessage<List<RoleUser>> {
             if (rues != null && !rues.isEmpty()) {
                 List<RoleUser> rus = new ArrayList<RoleUser>(rues.size());
                 for (XmlElement rue : rues) {
-                    rus.add(new RoleUser(rue.value(), rue.value("@id")));
+                    rus.add(new RoleUser(rue.value(), rue.longValue("@id")));
                 }
                 if (!rus.isEmpty()) {
                     return rus;

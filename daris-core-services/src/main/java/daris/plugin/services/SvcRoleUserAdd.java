@@ -9,17 +9,17 @@ import arc.xml.XmlDoc.Element;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
 
-public class SvcProjectRoleUserCandidateAdd extends PluginService {
+public class SvcRoleUserAdd extends PluginService {
 
-    public static final String PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK = "[daris.project.role-user.candidate]";
+    public static final String PROJECT_ROLE_USER_CANDIDATE_TRAILING_MARK = "[daris.role-user]";
 
-    public static final String PROJECT_ROLE_USER_CANDIDATE_DICTIONARY = "daris:daris.project.role-user.candidate";
+    public static final String PROJECT_ROLE_USER_CANDIDATE_DICTIONARY = "daris:daris.role-user";
 
-    public static final String SERVICE_NAME = "daris.project.role-user.candidate.add";
+    public static final String SERVICE_NAME = "daris.role-user.add";
 
     private Interface _defn;
 
-    public SvcProjectRoleUserCandidateAdd() {
+    public SvcRoleUserAdd() {
         _defn = new Interface();
         _defn.add(new Interface.Element("role", StringType.DEFAULT, "The role name.", 1, Integer.MAX_VALUE));
     }
@@ -36,7 +36,7 @@ public class SvcProjectRoleUserCandidateAdd extends PluginService {
 
     @Override
     public String description() {
-        return "Add project role-user candidate.";
+        return "Grant permission to the role so that it become a DaRIS role-user candidate.";
     }
 
     @Override
