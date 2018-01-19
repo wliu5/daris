@@ -135,6 +135,7 @@ public class SvcReplicateSync extends PluginService {
 
 	private int destroyOrListAssets (ServiceExecutor executor, String dateTime, ServerRoute sr, XmlDocMaker list, String type, 
 			Boolean destroy, Boolean count, Boolean listPaths, XmlWriter w) throws Throwable {
+
 		Collection<XmlDoc.Element> elements = list.root().elements("id");
 		if (elements==null) return 0;
 		//
@@ -160,13 +161,16 @@ public class SvcReplicateSync extends PluginService {
 					String id = el.value();
 					String rid = el.value("@rid");
 					String name = el.value("@name");
+					String cid = el.value("@cid");
 					XmlDocMaker dm = new XmlDocMaker("args");
 					dm.add("members", false);
 					dm.add("atomic", true);
 					dm.add("id", id);
 					executor.execute(sr, "asset.destroy", dm.root());
 					PluginTask.checkIfThreadTaskAborted();
-					if (!count) w.add("id", new String[]{"name", name, "rid", rid, "destroyed", "true"}, id);
+					if (!count) {
+						w.add("id", new String[]{"name", name, "cid", cid, "rid", rid, "destroyed", "true"}, id);
+					}
 				}
 			} else {
 				for (XmlDoc.Element el : elements) {
@@ -174,6 +178,7 @@ public class SvcReplicateSync extends PluginService {
 					String rid = el.value("@rid");
 					String name = el.value("@name");
 					String path = el.value("@path");
+					String cid = el.value("@cid");
 					int idx  = path.lastIndexOf("/");
 					if (listPaths && idx>=0) {
 						String parent = path.substring(0, idx);
@@ -185,7 +190,9 @@ public class SvcReplicateSync extends PluginService {
 							paths.put(parent, 1);
 						}
 					}
-					if (!count) w.add("id", new String[]{"name", name, "rid", rid, "destroyed", "false"}, id);
+					if (!count) {
+						w.add("id", new String[]{"name", name, "cid", cid, "rid", rid, "destroyed", "false"}, id);
+					}
 				}
 			}
 		}
@@ -276,12 +283,14 @@ public class SvcReplicateSync extends PluginService {
 		dm.add("xpath", "rid");
 		dm.add("xpath", "type");
 		dm.add("xpath", "name");
-		// Only way to do this at the moment! thanks Alex Maddern
+		// Only way to add the 'xpath' at the moment! thanks Alex Maddern
 		//		dm.add("xpath", "path");
 		dm.add("xpath", new String[]{"ename", "value"}, 
 				"string.format('%s/%s', xvalue('namespace'), "
 						+ "choose(equals(xvalue('name'),null()), "
 						+ "string.format('__asset_id__%s',xvalue('@id')),xvalue('name')))");
+		dm.add("xpath", "cid");
+
 		XmlDoc.Element r = executor.execute(srPeer, "asset.query", dm.root());
 		if (dbg) {
 			//			log (dateTime, "   nig.replicate.sycnhronize: asset.query on peer took " + duration(time));
@@ -335,22 +344,23 @@ public class SvcReplicateSync extends PluginService {
 				String type = t.get(2).value();
 				String name = t.get(3).value();
 				String path = t.get(4).value();
+				String cid = t.get(5).value();
 				nExtra++;
 
 				// Put in correct list
 				if (type==null) {
-					destroyOther.add("id",  new String[]{"name", name, "rid", rid, "path", path}, idOnPeer);
+					destroyOther.add("id",  new String[]{"name", name, "cid", cid, "rid", rid, "path", path}, idOnPeer);
 				} else {
 					if (type.equals("dicom/patient")) {
-						destroyDICOMPatient.add("id", new String[]{"name", name, "rid", rid, "path", path}, idOnPeer);
+						destroyDICOMPatient.add("id", new String[]{"name", name, "cid", cid, "rid", rid, "path", path}, idOnPeer);
 					} else if (type.equals("dicom/study") ||
 							type.equals("siemens-raw-petct/study")) {         // Type, not as document type (so no daris:)
-						destroyDICOMStudy.add("id", new String[]{"name", name, "rid", rid, "path", path}, idOnPeer);
+						destroyDICOMStudy.add("id", new String[]{"name", name, "cid", cid, "rid", rid, "path", path}, idOnPeer);
 					} else if (type.equals("dicom/series") ||
 							type.equals("siemens-raw-petct/series")) {
-						destroyDICOMSeries.add("id", new String[]{"name", name, "rid", rid, "path", path}, idOnPeer);
+						destroyDICOMSeries.add("id", new String[]{"name", name, "cid", cid, "rid", rid, "path", path}, idOnPeer);
 					} else {
-						destroyOther.add("id", new String[]{"name", name, "rid", rid, "path", path}, idOnPeer);
+						destroyOther.add("id", new String[]{"name", name, "cid", cid, "rid", rid, "path", path}, idOnPeer);
 					}
 				}
 				if (dbg) {
