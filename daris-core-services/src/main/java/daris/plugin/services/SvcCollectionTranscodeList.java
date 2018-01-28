@@ -25,7 +25,7 @@ public class SvcCollectionTranscodeList extends PluginService {
 
     public SvcCollectionTranscodeList() {
         _defn = new Interface();
-        _defn.add(new Interface.Element("cid", CiteableIdType.DEFAULT, "The citeable id of the root/parent object.", 1,
+        _defn.add(new Interface.Element("cid", CiteableIdType.DEFAULT, "The citeable id of the root/parent object.", 0,
                 1));
         _defn.add(new Interface.Element("where", StringType.DEFAULT,
                 "the query to filter/find the objects to be included.", 0, 1));
@@ -50,6 +50,9 @@ public class SvcCollectionTranscodeList extends PluginService {
     public void execute(Element args, Inputs inputs, Outputs outputs, XmlWriter w) throws Throwable {
         String cid = args.value("cid");
         String where = args.value("where");
+        if (cid == null && where == null) {
+            throw new IllegalArgumentException("No cid or where is specified.");
+        }
         listTranscodes(executor(), cid, where, w);
     }
 

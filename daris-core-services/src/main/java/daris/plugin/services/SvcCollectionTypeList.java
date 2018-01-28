@@ -20,7 +20,7 @@ public class SvcCollectionTypeList extends PluginService {
 
     public SvcCollectionTypeList() {
         _defn = new Interface();
-        _defn.add(new Interface.Element("cid", CiteableIdType.DEFAULT, "The citeable id of the root/parent object.", 1,
+        _defn.add(new Interface.Element("cid", CiteableIdType.DEFAULT, "The citeable id of the root/parent object.", 0,
                 1));
         _defn.add(new Interface.Element("where", StringType.DEFAULT, "Additional query to find the matching objects.",
                 0, 1));
@@ -45,13 +45,15 @@ public class SvcCollectionTypeList extends PluginService {
     public void execute(Element args, Inputs inputs, Outputs outputs, XmlWriter w) throws Throwable {
         String cid = args.value("cid");
         String where = args.value("where");
+        if (cid == null && where == null) {
+            throw new IllegalArgumentException("No cid or where is specified.");
+        }
         SortedSet<String> types = listTypes(executor(), cid, where);
         if (types != null) {
             for (String type : types) {
                 w.add("type", type);
             }
         }
-
     }
 
     @Override
@@ -61,11 +63,17 @@ public class SvcCollectionTypeList extends PluginService {
 
     public static SortedSet<String> listTypes(ServiceExecutor executor, String cid, String where) throws Throwable {
         StringBuilder sb = new StringBuilder();
-        sb.append("(cid='" + cid + "' or cid starts with '" + cid + "')");
+        if (cid != null) {
+            sb.append("(cid='" + cid + "' or cid starts with '" + cid + "')");
+        }
         if (where != null) {
-            sb.append(" and (");
+            if (cid != null) {
+                sb.append(" and (");
+            }
             sb.append(where);
-            sb.append(")");
+            if (cid != null) {
+                sb.append(")");
+            }
         }
 
         XmlDocMaker dm = new XmlDocMaker("args");
