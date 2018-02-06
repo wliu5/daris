@@ -91,8 +91,12 @@ public class SvcProjectUserList extends PluginService {
                     Set<String> roles = filterValues(ue.values("role[@type='role']"),
                             ProjectRole.PROJECT_SPECIFIC_ROLE_PREFIX, "." + cid);
 
-                    if (roles == null && UserSelf.isAdmin(executor())) {
-                        roleType = ProjectRole.Type.PROJECT_ADMINISTRATOR;
+                    if (roles == null) {
+                        if (UserSelf.isAdmin(executor())) {
+                            roleType = ProjectRole.Type.PROJECT_ADMINISTRATOR;
+                        } else {
+                            continue;
+                        }
                     } else {
                         roleType = ProjectRole.Type.roleTypeFrom(roles, cid);
                         dataUse = (roleType == ProjectRole.Type.PROJECT_ADMINISTRATOR
