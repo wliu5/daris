@@ -44,8 +44,7 @@ public abstract class DarisTranscodeImpl implements TranscoderImpl {
         public static final String BZIP2 = "application/x-bzip2";
 
         public static boolean isZIP(String mimeType) {
-            return ZIP.equalsIgnoreCase(mimeType)
-                    || XZIP.equalsIgnoreCase(mimeType);
+            return ZIP.equalsIgnoreCase(mimeType) || XZIP.equalsIgnoreCase(mimeType);
         }
 
         public static boolean isAAR(String mimeType) {
@@ -88,8 +87,7 @@ public abstract class DarisTranscodeImpl implements TranscoderImpl {
         public static synchronized void start(long size) throws Throwable {
             while (_used + size > _limit) {
                 if (size > _limit) {
-                    throw new Exception("Reached resource limit(" + _limit
-                            + " bytes).");
+                    throw new Exception("Reached resource limit(" + _limit + " bytes).");
                 } else {
                     ResourceManager.class.wait();
                 }
@@ -104,9 +102,8 @@ public abstract class DarisTranscodeImpl implements TranscoderImpl {
     }
 
     @Override
-    public final String transcode(File inputFile, MimeType fromType,
-            MimeType fromContentType, MimeType toType, File out,
-            Map<String, String> params) throws Throwable {
+    public final String transcode(File inputFile, MimeType fromType, MimeType fromContentType, MimeType toType,
+            File out, Map<String, String> params) throws Throwable {
         File tmpDir = PluginService.createTemporaryDirectory();
         try {
             extract(inputFile, fromContentType, tmpDir);
@@ -118,7 +115,13 @@ public abstract class DarisTranscodeImpl implements TranscoderImpl {
                     ResourceManager.start(inputSize);
                     resourceManagerStarted = true;
                 }
-                transcode(tmpDir, fromType, toType, params);
+                try {
+                    transcode(tmpDir, fromType, toType, params);
+                } catch (Throwable e) {
+                    try (PrintWriter w = new PrintWriter(new File(tmpDir, "error.txt"))) {
+                        e.printStackTrace(w);
+                    }
+                }
             } finally {
                 if (resourceManaged() && resourceManagerStarted) {
                     ResourceManager.stop(inputSize);
@@ -152,8 +155,8 @@ public abstract class DarisTranscodeImpl implements TranscoderImpl {
         return from() + " to " + to() + " transcoder.";
     }
 
-    protected abstract void transcode(File dir, MimeType fromType,
-            MimeType toType, Map<String, String> params) throws Throwable;
+    protected abstract void transcode(File dir, MimeType fromType, MimeType toType, Map<String, String> params)
+            throws Throwable;
 
     protected abstract boolean resourceManaged();
 
@@ -163,8 +166,7 @@ public abstract class DarisTranscodeImpl implements TranscoderImpl {
 
     public abstract DarisTranscodeProvider provider();
 
-    private static void extract(File inputFile, MimeType type, File outputDir)
-            throws Throwable {
+    private static void extract(File inputFile, MimeType type, File outputDir) throws Throwable {
         String typeName = type.name();
         if (MimeTypes.isAAR(typeName)) {
             ArchiveInput ai = ArchiveRegistry.createInput(inputFile, type);
@@ -176,15 +178,13 @@ public abstract class DarisTranscodeImpl implements TranscoderImpl {
         } else if (MimeTypes.isZIP(typeName) || MimeTypes.isTAR(typeName)) {
             List<File> outputFiles = unarchive(inputFile, outputDir);
             if (outputFiles == null) {
-                throw new Exception("Failed to extract archive: "
-                        + inputFile.getAbsolutePath() + ". MIME type: "
-                        + typeName + ".");
+                throw new Exception(
+                        "Failed to extract archive: " + inputFile.getAbsolutePath() + ". MIME type: " + typeName + ".");
             }
         } else if (MimeTypes.isGZIP(typeName) || MimeTypes.isBZIP2(typeName)) {
             File outputFile = decompress(inputFile, outputDir);
             if (outputFile == null) {
-                throw new Exception("Failed to decompress archive: "
-                        + inputFile.getAbsolutePath() + ". MIME type: "
+                throw new Exception("Failed to decompress archive: " + inputFile.getAbsolutePath() + ". MIME type: "
                         + typeName + ".");
             }
             List<File> outputFiles = unarchive(inputFile, outputDir);
@@ -199,15 +199,12 @@ public abstract class DarisTranscodeImpl implements TranscoderImpl {
         }
     }
 
-    private static File decompress(File inputFile, File outputDir)
-            throws Throwable {
+    private static File decompress(File inputFile, File outputDir) throws Throwable {
         String outputFileName = inputFile.getName();
         if (outputFileName.endsWith(".gz")) {
-            outputFileName = outputFileName.substring(0,
-                    outputFileName.length() - 3);
+            outputFileName = outputFileName.substring(0, outputFileName.length() - 3);
         } else if (outputFileName.endsWith(".bz2")) {
-            outputFileName = outputFileName.substring(0,
-                    outputFileName.length() - 4);
+            outputFileName = outputFileName.substring(0, outputFileName.length() - 4);
         }
         File of = new File(outputDir, outputFileName);
         InputStream is = new BufferedInputStream(new FileInputStream(inputFile));
@@ -233,10 +230,8 @@ public abstract class DarisTranscodeImpl implements TranscoderImpl {
         }
     }
 
-    private static void archive(File inputDir, File outputFile,
-            String outputType) throws Throwable {
-        ArchiveOutput ao = ArchiveRegistry.createOutput(outputFile, outputType,
-                COMPRESS_LEVEL, null);
+    private static void archive(File inputDir, File outputFile, String outputType) throws Throwable {
+        ArchiveOutput ao = ArchiveRegistry.createOutput(outputFile, outputType, COMPRESS_LEVEL, null);
         try {
             File[] files = inputDir.listFiles();
             if (files != null) {
@@ -249,8 +244,7 @@ public abstract class DarisTranscodeImpl implements TranscoderImpl {
         }
     }
 
-    private static List<File> unarchive(File inputFile, File outputDir)
-            throws Throwable {
+    private static List<File> unarchive(File inputFile, File outputDir) throws Throwable {
         InputStream is = new BufferedInputStream(new FileInputStream(inputFile));
         ArchiveInputStream ais = null;
         List<File> ofs = new ArrayList<File>();
@@ -293,10 +287,8 @@ public abstract class DarisTranscodeImpl implements TranscoderImpl {
                 FileUtils.forceDelete(file);
             }
         } catch (Throwable e) {
-            System.out.println("Failed to delete "
-                    + (file.isDirectory() ? "directory" : "file") + ": "
-                    + file.getAbsolutePath()
-                    + ". It will be deleted when jvm exits.");
+            System.out.println("Failed to delete " + (file.isDirectory() ? "directory" : "file") + ": "
+                    + file.getAbsolutePath() + ". It will be deleted when jvm exits.");
             FileUtils.forceDeleteOnExit(file);
         }
     }
@@ -307,13 +299,11 @@ public abstract class DarisTranscodeImpl implements TranscoderImpl {
         }
     }
 
-    private static void appendToErrorFile(File dir, String errorText)
-            throws Throwable {
+    private static void appendToErrorFile(File dir, String errorText) throws Throwable {
         File file = new File(dir, ERROR_FILE_NAME);
         PrintWriter w = null;
         try {
-            w = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(file, true), "UTF-8")));
+            w = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8")));
             w.println(errorText);
         } finally {
             if (w != null) {
