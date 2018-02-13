@@ -28,7 +28,9 @@ public class SvcObjectChildCursorGet extends PluginService {
         _defn.add(new Interface.Element("size", IntegerType.POSITIVE_ONE,
                 "Number of results to return. Defaults to 100.", 0, 1));
 
-        SvcObjectChildrenList.addSortArgument(_defn);
+        // asset.query :seek-to argument conflicts with :sort argument so no
+        // sorting can be done.
+        // SvcObjectChildrenList.addSortArgument(_defn);
         SvcObjectChildrenList.addFilterArgument(_defn);
     }
 
@@ -81,9 +83,9 @@ public class SvcObjectChildCursorGet extends PluginService {
             dm.add("seek-to", id);
         }
         dm.add("size", size);
-        if (args.elementExists("sort")) {
-            dm.add(args.element("sort"), true);
-        }
+//        if (args.elementExists("sort")) {
+//            dm.add(args.element("sort"), true);
+//        }
         dm.add("count", true);
         dm.add("action", "get-id");
         XmlDoc.Element re = executor().execute("asset.query", dm.root());

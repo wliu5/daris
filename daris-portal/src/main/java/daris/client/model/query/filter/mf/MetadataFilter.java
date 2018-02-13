@@ -26,14 +26,10 @@ import daris.client.model.query.filter.operators.OperatorUtil;
 public class MetadataFilter extends Filter {
 
     public static class MetadataOperator extends arc.mf.expr.Operator {
-        public static final MetadataOperator HAS_VALUE = new MetadataOperator(
-                "has value", 0);
-        public static final MetadataOperator HASNO_VALUE = new MetadataOperator(
-                "hasno value", 0);
-        public static final MetadataOperator IS_VALID = new MetadataOperator(
-                "is valid", 0);
-        public static final MetadataOperator IS_INVALID = new MetadataOperator(
-                "is invalid", 0);
+        public static final MetadataOperator HAS_VALUE = new MetadataOperator("has value", 0);
+        public static final MetadataOperator HASNO_VALUE = new MetadataOperator("hasno value", 0);
+        public static final MetadataOperator IS_VALID = new MetadataOperator("is valid", 0);
+        public static final MetadataOperator IS_INVALID = new MetadataOperator("is invalid", 0);
 
         public static final MetadataOperator EQ = new MetadataOperator("=", 1);
         public static final MetadataOperator NE = new MetadataOperator("!=", 1);
@@ -42,33 +38,24 @@ public class MetadataFilter extends Filter {
         public static final MetadataOperator LT = new MetadataOperator("<", 1);
         public static final MetadataOperator LE = new MetadataOperator("<=", 1);
 
-        public static final MetadataOperator CONTAINS = new MetadataOperator(
-                "contains", 1);
-        public static final MetadataOperator CONTAINS_ALL = new MetadataOperator(
-                "contains-all", 1);
-        public static final MetadataOperator CONTAINS_ANY = new MetadataOperator(
-                "contains-any", 1);
-        public static final MetadataOperator CONTAINS_NO = new MetadataOperator(
-                "contains-no", 1);
+        public static final MetadataOperator CONTAINS = new MetadataOperator("contains", 1);
+        public static final MetadataOperator CONTAINS_ALL = new MetadataOperator("contains-all", 1);
+        public static final MetadataOperator CONTAINS_ANY = new MetadataOperator("contains-any", 1);
+        public static final MetadataOperator CONTAINS_NO = new MetadataOperator("contains-no", 1);
 
-        public static final MetadataOperator LIKE = new MetadataOperator(
-                "like", 1);
+        public static final MetadataOperator LIKE = new MetadataOperator("like", 1);
 
-        public static final MetadataOperator STARTS_WITH = new MetadataOperator(
-                "starts with", 1);
-        public static final MetadataOperator ENDS_WITH = new MetadataOperator(
-                "ends with", 1);
+        public static final MetadataOperator STARTS_WITH = new MetadataOperator("starts with", 1);
+        public static final MetadataOperator ENDS_WITH = new MetadataOperator("ends with", 1);
 
-        public static final MetadataOperator[] VALUES = new MetadataOperator[] {
-                HAS_VALUE, HASNO_VALUE, IS_VALID, IS_INVALID, EQ, NE, GT, GE,
-                LT, LE, CONTAINS, CONTAINS_ALL, CONTAINS_ANY, CONTAINS_NO,
-                LIKE, STARTS_WITH, ENDS_WITH };
-        public static final List<MetadataOperator> DOC_TYPE_OPERATORS = ListUtil
-                .list(HAS_VALUE, HASNO_VALUE, IS_VALID, IS_INVALID);
+        public static final MetadataOperator[] VALUES = new MetadataOperator[] { HAS_VALUE, HASNO_VALUE, IS_VALID,
+                IS_INVALID, EQ, NE, GT, GE, LT, LE, CONTAINS, CONTAINS_ALL, CONTAINS_ANY, CONTAINS_NO, LIKE,
+                STARTS_WITH, ENDS_WITH };
+        public static final List<MetadataOperator> DOC_TYPE_OPERATORS = ListUtil.list(HAS_VALUE, HASNO_VALUE, IS_VALID,
+                IS_INVALID);
 
-        public static final List<MetadataOperator> STRING_TYPE_OPERATORS = ListUtil
-                .list(HAS_VALUE, HASNO_VALUE, EQ, NE, CONTAINS, CONTAINS_ALL,
-                        CONTAINS_ANY, CONTAINS_NO, LIKE, STARTS_WITH, ENDS_WITH);
+        public static final List<MetadataOperator> STRING_TYPE_OPERATORS = ListUtil.list(HAS_VALUE, HASNO_VALUE, EQ, NE,
+                CONTAINS, CONTAINS_ALL, CONTAINS_ANY, CONTAINS_NO, LIKE, STARTS_WITH, ENDS_WITH);
 
         private MetadataOperator(String value, int nbValues) {
             super(value, value, value, nbValues);
@@ -91,6 +78,11 @@ public class MetadataFilter extends Filter {
             return false;
         }
 
+        public boolean isDocumentTextOperator() {
+            return EQ.equals(this) || NE.equals(this) || GT.equals(this) || GE.equals(this) || LT.equals(this)
+                    || LE.equals(this);
+        }
+
         public static MetadataOperator parse(String s) {
             return OperatorUtil.parse(VALUES, s);
         }
@@ -104,8 +96,7 @@ public class MetadataFilter extends Filter {
                 // DocType.operators() returns null
                 return DOC_TYPE_OPERATORS;
             }
-            List<MetadataOperator> mops = new ArrayList<MetadataOperator>(
-                    DOC_TYPE_OPERATORS);
+            List<MetadataOperator> mops = new ArrayList<MetadataOperator>(DOC_TYPE_OPERATORS);
             for (arc.mf.expr.Operator op : ops) {
                 MetadataOperator mop = parse(op.value());
                 if (mop != null) {
@@ -124,8 +115,7 @@ public class MetadataFilter extends Filter {
         }
     }
 
-    public static class OperatorEnumDataSource implements
-            DynamicEnumerationDataSource<MetadataOperator> {
+    public static class OperatorEnumDataSource implements DynamicEnumerationDataSource<MetadataOperator> {
         private MetadataPath _path;
 
         public OperatorEnumDataSource(MetadataPath path) {
@@ -138,8 +128,7 @@ public class MetadataFilter extends Filter {
         }
 
         @Override
-        public void exists(final String value,
-                final DynamicEnumerationExistsHandler handler) {
+        public void exists(final String value, final DynamicEnumerationExistsHandler handler) {
             if (_path == null) {
                 handler.exists(value, false);
                 return;
@@ -172,8 +161,7 @@ public class MetadataFilter extends Filter {
             if (_path.documentOnly()) {
                 List<Value<MetadataOperator>> opvs = new ArrayList<Value<MetadataOperator>>();
                 for (MetadataOperator op : MetadataOperator.DOC_TYPE_OPERATORS) {
-                    Value<MetadataOperator> opv = new Value<MetadataOperator>(
-                            op);
+                    Value<MetadataOperator> opv = new Value<MetadataOperator>(op);
                     opvs.add(opv);
                 }
                 handler.process(start, end, opvs.size(), opvs);
@@ -189,12 +177,10 @@ public class MetadataFilter extends Filter {
 
                         List<Value<MetadataOperator>> opvs = new ArrayList<Value<MetadataOperator>>();
                         DataType type = n.type();
-                        List<MetadataOperator> ops = MetadataOperator
-                                .operatorsFor(type);
+                        List<MetadataOperator> ops = MetadataOperator.operatorsFor(type);
                         if (ops != null) {
                             for (MetadataOperator op : ops) {
-                                Value<MetadataOperator> opv = new Value<MetadataOperator>(
-                                        op);
+                                Value<MetadataOperator> opv = new Value<MetadataOperator>(op);
                                 opvs.add(opv);
                             }
                         }
@@ -212,8 +198,7 @@ public class MetadataFilter extends Filter {
     private String _value;
     private boolean _ignoreCase;
 
-    public MetadataFilter(MetadataPath path,
-            MetadataFilter.MetadataOperator op, String value, boolean ignoreCase) {
+    public MetadataFilter(MetadataPath path, MetadataFilter.MetadataOperator op, String value, boolean ignoreCase) {
         _path = path;
         _op = op;
         _value = value;
@@ -284,16 +269,14 @@ public class MetadataFilter extends Filter {
         if (_path == null || _op == null) {
             return;
         }
-        if (!_path.documentOnly() && _op.equals(MetadataOperator.STARTS_WITH)
-                && _ignoreCase) {
+        if (!_path.documentOnly() && _op.equals(MetadataOperator.STARTS_WITH) && _ignoreCase) {
             sb.append("function(starts-with(lowercase(xvalue('meta/");
             sb.append(_path.path());
             sb.append("')),'");
             sb.append(_value);
             sb.append("'))");
         } else {
-            sb.append(_path.documentOnly() ? _path.path() : "xpath("
-                    + _path.path() + ")");
+            sb.append(_path.documentOnly() ? _path.path() : "xpath(" + _path.path() + ")");
             sb.append(" ");
             sb.append(_op);
             if (_op.numberOfValues() > 0) {
@@ -305,11 +288,20 @@ public class MetadataFilter extends Filter {
                         return;
                     }
                 }
-                if (_ignoreCase) {
-                    sb.append("ignore-case('" + _value + "')");
-                } else {
-                    sb.append("'" + _value + "'");
+                if (_op.isDocumentTextOperator() && _ignoreCase) {
+                    sb.append("ignore-case(");
                 }
+                if (_op.equals(MetadataOperator.CONTAINS) || _op.equals(MetadataOperator.CONTAINS_NO)) {
+                    sb.append("literal(");
+                }
+                sb.append("'").append(_value).append("'");
+                if (_op.equals(MetadataOperator.CONTAINS) || _op.equals(MetadataOperator.CONTAINS_NO)) {
+                    sb.append(")");
+                }
+                if (_op.isDocumentTextOperator() && _ignoreCase) {
+                    sb.append(")");
+                }
+
             }
         }
     }

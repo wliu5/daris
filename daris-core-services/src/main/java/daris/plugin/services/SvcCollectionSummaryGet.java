@@ -21,7 +21,7 @@ public class SvcCollectionSummaryGet extends PluginService {
 
     public SvcCollectionSummaryGet() {
         _defn = new Interface();
-        _defn.add(new Interface.Element("cid", CiteableIdType.DEFAULT, "The citeable id of the root/parent object.", 1,
+        _defn.add(new Interface.Element("cid", CiteableIdType.DEFAULT, "The citeable id of the root/parent object.", 0,
                 1));
         _defn.add(new Interface.Element("where", StringType.DEFAULT,
                 "the query to filter/find the objects to be included.", 0, 1));
@@ -48,6 +48,9 @@ public class SvcCollectionSummaryGet extends PluginService {
     public void execute(Element args, Inputs arg1, Outputs arg2, XmlWriter w) throws Throwable {
         String cid = args.value("cid");
         String where = args.value("where");
+        if (cid == null && where == null) {
+            throw new IllegalArgumentException("Missing cid and where argument.");
+        }
         boolean async = args.booleanValue("async", false);
         if (async) {
             executeAsync(cid, where, w);
@@ -188,7 +191,9 @@ public class SvcCollectionSummaryGet extends PluginService {
             @Override
             protected Element execute(ServiceExecutor executor) throws Throwable {
                 XmlDocMaker dm = new XmlDocMaker("args");
-                dm.add("cid", cid);
+                if (cid != null) {
+                    dm.add("cid", cid);
+                }
                 if (where != null) {
                     dm.add("where", where);
                 }
@@ -300,11 +305,15 @@ public class SvcCollectionSummaryGet extends PluginService {
     }
 
     private static String objectQuery(String cid, String where) {
-        StringBuilder sb = new StringBuilder("(cid='" + cid + "' or cid starts with '" + cid + "')");
-        if (where != null) {
-            sb.append(" and (");
-            sb.append(where);
-            sb.append(")");
+        StringBuilder sb = new StringBuilder();
+        if (cid != null) {
+            sb.append("(cid='" + cid + "' or cid starts with '" + cid + "')");
+            if (where != null) {
+                sb.append(" and (").append(where).append(")");
+            }
+        } else {
+            sb.append("(").append(where).append(") and ");
+            sb.append("daris:pssd-object has value");
         }
         return sb.toString();
     }
