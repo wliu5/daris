@@ -27,7 +27,7 @@ public class SvcReplicateCheck extends PluginService {
 		_defn.add(new Interface.Element("where",StringType.DEFAULT, "Query predicate to restrict the selected assets on the local host. If unset, all assets are considered. If there is more than one where clause, then the second and subsequent clauses are evaluated (linearly) against the result set of the first where clause (a post filter).", 0, Integer.MAX_VALUE));
 		_defn.add(new Interface.Element("size",IntegerType.DEFAULT, "Limit the accumulation loop to this number of assets per iteration (if too large, the host may run out of virtual memory).  Defaults to 5000.", 0, 1));
 		_defn.add(new Interface.Element("dst", StringType.DEFAULT, "The destination parent namespace. If supplied (use '/' for root namespace), assets will actually be replicated (one at a time; not efficient). The default is no replication.", 0, 1));
-		_defn.add(new Interface.Element("check-asset", BooleanType.DEFAULT, "Check modification time and size of existing replicas (default false) as well as their existence (hugely slows the process if activated).", 0, 1));
+		_defn.add(new Interface.Element("check-asset", BooleanType.DEFAULT, "Check modification time (see if primary has been modified after the replica) and base 10 checksum (if has content) of existing replicas (default false) as well as their existence (hugely slows the process if activated).", 0, 1));
 		_defn.add(new Interface.Element("use-indexes", BooleanType.DEFAULT, "Turn on or off the use of indexes in the query. Defaults to true.", 0, 1));
 		_defn.add(new Interface.Element("debug", BooleanType.DEFAULT, "Write some stuff in the log. Default to false.", 0, 1));
 		_defn.add(new Interface.Element("include-destroyed", BooleanType.DEFAULT, "Include soft destroyed assets (so don't include soft destroy selection in the where predicate. Default to false.", 0, 1));
@@ -41,7 +41,7 @@ public class SvcReplicateCheck extends PluginService {
 	}
 
 	public String description() {
-		return "Lists assets (both primaries, and replicas from other hosts) that haven't been replicated to the remote peer. You can abort during the accumulation phase once per size chunk and also during actual replication of assets (between each asset). Assets can also be actually replicated rather than juyst listed by specifying the destinational root namespace.";
+		return "Lists assets (both primaries, and replicas from other hosts) that haven't been replicated to the remote peer (primary algorithm is to look for the replica by asset id). You can abort during the accumulation phase once per size chunk and also during actual replication of assets (between each asset). Assets can also be actually replicated rather than just listed by specifying the destination root namespace.";
 	}
 
 	public Interface definition() {
@@ -196,15 +196,7 @@ public class SvcReplicateCheck extends PluginService {
 		// we may run out of memory
 		if (dbg) log(dateTime, "nig.replicate.check : find assets on primary in chunk starting with idx = " + idx[0]);
 		XmlDocMaker dm = new XmlDocMaker("args");
-		/*
-		if (exclDaRISProc) {
-			// Drop processed DataSets from query
-			if (where==null) where = "";
-			// Need this complex expression as there the simpler generates a NULLP
-			// (not(xpath(pssd-derivation/processed)='true') or (mf-dicom-series has value))
-			where += " and ( (xpath(daris:pssd-derivation/processed)='false' or daris:pssd-derivation hasno value or daris:pssd-derivation/processed hasno value) or (mf-dicom-series has value) )";
-		}
-		 */
+
 		if (includeDestroyed) {
 			if (wheres!=null) {
 				boolean first = true;
@@ -312,10 +304,10 @@ public class SvcReplicateCheck extends PluginService {
 			if (result.booleanValue()==false) {
 				if (list) {
 					XmlDoc.Element asset = AssetUtil.getAsset(executor, null, primaryID);
-					String csize = asset.value("asset/content/size");
 					String type = asset.value("asset/type");
+					String csum = asset.value("asset/content/csum[@base='10']");    // May be null (no content)
 					if (type!=null && type.equals("content/unknown")) type = null;
-					w.add("id", new String[]{"exists", "false", "cid", cid, "type", type, "size", csize},  primaryID);
+					w.add("id", new String[]{"exists", "false", "cid", cid, "type", type, "csum-base10", csum},  primaryID);
 				}
 				assetList.add(primaryID);
 			} else {
@@ -326,8 +318,9 @@ public class SvcReplicateCheck extends PluginService {
 					// See if the primary has been modified since the replica was made
 					XmlDoc.Element asset = AssetUtil.getAsset(executor, null, primaryID);
 					Date mtime = asset.dateValue("asset/mtime");
-					String csize = asset.value("asset/content/size");
 					String type = asset.value("asset/type");
+					String csum = asset.value("asset/content/csum[@base='10']");
+
 
 					// Use id overload e.g. "asset.get :id rid=1004.123455"
 					dm = new XmlDocMaker("args");
@@ -335,28 +328,28 @@ public class SvcReplicateCheck extends PluginService {
 					XmlDoc.Element remoteAsset = executor.execute(sr, "asset.get", dm.root());
 
 					Date mtimeRep = remoteAsset.dateValue("asset/mtime");
-					String csizeRep = remoteAsset.value("asset/content/size");
 					String cidRep = remoteAsset.value("asset/cid");            // Same for primary and replica
+					String csumRep = remoteAsset.value("asset/content/csum[@base='10']");
 					if (dbg) {
 						if (mtime!=null && mtimeRep!=null) {
 							log(dateTime, "      nig.replicate.check : mtimes=" + mtime + ", " + mtimeRep);
 						} else {			
 							log(dateTime, "      nig.replicate.check : mtimes are unexpectedly null for asset " + rid);
 						}
-						if (csize!=null && csizeRep!=null) {
-							log(dateTime, "      nig.replicate.check : sizes =" + csize + ", " + csizeRep);
+						if (csum!=null && csumRep!=null) {
+							log(dateTime, "      nig.replicate.check : check sums (base 10) =" + csum + ", " + csumRep);
 						}
 					}
-					if (csize!=null) {
-						if (csizeRep!=null) {
-							if (mtime.after(mtimeRep) || !csize.equals(csizeRep)) {
+					if (csum!=null) {
+						if (csumRep!=null) {
+							if (mtime.after(mtimeRep) || !csum.equals(csumRep)) {
 								w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString(),
-										"csize-primary", csize, "csize-replica", csizeRep},  primaryID);
+										"csum-base10-primary", csum, "csum-base10-replica", csumRep},  primaryID);
 								assetList.add(primaryID);	
 							}
 						} else {
 							w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString(),
-									"csize-primary", csize, "csize-replica", "missing"},  primaryID);
+									"csum-base10-primary", csum, "csum-base10-replica", "missing"},  primaryID);
 							assetList.add(primaryID);	
 						}
 					} else {
