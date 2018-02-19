@@ -11,22 +11,22 @@ import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
 import arc.xml.XmlWriter;
 
-public class SvcAssetStringCheck extends PluginService {
+public class SvcAssetDocStringCheck extends PluginService {
 
 
 	private Interface _defn;
-	private Integer idx_ = 1;
-	private Integer count_ = 0;
+	private Integer idx_;
+	private Integer count_;
 
 
-	public SvcAssetStringCheck() {
+	public SvcAssetDocStringCheck() {
 		_defn = new Interface();
 		_defn.add(new Interface.Element("where",StringType.DEFAULT, "Query predicate to restrict the selected assets on the local host. YOu shoujld include the component to only finds assets with the xpath of interest set.", 1, 1));
 		_defn.add(new Interface.Element("xpath",StringType.DEFAULT, "The xpath of interest.", 1, 1));
 		_defn.add(new Interface.Element("size",IntegerType.DEFAULT, "Limit the accumulation loop to this number of assets per iteration (if too large, the VM may run out of virtual memory).  Defaults to 10000.", 0, 1));
 	}
 	public String name() {
-		return "nig.asset.string.check";
+		return "nig.asset.doc.string.check";
 	}
 
 	public String description() {
@@ -60,6 +60,8 @@ public class SvcAssetStringCheck extends PluginService {
 		// Iterate through cursor and build list of assets 
 		boolean more = true;
 		Vector<String> assetIDs = new Vector<String>();
+		idx_ = 1;
+		count_ = 0;
 		while (more) {
 			more = find (executor(),  where, size, xpath, assetIDs,  w);
 			PluginTask.checkIfThreadTaskAborted();
@@ -100,9 +102,7 @@ public class SvcAssetStringCheck extends PluginService {
 			List<XmlDoc.Element> t = asset.elements("value");
 			String id = t.get(0).value();
 			String text = t.get(1).value();
-			if (text.matches("\\A\\p{ASCII}*\\z")) {
-				w.add("id", new String[]{"text", text, "ascii", "true"}, id);
-			} else {
+			if (!text.matches("\\A\\p{ASCII}*\\z")) {
 				w.add("id", new String[]{"text", text, "ascii", "false"}, id);
 			}
 		}
