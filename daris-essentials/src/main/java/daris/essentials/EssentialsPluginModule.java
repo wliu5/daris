@@ -44,6 +44,8 @@ public class EssentialsPluginModule implements PluginModule {
         _svs.add(new SvcAssetIdGet());
         _svs.add(new SvcAssetMetaStringReplace());
         _svs.add(new SvcAssetPidSet());
+        _svs.add(new SvcAssetStringCheck());
+
         //
         _svs.add(new SvcFileSystemCheck());
         _svs.add(new SvcIPAddressResolve());
