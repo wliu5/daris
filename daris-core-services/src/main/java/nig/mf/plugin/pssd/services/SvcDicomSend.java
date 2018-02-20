@@ -596,7 +596,7 @@ public class SvcDicomSend extends PluginService {
         }
     }
 
-    private static Map<AttributeTag, Object> parseOverriddenElements(XmlDoc.Element oe) throws Throwable {
+    public static Map<AttributeTag, Object> parseOverriddenElements(XmlDoc.Element oe) throws Throwable {
         List<XmlDoc.Element> ees = oe.elements("element");
         if (ees != null) {
             Map<AttributeTag, Object> map = new TreeMap<AttributeTag, Object>();
@@ -814,14 +814,14 @@ public class SvcDicomSend extends PluginService {
         }
     }
 
-    private static void addByAssetId(ServiceExecutor executor, String assetId, Set<String> datasetAssetIds)
+    public static void addByAssetId(ServiceExecutor executor, String assetId, Set<String> datasetAssetIds)
             throws Throwable {
         XmlDoc.Element ae = executor.execute("asset.get", "<args><id>" + assetId + "</id></args>", null, null)
                 .element("asset");
         addByAssetMeta(executor, ae, datasetAssetIds);
     }
 
-    private static void addByCiteableId(ServiceExecutor executor, String citeableId, Set<String> datasetAssetIds)
+    public static void addByCiteableId(ServiceExecutor executor, String citeableId, Set<String> datasetAssetIds)
             throws Throwable {
         XmlDocMaker dm = new XmlDocMaker("args");
         dm.add("where", "(cid='" + citeableId + "' or cid starts with '" + citeableId
@@ -834,7 +834,7 @@ public class SvcDicomSend extends PluginService {
         }
     }
 
-    private static void addByQuery(ServiceExecutor executor, String where, Set<String> datasetAssetIds)
+    public static void addByQuery(ServiceExecutor executor, String where, Set<String> datasetAssetIds)
             throws Throwable {
         StringBuilder sb = new StringBuilder();
         sb.append("(").append(where).append(") and asset has content and mf-dicom-series has value");
