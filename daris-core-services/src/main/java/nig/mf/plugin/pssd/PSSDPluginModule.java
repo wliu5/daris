@@ -49,6 +49,8 @@ public class PSSDPluginModule implements HttpServletPluginModule {
 
         _services.add(new daris.plugin.services.SvcAssetContentExists());
         _services.add(new daris.plugin.services.SvcAssetPathGenerate());
+        _services.add(new daris.plugin.services.SvcAssetReplicateCheck());
+        _services.add(new daris.plugin.services.SvcAssetReplicateDestroyedCheck());
         _services.add(new SvcExMethodOrdinalSet());
         _services.add(new SvcAnnouncementCreate());
         _services.add(new SvcAnnouncementDescribe());
@@ -313,6 +315,8 @@ public class PSSDPluginModule implements HttpServletPluginModule {
         _services.add(new SvcObjectThumbnailUnset());
 
         _services.add(new SvcDicomSend());
+        _services.add(new daris.plugin.services.SvcDicomScpSend());
+        _services.add(new daris.plugin.services.SvcDicomSftpSend());
         _services.add(new SvcDICOMAERegID());
         _services.add(new SvcDICOMAEAdd());
         _services.add(new SvcDICOMAERemove());
