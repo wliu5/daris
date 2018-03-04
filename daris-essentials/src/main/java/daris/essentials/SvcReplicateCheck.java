@@ -307,7 +307,16 @@ public class SvcReplicateCheck extends PluginService {
 					String type = asset.value("asset/type");
 					String csum = asset.value("asset/content/csum[@base='10']");    // May be null (no content)
 					if (type!=null && type.equals("content/unknown")) type = null;
-					w.add("id", new String[]{"exists", "false", "cid", cid, "type", type, "csum-base10", csum},  primaryID);
+					//
+		            XmlDoc.Element csize = asset.element("asset/content/size");
+					String csizeV = csize.value();
+					String csizeU = csize.value("@h");
+					String t = null;
+					if (csize!=null) {
+						t = csizeV +" " +csizeU;
+					}
+					//
+		            w.add("id", new String[]{"exists", "false", "cid", cid, "type", type, "csum-base10", csum, "csize", t},  primaryID);
 				}
 				assetList.add(primaryID);
 			} else {
