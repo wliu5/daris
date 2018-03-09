@@ -327,9 +327,23 @@ actor.grant :perm < :access ADMINISTER :resource -type service server.java.envir
 actor.grant :role -type role service-user :type plugin:service :name daris.object.tag.add
 actor.grant :role -type role service-user :type plugin:service :name daris.object.tag.remove
 
-actor.grant :role -type role service-user :type plugin:service :name daris.path.expression.add
-actor.grant :role -type role service-user :type plugin:service :name daris.path.expression.list
-actor.grant :role -type role service-user :type plugin:service :name daris.path.expression.remove
 
-actor.grant :role -type role service-user :type plugin:service :name daris.project.user.list
-actor.grant :perm < :resource -type dictionary:namespace daris: :access ACCESS > :type plugin:service :name daris.project.user.list
+###########################
+# daris.path.expression.*
+###########################
+
+actor.grant :type plugin:service :name daris.path.expression.add :role -type role service-user
+actor.grant :type plugin:service :name daris.path.expression.list :role -type role service-user
+actor.grant :type plugin:service :name daris.path.expression.remove :role -type role service-user
+
+###########################
+# daris.project.user.*
+###########################
+
+actor.grant :type plugin:service :name daris.project.user.list :role -type role service-user 
+actor.grant :type plugin:service :name daris.project.user.list :perm < :resource -type dictionary:namespace daris: :access ACCESS > 
+actor.grant :type plugin:service :name daris.project.user.set    :role -type role system-administrator
+actor.grant :type plugin:service :name daris.project.user.add    :role -type role system-administrator
+actor.grant :type plugin:service :name daris.project.user.remove :role -type role system-administrator 
+
+

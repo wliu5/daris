@@ -116,6 +116,14 @@ public abstract class SvcDicomSshSend extends PluginService {
         defn.add(passphrase);
 
         defn.add(new Interface.Element("directory", StringType.DEFAULT, "Remote destination directory.", 0, 1));
+
+        // defn.add(new Interface.Element("dicom-dir-path-pattern",
+        // StringType.DEFAULT,
+        // "DICOM directory path pattern.", 0, 1));
+
+        defn.add(new Interface.Element("dicom-filename-by",
+                new EnumType(new String[] { "SOPInstanceUID", "InstanceNumber" }),
+                "Name the dicom files by SOPInstanceUID or InstanceNumber. Defaults to SOPInstanceUID", 0, 1));
     }
 
     protected abstract String sshTransferService();
@@ -157,6 +165,7 @@ public abstract class SvcDicomSshSend extends PluginService {
             Exception ex = new IllegalArgumentException("Argument 'id', 'cid' or 'where' is required.");
             throw ex;
         }
+        String dicomFilenameBy = args.stringValue("dicom-filename-by", "SOPInstanceUID");
         Set<String> datasetAssetIds = new TreeSet<String>();
         if (ids != null) {
             PluginTask.checkIfThreadTaskAborted();
@@ -196,7 +205,8 @@ public abstract class SvcDicomSshSend extends PluginService {
         for (String datasetAssetId : datasetAssetIds) {
             File tmpDir = PluginTask.createTemporaryDirectory();
             try {
-                sendDicomDataset(executor(), service, args, datasetAssetId, override, tmpDir, progress);
+                sendDicomDataset(executor(), service, args, datasetAssetId, override, tmpDir, dicomFilenameBy,
+                        progress);
             } finally {
                 FileUtils.deleteDirectory(tmpDir.toPath());
             }
@@ -204,16 +214,18 @@ public abstract class SvcDicomSshSend extends PluginService {
     }
 
     private static void sendDicomDataset(ServiceExecutor executor, String service, XmlDoc.Element args, String assetId,
-            Map<AttributeTag, Object> override, File tmpDir, Progress progress) throws Throwable {
+            Map<AttributeTag, Object> override, File tmpDir, String dicomFilenameBy, Progress progress)
+            throws Throwable {
         PluginTask.checkIfThreadTaskAborted();
-        File dir = extractDicomDataset(executor, assetId, override, tmpDir, progress);
+        extractDicomDataset(executor, assetId, override, tmpDir, dicomFilenameBy, progress);
         PluginTask.checkIfThreadTaskAborted();
-        sendDirectory(executor, service, args, dir);
+        sendDirectory(executor, service, args, tmpDir);
         progress.processedDatasets++;
     }
 
-    private static File extractDicomDataset(ServiceExecutor executor, String assetId,
-            Map<AttributeTag, Object> override, File baseDir, Progress progress) throws Throwable {
+    private static void extractDicomDataset(ServiceExecutor executor, String assetId,
+            Map<AttributeTag, Object> override, File baseDir, String dicomFilenameBy, Progress progress)
+            throws Throwable {
         PluginService.Outputs outputs = new PluginService.Outputs(1);
         XmlDoc.Element ae = executor.execute("asset.get", "<args><id>" + assetId + "</id></args>", null, outputs)
                 .element("asset");
@@ -222,7 +234,6 @@ public abstract class SvcDicomSshSend extends PluginService {
         assert output != null;
 
         String cid = ae.value("cid");
-        String seriesUID = ae.value("meta/mf-dicom-series/uid");
         int seriesSize = ae.intValue("meta/mf-dicom-series/size");
         progress.totalFiles += seriesSize;
 
@@ -238,16 +249,6 @@ public abstract class SvcDicomSshSend extends PluginService {
 
         assert studyAssetId != null || studyCID != null;
 
-        XmlDoc.Element studyAE = AssetUtils.getAssetMeta(executor, studyAssetId, studyCID);
-        String studyUID = studyAE.value("meta/mf-dicom-study/uid");
-
-        assert studyUID != null;
-
-        File studyDir = new File(baseDir, studyUID);
-        studyDir.mkdir();
-        File datasetDir = new File(studyDir, seriesUID);
-        datasetDir.mkdir();
-
         String ctype = ae.value("content/type");
         long csize = output.length() >= 0 ? output.length() : ae.longValue("content/size");
 
@@ -259,11 +260,13 @@ public abstract class SvcDicomSshSend extends PluginService {
         ArchiveInput ai = ArchiveRegistry.createInput(new SizedInputStream(output.stream(), csize), mtype);
         try {
             ArchiveInput.Entry e = null;
+            int idx = 1;
             while ((e = ai.next()) != null) {
                 try {
                     if (!e.isDirectory()) {
-                        editDicomFile(e.stream(), e.size(), override, datasetDir);
+                        editDicomFile(studyCID, idx, e.stream(), e.size(), override, baseDir, dicomFilenameBy);
                         progress.processedFiles++;
+                        idx++;
                         PluginTask.threadTaskCompletedOneOf(progress.totalFiles);
                     }
                 } finally {
@@ -273,11 +276,10 @@ public abstract class SvcDicomSshSend extends PluginService {
         } finally {
             ai.close();
         }
-        return studyDir;
     }
 
-    private static void editDicomFile(InputStream in, long length, Map<AttributeTag, Object> override, File dir)
-            throws Throwable {
+    private static void editDicomFile(String studyCID, int idx, InputStream in, long length,
+            Map<AttributeTag, Object> override, File dir, String dicomFilenameBy) throws Throwable {
         AttributeList list = new AttributeList();
         list.read(new DicomInputStream(in));
         Attribute mediaStorageSOPClassUIDAttr = list.get(TagFromName.MediaStorageSOPClassUID);
@@ -324,36 +326,115 @@ public abstract class SvcDicomSshSend extends PluginService {
                 }
             }
         }
-        String sopInstanceUID = list.get(TagFromName.SOPInstanceUID).getSingleStringValueOrNull();
-        assert sopInstanceUID != null;
-        File f = new File(dir, sopInstanceUID + ".dcm");
+
+        File parentDir = dir;
+        /*
+         * patient dir
+         */
+        StringBuilder sb = new StringBuilder();
+        String patientId = Attribute.getSingleStringValueOrDefault(list, TagFromName.PatientID, "")
+                .replaceAll("[^ \\w.-]", " ").replaceAll("\\ {2,}", " ").trim();
+        String patientName = Attribute.getSingleStringValueOrDefault(list, TagFromName.PatientName, "")
+                .replaceAll("[^ \\w.-]", " ").replaceAll("\\ {2,}", " ").trim();
+        if (patientId.isEmpty() && patientName.isEmpty()) {
+            sb.append(CiteableIdUtil.getSubjectId(studyCID));
+        } else {
+            if (!patientId.isEmpty()) {
+                sb.append(patientId);
+            }
+            if (!patientName.isEmpty()) {
+                if (sb.length() > 0) {
+                    sb.append(" ");
+                }
+                sb.append(patientName);
+            }
+        }
+        if (sb.length() > 0) {
+            parentDir = new File(dir, sb.toString());
+            parentDir.mkdir();
+        }
+
+        /*
+         * study dir
+         */
+        sb = new StringBuilder();
+        String studyDescription = Attribute.getSingleStringValueOrDefault(list, TagFromName.StudyDescription, "")
+                .replaceAll("[^ \\w.-]", " ").replaceAll("\\ {2,}", " ").trim();
+        if (!studyDescription.isEmpty()) {
+            sb.append(studyDescription);
+        } else {
+            if (studyCID != null) {
+                sb.append(studyCID);
+            } else {
+                String studyInstanceUID = Attribute.getSingleStringValueOrNull(list, TagFromName.StudyInstanceUID);
+                if (studyInstanceUID != null) {
+                    sb.append(studyInstanceUID);
+                }
+            }
+        }
+        if (sb.length() > 0) {
+            parentDir = new File(parentDir, sb.toString());
+            parentDir.mkdirs();
+        }
+
+        /*
+         * series dir
+         */
+        String seriesDescription = Attribute.getSingleStringValueOrDefault(list, TagFromName.SeriesDescription, "")
+                .replaceAll("[^ \\w.-]", " ").replaceAll("\\ {2,}", " ").trim();
+
+        if (!seriesDescription.isEmpty()) {
+            parentDir = new File(parentDir, seriesDescription);
+        } else {
+            String seriesInstanceUID = Attribute.getSingleStringValueOrNull(list, TagFromName.SeriesInstanceUID);
+            parentDir = new File(parentDir, seriesInstanceUID);
+        }
+        parentDir.mkdirs();
+
+        /*
+         * dicom file name
+         */
+        String dicomFilename = null;
+        if (dicomFilenameBy.equals("SOPInstanceUID")) {
+            dicomFilename = Attribute.getSingleStringValueOrDefault(list, TagFromName.SOPInstanceUID,
+                    String.format("%05d", idx));
+        } else {
+            dicomFilename = String.format("%05d",
+                    Attribute.getSingleIntegerValueOrDefault(list, TagFromName.InstanceNumber, idx));
+        }
+        dicomFilename += ".dcm";
+
+        File f = new File(parentDir, dicomFilename);
         list.write(new FileOutputStream(f), TransferSyntax.ExplicitVRLittleEndian, true, true);
     }
 
     private static void sendDirectory(ServiceExecutor executor, String service, XmlDoc.Element args, File dir)
             throws Throwable {
-        XmlDocMaker dm = new XmlDocMaker("args");
-        dm.add(args.element("host"));
-        if (args.elementExists("port")) {
-            dm.add(args.element("port"));
+        File[] files = dir.listFiles();
+        for (File f : files) {
+            XmlDocMaker dm = new XmlDocMaker("args");
+            dm.add(args.element("host"));
+            if (args.elementExists("port")) {
+                dm.add(args.element("port"));
+            }
+            if (args.elementExists("user")) {
+                dm.add(args.element("user"));
+            }
+            if (args.elementExists("password")) {
+                dm.add(args.element("password"));
+            }
+            if (args.elementExists("private-key")) {
+                dm.add(args.element("private-key"));
+            }
+            if (args.elementExists("passphrase")) {
+                dm.add(args.element("passphrase"));
+            }
+            if (args.elementExists("directory")) {
+                dm.add(args.element("directory"));
+            }
+            dm.add("url", new String[] { "unarchive", "false" }, f.toURI().toURL().toString());
+            executor.execute(service, dm.root());
         }
-        if (args.elementExists("user")) {
-            dm.add(args.element("user"));
-        }
-        if (args.elementExists("password")) {
-            dm.add(args.element("password"));
-        }
-        if (args.elementExists("private-key")) {
-            dm.add(args.element("private-key"));
-        }
-        if (args.elementExists("passphrase")) {
-            dm.add(args.element("passphrase"));
-        }
-        if (args.elementExists("directory")) {
-            dm.add(args.element("directory"));
-        }
-        dm.add("url", new String[] { "unarchive", "false" }, dir.toURI().toURL().toString());
-        executor.execute(service, dm.root());
     }
 
     private static class Progress {

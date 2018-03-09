@@ -114,6 +114,7 @@ public class SvcAssetReplicateDestroyedCheck extends arc.mf.plugin.PluginService
         long total = 0;
         long destroyed = 0;
         long synchronised = 0;
+        
         // TODO
     }
 
