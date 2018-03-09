@@ -123,7 +123,7 @@ public abstract class SvcDicomSshSend extends PluginService {
 
         defn.add(new Interface.Element("dicom-filename-by",
                 new EnumType(new String[] { "SOPInstanceUID", "InstanceNumber" }),
-                "Name the dicom files by SOPInstanceUID or InstanceNumber. Defaults to SOPInstanceUID", 0, 1));
+                "Name the dicom files by SOPInstanceUID or InstanceNumber. Defaults to InstanceNumber", 0, 1));
     }
 
     protected abstract String sshTransferService();
@@ -165,7 +165,7 @@ public abstract class SvcDicomSshSend extends PluginService {
             Exception ex = new IllegalArgumentException("Argument 'id', 'cid' or 'where' is required.");
             throw ex;
         }
-        String dicomFilenameBy = args.stringValue("dicom-filename-by", "SOPInstanceUID");
+        String dicomFilenameBy = args.stringValue("dicom-filename-by", "InstanceNumber");
         Set<String> datasetAssetIds = new TreeSet<String>();
         if (ids != null) {
             PluginTask.checkIfThreadTaskAborted();
@@ -344,7 +344,7 @@ public abstract class SvcDicomSshSend extends PluginService {
             }
             if (!patientName.isEmpty()) {
                 if (sb.length() > 0) {
-                    sb.append(" ");
+                    sb.append(" - ");
                 }
                 sb.append(patientName);
             }
