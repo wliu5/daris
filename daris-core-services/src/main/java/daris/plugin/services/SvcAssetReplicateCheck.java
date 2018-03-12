@@ -52,6 +52,8 @@ public class SvcAssetReplicateCheck extends PluginService {
         _defn.add(new Interface.Element("action", new EnumType(new String[] { "count", "get-id" }),
                 "Action to take when found assets that are not replicated. Defaults to 'count'. Set to 'get-cid' to list the assets.",
                 0, 1));
+        _defn.add(new Interface.Element("use-indexes", BooleanType.DEFAULT,
+                "If true, then use available indexes. If false, then perform linear searching. Defaults to true."));
     }
 
     @Override
@@ -82,6 +84,7 @@ public class SvcAssetReplicateCheck extends PluginService {
         String action = args.stringValue("action", "count");
         boolean compare = args.booleanValue("compare", false);
         String email = args.value("email");
+        boolean useIndexes = args.booleanValue("use-indexes", true);
 
         long uuid = IDUtils.serverUUID(executor());
         Long schemaID = IDUtils.schemaID(executor());
@@ -98,6 +101,7 @@ public class SvcAssetReplicateCheck extends PluginService {
             if (compare) {
                 dm.add("action", "get-meta");
             }
+            dm.add("use-indexes",useIndexes);
             PluginTask.checkIfThreadTaskAborted();
             XmlDoc.Element re = executor().execute("asset.query", dm.root());
             check(executor(), re, uuid, schemaID, peerRoute, summary, action);

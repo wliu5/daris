@@ -38,6 +38,7 @@ public class SvcAssetReplicateDestroyedCheck extends arc.mf.plugin.PluginService
                 1));
         _defn.add(new Interface.Element("action", new EnumType(new String[] { "get-id", "count" }),
                 "Action to take when locally destroyed replicas are found. Defaults to count."));
+        
     }
 
     @Override
