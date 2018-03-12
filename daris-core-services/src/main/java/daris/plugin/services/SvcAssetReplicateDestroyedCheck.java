@@ -1,12 +1,17 @@
 package daris.plugin.services;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import arc.mf.plugin.PluginTask;
 import arc.mf.plugin.ServerRoute;
 import arc.mf.plugin.ServiceExecutor;
+import arc.mf.plugin.dtype.BooleanType;
 import arc.mf.plugin.dtype.EmailAddressType;
 import arc.mf.plugin.dtype.EnumType;
 import arc.mf.plugin.dtype.IntegerType;
@@ -20,7 +25,11 @@ public class SvcAssetReplicateDestroyedCheck extends arc.mf.plugin.PluginService
 
     public static final String SERVICE_NAME = "daris.asset.replicate.destroyed.check";
 
-    public static final int DEFAULT_STEP = 100;
+    public static final int DEFAULT_STEP = 5000;
+
+    public static final int MAX_RESULT_ELEMENTS = 1000;
+
+    public static final String NOTIFICATION_EMAIL_SUBJECT = "DaRIS replicate destroyed check result";
 
     private Interface _defn;
 
@@ -37,8 +46,10 @@ public class SvcAssetReplicateDestroyedCheck extends arc.mf.plugin.PluginService
                 "Set to true to list the assets that are missing or differ on the peer system. Defaults to false.", 0,
                 1));
         _defn.add(new Interface.Element("action", new EnumType(new String[] { "get-id", "count" }),
-                "Action to take when locally destroyed replicas are found. Defaults to count."));
-        
+                "Action to take when locally destroyed replicas are found. Defaults to count.", 0, 1));
+        _defn.add(new Interface.Element("use-indexes", BooleanType.DEFAULT,
+                "If true, then use available indexes. If false, then perform linear searching. Defaults to true.", 0,
+                1));
     }
 
     @Override
@@ -81,10 +92,11 @@ public class SvcAssetReplicateDestroyedCheck extends arc.mf.plugin.PluginService
         if (dst != null) {
             where.append(" and namespace>='").append(dst).append("'");
         }
+        boolean useIndexes = args.booleanValue("use-indexes", true);
 
         long idx = 1;
         boolean complete = false;
-        Summary summary = new Summary();
+        Summary summary = new Summary(peer, peerRoute, dst);
         do {
             XmlDocMaker dm = new XmlDocMaker("args");
             dm.add("where", where);
@@ -92,35 +104,79 @@ public class SvcAssetReplicateDestroyedCheck extends arc.mf.plugin.PluginService
             dm.add("size", step);
             dm.add("include-destroyed", true);
             dm.add("action", "get-rid");
+            dm.add("use-indexes", useIndexes);
             PluginTask.checkIfThreadTaskAborted();
             XmlDoc.Element re = executor().execute(peerRoute, "asset.query", dm.root());
-            check(executor(), re, uuid, schemaID, peerRoute, summary, "get-id".equals(action) ? w : null);
+            check(executor(), re, uuid, schemaID, peerRoute, summary, action);
             idx += step;
             complete = re.booleanValue("cursor/total/@complete");
         } while (!complete);
+        if (summary.haveResult()) {
+            w.add(summary.result(), false);
+        }
         w.add("destroyed", summary.destroyed);
         w.add("total", summary.total);
 
         if (email != null) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("         Peer(" + peerRoute.target() + "): ").append(peer).append("\n");
-            sb.append("      DST Namespace: ").append(dst).append("\n");
-            sb.append("      Total Checked: ").append(summary.total).append("\n");
-            sb.append("          Destoryed: ").append(summary.destroyed).append("\n");
-            SvcAssetReplicateCheck.sendEmail(executor(), "Replicate Destroyed Check Result", sb.toString(), email);
+            sendEmail(executor(), summary, email);
         }
     }
 
     private class Summary {
-        long total = 0;
-        long destroyed = 0;
-        long synchronised = 0;
-        
-        // TODO
+        final long startTime;
+        final String peer;
+        final ServerRoute peerRoute;
+        final String dstNamespace;
+        final AtomicLong total = new AtomicLong(0);
+        final AtomicLong destroyed = new AtomicLong(0);
+        private AtomicInteger _nbElements = new AtomicInteger(0);
+
+        private int _maxElements = MAX_RESULT_ELEMENTS;
+
+        private XmlDocMaker _dm;
+
+        Summary(String peer, ServerRoute peerRoute, String dstNamespace) {
+            this(peer, peerRoute, dstNamespace, MAX_RESULT_ELEMENTS);
+        }
+
+        Summary(String peer, ServerRoute peerRoute, String dstNamespace, int maxElements) {
+            this.startTime = System.currentTimeMillis();
+            this.peer = peer;
+            this.peerRoute = peerRoute;
+            this.dstNamespace = dstNamespace;
+            _maxElements = maxElements;
+        }
+
+        public void add(String element, String[] attrs, String value) throws Throwable {
+            if (_dm == null) {
+                _dm = new XmlDocMaker("result");
+            }
+            int nbElements = _nbElements.getAndIncrement();
+            if (nbElements <= _maxElements) {
+                _dm.add(element, attrs, value);
+            }
+        }
+
+        public XmlDoc.Element result() {
+            return _dm == null ? null : _dm.root();
+        }
+
+        public boolean haveResult() {
+            return result() != null && result().elementExists("id");
+        }
+
+        public boolean isResultComplete() throws Throwable {
+            XmlDoc.Element re = result();
+            if (re != null) {
+                int n = re.count("id");
+                return n > 0 && n == destroyed.get();
+            }
+            return false;
+        }
     }
 
     private void check(ServiceExecutor executor, XmlDoc.Element re, long uuid, Long schemaID, ServerRoute peerRoute,
-            Summary summary, XmlWriter w) throws Throwable {
+            Summary summary, String action) throws Throwable {
 
         long count = re.longValue("cursor/count");
         if (count == 0) {
@@ -141,24 +197,24 @@ public class SvcAssetReplicateDestroyedCheck extends arc.mf.plugin.PluginService
         List<XmlDoc.Element> ees = executor.execute("asset.exists", dm.root()).elements("exists");
 
         assert count == ees.size();
-        summary.total += count;
+        summary.total.getAndAdd(count);
 
         Set<String> destroyed = new LinkedHashSet<String>();
         for (XmlDoc.Element ee : ees) {
             boolean exists = ee.booleanValue();
             String rid = ee.value("@id");
             if (!exists) {
-                summary.destroyed++;
+                summary.destroyed.getAndIncrement();
                 destroyed.add(rid);
             }
         }
 
-        if (w != null) {
+        if ("get-id".equalsIgnoreCase(action)) {
             if (!destroyed.isEmpty()) {
                 for (XmlDoc.Element ride : rides) {
                     String rid = ride.value();
                     if (destroyed.contains(rid)) {
-                        w.add("id", new String[] { "destroyed", "true" }, ride.value("@id"));
+                        summary.add("id", new String[] { "destroyed", "true" }, ride.value("@id"));
                     }
                 }
             }
@@ -166,6 +222,34 @@ public class SvcAssetReplicateDestroyedCheck extends arc.mf.plugin.PluginService
         PluginTask.threadTaskCompleted(count);
     }
 
+    static void sendEmail(ServiceExecutor executor, Summary summary, String email) throws Throwable {
+        StringBuilder sb = new StringBuilder();
+        String startTime = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z").format(new Date(summary.startTime));
+        sb.append(String.format("%32s: %s\n", "Execution started", startTime));
+        sb.append(String.format("%32s: %s\n", "Peer(" + summary.peerRoute.target() + ")", summary.peer));
+        if (summary.dstNamespace != null) {
+            sb.append(String.format("%32s: %s\n", "Peer namespace", summary.dstNamespace));
+        }
+        sb.append(String.format("%32s: %s\n", "Destroyed locally", summary.destroyed.get()));
+        sb.append(String.format("%32s: %s\n", "Total checked", summary.total.get()));
+
+        XmlDoc.Element re = summary.result();
+        if (re != null) {
+            List<XmlDoc.Element> ides = re.elements("id");
+            if (ides != null && !ides.isEmpty()) {
+                sb.append("\n").append("Replica assets destroyed locally");
+                if (!summary.isResultComplete()) {
+                    sb.append("(incomplete)");
+                }
+                sb.append(":\n");
+                for (XmlDoc.Element ide : ides) {
+                    SvcAssetReplicateCheck.saveXmlElementAsText(sb, ide, 4, 4);
+                }
+            }
+        }
+        SvcAssetReplicateCheck.sendEmail(executor, NOTIFICATION_EMAIL_SUBJECT + " [" + startTime + "]", sb.toString(),
+                email);
+    }
 
     @Override
     public String name() {
