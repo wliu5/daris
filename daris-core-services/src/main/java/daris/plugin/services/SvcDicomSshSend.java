@@ -432,7 +432,7 @@ public abstract class SvcDicomSshSend extends PluginService {
             if (args.elementExists("directory")) {
                 dm.add(args.element("directory"));
             }
-            dm.add("url", new String[] { "unarchive", "false" }, f.toURI().toURL().toString());
+            dm.add("url", f.toURI().toURL().toString());
             executor.execute(service, dm.root());
         }
     }
