@@ -339,9 +339,7 @@ actor.grant :type plugin:service :name daris.path.expression.remove :role -type 
 ###########################
 # daris.project.user.*
 ###########################
-
-actor.grant :type plugin:service :name daris.project.user.list :role -type role service-user 
-actor.grant :type plugin:service :name daris.project.user.list :perm < :resource -type dictionary:namespace daris: :access ACCESS > 
+actor.grant :type plugin:service :name daris.project.user.list   :role -type role system-administrator 
 actor.grant :type plugin:service :name daris.project.user.set    :role -type role system-administrator
 actor.grant :type plugin:service :name daris.project.user.add    :role -type role system-administrator
 actor.grant :type plugin:service :name daris.project.user.remove :role -type role system-administrator 

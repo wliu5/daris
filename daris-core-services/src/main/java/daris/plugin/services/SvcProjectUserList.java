@@ -1,5 +1,6 @@
 package daris.plugin.services;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -155,10 +156,34 @@ public class SvcProjectUserList extends PluginService {
 
     public static List<XmlDoc.Element> getProjectUsers(ServiceExecutor executor, ServerRoute sroute, String cid)
             throws Throwable {
+        String guestRole = ProjectRole.guestRoleName(cid);
+        String memberRole = ProjectRole.memberRoleName(cid);
+        String subjectAdminRole = ProjectRole.subjectAdministratorRoleName(cid);
+        String projectAdminRole = ProjectRole.projectAdministratorRoleName(cid);
         XmlDocMaker dm = new XmlDocMaker("args");
-        dm.add("role", new String[] { "type", "role" }, ProjectRole.guestRoleName(cid));
+        dm.add("role", new String[] { "type", "role" }, guestRole);
         dm.add("permissions", true);
-        return executor.execute(sroute, "user.describe", dm.root()).elements("user");
+        List<XmlDoc.Element> ues = executor.execute(sroute, "user.describe", dm.root()).elements("user");
+        if (ues != null) {
+            List<XmlDoc.Element> us = new ArrayList<XmlDoc.Element>();
+            for (XmlDoc.Element ue : ues) {
+                Collection<String> roles = ue.values("role[@type='role']");
+                if (roles != null) {
+                    if (roles.contains("system-administrator")) {
+                        // exclude system-administrator
+                    }
+                    if (roles.contains(guestRole) || roles.contains(memberRole) || roles.contains(subjectAdminRole)
+                            || roles.contains(projectAdminRole)) {
+                        // only include the user has the direct role
+                        us.add(ue);
+                    }
+                }
+            }
+            if (!us.isEmpty()) {
+                return us;
+            }
+        }
+        return null;
     }
 
     public static Set<String> getProjectRoleUsers(ServiceExecutor executor, ServerRoute sroute, String cid)

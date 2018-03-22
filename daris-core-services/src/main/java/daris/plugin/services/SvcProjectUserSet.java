@@ -35,7 +35,7 @@ public class SvcProjectUserSet extends PluginService {
         _defn.add(new Interface.Element("cid", CiteableIdType.DEFAULT, "The citeable id of the project.", 0, 1));
 
         Interface.Element user = new Interface.Element("user", XmlDocType.DEFAULT,
-                "User to become a user of the project.", 1, Integer.MAX_VALUE);
+                "User to become a user of the project.", 0, Integer.MAX_VALUE);
 
         Interface.Element userAuthority = new Interface.Element("authority", StringType.DEFAULT,
                 "The authority of interest. Defaults to local.", 0, 1);
