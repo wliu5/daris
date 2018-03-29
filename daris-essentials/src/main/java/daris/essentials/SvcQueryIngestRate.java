@@ -106,14 +106,14 @@ public class SvcQueryIngestRate extends PluginService {
 
 	public void execute(XmlDoc.Element args, Inputs in, Outputs out, XmlWriter w) throws Throwable {
 
-		String where = args.value("where");
+		String where2 = args.value("where");
 		Collection<String> years = args.values("year");				
 		//
 		for (String year : years) {
 			for (int i=0;i<12;i++) {
 				PluginTask.checkIfThreadTaskAborted();
 				XmlDocMaker dm = new XmlDocMaker("args");
-				where += " and " + makeWhere(i, year);
+				String where = where2 + " and " + makeWhere(i, year);
 				String my = makeMonth (i, year);
 				dm.add("where", where);
 				dm.add("action", "sum");
@@ -134,7 +134,7 @@ public class SvcQueryIngestRate extends PluginService {
 		if (i==0) {
 			return "ctime>='01-Jan-" + year + " 00:00:00' and ctime<='31-Jan-" + year + " 24:00:00'";
 		} else if (i==1) {
-			return "ctime>='01-Feb-" + year + " 00:00:00' and ctime<='28-Feb-" + year + " 24:00:00'";
+			return "ctime>='01-Feb-" + year + " 00:00:00' and ctime<='29-Feb-" + year + " 24:00:00'";    // Allow for leap year
 		} else if (i==2) {
 			return "ctime>='01-Mar-" + year + " 00:00:00' and ctime<='31-Mar-" + year + " 24:00:00'";
 		} else if (i==3) {
