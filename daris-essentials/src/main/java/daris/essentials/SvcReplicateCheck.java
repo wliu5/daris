@@ -35,6 +35,7 @@ public class SvcReplicateCheck extends PluginService {
 		_defn.add(new Interface.Element("rep-inc", IntegerType.DEFAULT, "When debug is true, messages are written to the server log. This parameter specifies the increment to report that assets have been replicated.  Defaults to 1000. ", 0, 1));
 		_defn.add(new Interface.Element("throw-on-fail", BooleanType.DEFAULT, "By default, service will fail if it fails to replicate any asset. Set to false to not fail and wirte a message in the mediaflux-server log instead for every asset that fails to replciate.", 0, 1));
 		_defn.add(new Interface.Element("related", IntegerType.DEFAULT, "Specifies the number of levels of related assets (primary relationship) to be replicated.  Has no impact on the find part of the service, just the replicatioh. Defaults to 0. Specify infinity to traverse all relationships.", 0, 1));
+		_defn.add(new Interface.Element("versions", StringType.DEFAULT, "Replicate all ('all') versions, or just the version matched by the query ('match' - default)", 0, 1));
 	}
 	public String name() {
 		return "nig.replicate.check";
@@ -82,6 +83,10 @@ public class SvcReplicateCheck extends PluginService {
 		Boolean throwOnFail = args.booleanValue("throw-on-fail", true);
 		Integer repInc = args.intValue("rep-inc", 1000);
 		Integer related = args.intValue("related", 0);
+		String versions = args.stringValue("versions", "match");
+		if (!versions.equals("match") && !versions.equalsIgnoreCase("all")) {
+			throw new Exception ("versions must be 'match' or 'all'");
+		}
 
 		// Find route to peer. Exception if can't reach and build in extra checks to make sure we are 
 		// being very safe
@@ -154,6 +159,7 @@ public class SvcReplicateCheck extends PluginService {
 					dm.add("update-models", false);
 					dm.add("allow-move", true);
 					dm.add("locally-modified-only", false);             // Allows us to replicate foreign assets (that are already replicas on our primary)
+					dm.add("versions", versions);
 					if (includeDestroyed) dm.add("include-destroyed", true);
 
 					try {
