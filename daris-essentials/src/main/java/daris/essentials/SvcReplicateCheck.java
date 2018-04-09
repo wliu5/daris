@@ -84,7 +84,7 @@ public class SvcReplicateCheck extends PluginService {
 		Integer repInc = args.intValue("rep-inc", 1000);
 		Integer related = args.intValue("related", 0);
 		String versions = args.stringValue("versions", "match");
-		if (!versions.equals("match") && !versions.equalsIgnoreCase("all")) {
+		if (!versions.equals("match") && !versions.equals("all")) {
 			throw new Exception ("versions must be 'match' or 'all'");
 		}
 
