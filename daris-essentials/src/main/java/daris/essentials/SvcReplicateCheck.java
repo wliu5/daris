@@ -36,6 +36,7 @@ public class SvcReplicateCheck extends PluginService {
 		_defn.add(new Interface.Element("throw-on-fail", BooleanType.DEFAULT, "By default, service will fail if it fails to replicate any asset. Set to false to not fail and wirte a message in the mediaflux-server log instead for every asset that fails to replciate.", 0, 1));
 		_defn.add(new Interface.Element("related", IntegerType.DEFAULT, "Specifies the number of levels of related assets (primary relationship) to be replicated.  Has no impact on the find part of the service, just the replicatioh. Defaults to 0. Specify infinity to traverse all relationships.", 0, 1));
 		_defn.add(new Interface.Element("versions", StringType.DEFAULT, "Replicate all ('all') versions, or just the version matched by the query ('match' - default)", 0, 1));
+		_defn.add(new Interface.Element("collection-assets", BooleanType.DEFAULT, "When true (Default is false), sets these arguments of asset.replicate.to (when replicating) :collection-assets/{describe-queries,include-dynamic-members,include-static-members, Binclude-subcollections} to true.", 0, 1));
 	}
 	public String name() {
 		return "nig.replicate.check";
@@ -87,6 +88,7 @@ public class SvcReplicateCheck extends PluginService {
 		if (!versions.equals("match") && !versions.equals("all")) {
 			throw new Exception ("versions must be 'match' or 'all'");
 		}
+		Boolean collectionAssets = args.booleanValue("collection-assets", false);
 
 		// Find route to peer. Exception if can't reach and build in extra checks to make sure we are 
 		// being very safe
@@ -161,6 +163,14 @@ public class SvcReplicateCheck extends PluginService {
 					dm.add("locally-modified-only", false);             // Allows us to replicate foreign assets (that are already replicas on our primary)
 					dm.add("versions", versions);
 					if (includeDestroyed) dm.add("include-destroyed", true);
+					if (collectionAssets) {
+						dm.push("collection-assets");
+						dm.add("describe-queries", true);
+						dm.add("include-dynamic-members", true);
+						dm.add("include-static-members", true);
+						dm.add("include-subcollections", true);
+						dm.pop();
+					}
 
 					try {
 						executor().execute("asset.replicate.to", dm.root());
