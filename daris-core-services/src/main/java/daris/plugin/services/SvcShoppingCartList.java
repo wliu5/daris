@@ -59,7 +59,7 @@ public class SvcShoppingCartList extends PluginService {
             dm.add(args.element("status"));
         }
         if (args.elementExists("all")) {
-            dm.add(args.element("list-all"));
+            dm.add("list-all", args.value("all"));
         }
         XmlDoc.Element re = executor().execute("shopping.cart.describe", dm.root());
         List<XmlDoc.Element> ces = re.elements("cart");
