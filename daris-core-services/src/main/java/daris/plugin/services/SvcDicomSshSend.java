@@ -47,9 +47,9 @@ public abstract class SvcDicomSshSend extends PluginService {
 
     public static final String SERVICE_NAME = "daris.dicom.ssh.send";
 
-    public static final String SERVICE_SCP_PUT = "daris.scp.put";
+    public static final String SERVICE_SCP_PUT = "unimelb.scp.put";
 
-    public static final String SERVICE_SFTP_PUT = "daris.sftp.put";
+    public static final String SERVICE_SFTP_PUT = "unimelb.sftp.put";
 
     public static final String DEFAULT_AE_TITLE = "DaRIS";
 
