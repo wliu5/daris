@@ -40,6 +40,7 @@ grantRoleReadAccessServices   daris:pssd.model.user \
     { om.pssd.* \
       daris.* \
       nig.* \
+      unimelb.* \
       application.property.* \
       asset.model.* \
       actor.have \
@@ -85,6 +86,7 @@ grantRoleWriteAccessServices  daris:pssd.model.user \
       om.pssd.*  \
       daris.*  \
       nig.* \
+      unimelb.* \
       asset.create \
       asset.destroy \
       asset.set \
