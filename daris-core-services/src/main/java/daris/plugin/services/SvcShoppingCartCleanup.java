@@ -94,29 +94,38 @@ public class SvcShoppingCartCleanup extends PluginService {
         Date d = cal.getTime();
 
         XmlDocMaker dm = new XmlDocMaker("args");
-        dm.add("status", Status.aborted);
-        dm.add("status", Status.data_ready);
-        dm.add("status", Status.rejected);
-        dm.add("status", Status.error);
-        dm.add("status", Status.withdrawn);
+//        dm.add("status", Status.aborted);
+//        dm.add("status", Status.data_ready);
+//        dm.add("status", Status.rejected);
+//        dm.add("status", Status.error);
+//        dm.add("status", Status.withdrawn);
         dm.add("size", "infinity");
         dm.add("list-all", listAll);
 
         XmlDoc.Element r = executor().execute("shopping.cart.describe", dm.root());
         List<XmlDoc.Element> ces = r.elements("cart");
-        System.out.println("### 1: " + (ces == null ? 0 : ces.size()));
         Set<String> cartIds = new LinkedHashSet<String>();
         if (ces != null) {
             for (XmlDoc.Element ce : ces) {
-                String id = ce.value("@id");
-                Date changed = ce.dateValue("status/@changed");
-                if (changed.before(d)) {
-                    cartIds.add(id);
+                Status status = Status.fromString(ce.value("status"));
+                switch (status) {
+                case data_ready:
+                case rejected:
+                case error:
+                case aborted:
+                case withdrawn:
+                    String id = ce.value("@id");
+                    Date changed = ce.dateValue("status/@changed");
+                    if (changed.before(d)) {
+                        cartIds.add(id);
+                    }
+                    break;
+                default:
+                    break;
                 }
             }
         }
         if (!cartIds.isEmpty()) {
-            System.out.println("### 2: " + cartIds.size());
             SvcShoppingCartDestroy.destroy(executor(), cartIds);
         }
         w.add("total-destroyed", cartIds.size());

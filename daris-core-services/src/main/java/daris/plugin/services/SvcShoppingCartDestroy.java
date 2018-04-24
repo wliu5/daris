@@ -80,7 +80,6 @@ public class SvcShoppingCartDestroy extends PluginService {
                 dm.add("sid", cartId);
                 dm.pop();
             }
-            System.out.println(dm.root());
             executor.execute("service.execute", dm.root());
         }
     }
