@@ -599,6 +599,8 @@ public class AssetUtil {
 		dm.push(doc.qname(), attString);        // Use qualified name to set attributes; includes document name space
 		dm.pop();
 		dm.pop();
+		dm.add("allow-invalid-meta", true);
+		dm.add("allow-incomplete-meta", true);
 		//
 		executor.execute("asset.set", dm.root());
 	}
