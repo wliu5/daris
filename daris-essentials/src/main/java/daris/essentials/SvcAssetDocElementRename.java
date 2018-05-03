@@ -31,7 +31,6 @@ public class SvcAssetDocElementRename extends PluginService {
      	_defn.add(new Element("type", StringType.DEFAULT, "The Document Type name.", 1, 1));
 		_defn.add(new Element("old", StringType.DEFAULT, "The old element name.", 1, 1));
 		_defn.add(new Element("new", StringType.DEFAULT, "The new element name.", 1, 1));
-		_defn.add(new Element("allow-invalid-meta", BooleanType.DEFAULT, "Allow invalid meta-data; required if new doc type definition does not include old and new names (default true)", 0, 1));
 	}
 
 	public String name() {
@@ -63,7 +62,6 @@ public class SvcAssetDocElementRename extends PluginService {
 		String docType = args.value("type");
 		String elNameOld = args.value("old");
 		String elNameNew = args.value("new");
-		boolean allowInvalid = args.booleanValue("allow-invalid-meta", true);
 
 		// Get the asset meta-data for the give Document Type
 		XmlDocMaker doc = new XmlDocMaker("args");
@@ -85,7 +83,8 @@ public class SvcAssetDocElementRename extends PluginService {
 			// Add new document (name space is embodied in docIn)
 			doc = new XmlDocMaker("args");
 			doc.add("id", id);
-			doc.add("allow-invalid-meta", allowInvalid);
+			doc.add("allow-invalid-meta", true);
+			doc.add("allow-incomplete-meta", true);
 			doc.push("meta", new String[] { "action", "add" });
 			doc.add(docIn);
 			doc.pop();
