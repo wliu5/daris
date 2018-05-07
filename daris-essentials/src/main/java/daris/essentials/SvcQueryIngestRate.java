@@ -77,6 +77,8 @@ public class SvcQueryIngestRate extends PluginService {
 		_defn.add(me);
 		me = new Interface.Element("year", StringType.DEFAULT, "The calendar year of interest (no default)", 1, Integer.MAX_VALUE);
 		_defn.add(me);
+		me = new Interface.Element("month", StringType.DEFAULT, "The calendar month(s) of interest (defaults to all). Use 3 letters: Jan, Feb, Mar etc", 0, Integer.MAX_VALUE);
+		_defn.add(me);
 	}
 
 	public String name() {
@@ -108,28 +110,69 @@ public class SvcQueryIngestRate extends PluginService {
 
 		String where2 = args.value("where");
 		Collection<String> years = args.values("year");				
+		Collection<String> months = args.values("month");				
 		//
 		for (String year : years) {
+			Double totalSize = 0.0;
 			for (int i=0;i<12;i++) {
-				PluginTask.checkIfThreadTaskAborted();
-				XmlDocMaker dm = new XmlDocMaker("args");
-				String where = where2 + " and " + makeWhere(i, year);
-				String my = makeMonth (i, year);
-				dm.add("where", where);
-				dm.add("action", "sum");
-				dm.add("xpath", "content/size");
-				XmlDoc.Element r = executor().execute("asset.query", dm.root());
-				w.push("ingest");
-				w.add("month",  my);
-				String n = r.value("value/@nbe");
-				String t = r.value("value");
-				w.add("size", new String[]{"n", n}, bytesToGBytes (t));
-				w.pop();
+				if (monthIncluded(i, months)) {
+					PluginTask.checkIfThreadTaskAborted();
+					XmlDocMaker dm = new XmlDocMaker("args");
+					String where = where2 + " and " + makeWhere(i, year);
+					String my = makeMonth (i, year);
+					dm.add("where", where);
+					dm.add("action", "sum");
+					dm.add("xpath", "content/size");
+					XmlDoc.Element r = executor().execute("asset.query", dm.root());
+					w.push("ingest");
+					w.add("month",  my);
+					String nAssets = r.value("value/@nbe");
+					String bytes = r.value("value");
+					//
+					Double td = 0.0;
+					if (bytes!=null) td = Double.parseDouble(bytes);
+					totalSize += td;
+					//
+					w.add("size", new String[]{"n", nAssets, "bytes", bytes}, bytesToGBytes (bytes));
+					w.pop();
+				}
 			}
+			w.add("total-size", new String[]{"unit", "bytes"},  totalSize);
 		}
 	}
 
 
+	private Boolean monthIncluded (int im, Collection<String> months) {
+		if (months==null) return true;
+		for (String month : months) {
+		   if (month.equalsIgnoreCase("Jan")) {
+			   if (im==0) return true;
+		   } else if (month.equalsIgnoreCase("Feb")) {
+			   if (im==1) return true;
+		   } else if (month.equalsIgnoreCase("Mar")) {
+			   if (im==2) return true;
+		   } else if (month.equalsIgnoreCase("Apr")) {
+			   if (im==3) return true;
+		   } else if (month.equalsIgnoreCase("May")) {
+			   if (im==4) return true;
+		   } else if (month.equalsIgnoreCase("Jun")) {
+			   if (im==5) return true;
+		   } else if (month.equalsIgnoreCase("Jul")) {
+			   if (im==6) return true;
+		   } else if (month.equalsIgnoreCase("Aug")) {
+			   if (im==7) return true;
+		   } else if (month.equalsIgnoreCase("Sep")) {
+			   if (im==8) return true;
+		   } else if (month.equalsIgnoreCase("Oct")) {
+			   if (im==9) return true;
+		   } else if (month.equalsIgnoreCase("Nov")) {
+			   if (im==10) return true;
+		   } else if (month.equalsIgnoreCase("Dec")) {
+			   if (im==11) return true;
+		   } 
+		}
+		return false;
+	}
 	private String makeWhere (int i, String year) throws Throwable {
 		if (i==0) {
 			return "ctime>='01-Jan-" + year + " 00:00:00' and ctime<='31-Jan-" + year + " 24:00:00'";
