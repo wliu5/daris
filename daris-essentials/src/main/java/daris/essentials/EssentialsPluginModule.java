@@ -77,6 +77,8 @@ public class EssentialsPluginModule implements PluginModule {
         //
         _svs.add(new SvcRolePermsRemove());
         _svs.add(new SvcSecureWalletKeyEntryGenerate());
+        //
+        _svs.add(new SvcUserFind());
     }
 
     public void shutdown(ConfigurationResolver config) throws Throwable {
