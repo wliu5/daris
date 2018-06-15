@@ -67,8 +67,8 @@ actor.grant :type role :name daris:pssd.model.doc.user \
     :perm < :access PUBLISH    :resource -type document daris:pssd-shoppingcart-layout-pattern > \
     :perm < :access ACCESS     :resource -type document daris:pssd-dicom-ingest > \
     :perm < :access PUBLISH    :resource -type document daris:pssd-dicom-ingest > \
-    :perm < :access ACCESS     :resource -type document daris:daris:dicom-dataset > \
-    :perm < :access PUBLISH    :resource -type document daris:daris:dicom-dataset >
+    :perm < :access ACCESS     :resource -type document daris:dicom-dataset > \
+    :perm < :access PUBLISH    :resource -type document daris:dicom-dataset >
 
 # reovke excessively permissive access to all document namespaces
 actor.grant :type role :name daris:pssd.model.doc.user \
@@ -142,8 +142,6 @@ actor.grant :type role :name daris:pssd.model.user \
     :perm < :access MODIFY :resource -type service server.io.write > \
     :perm < :access MODIFY :resource -type service server.io.write.finish > \
     :perm < :access MODIFY :resource -type service server.log > \
-    :perm < :access MODIFY :resource -type service  > \
-    :perm < :access MODIFY :resource -type service  > \
     :perm < :access ACCESS :resource -type service server.ping > \
     :perm < :access MODIFY :resource -type service server.task.named.begin > \
     :perm < :access MODIFY :resource -type service server.task.named.end > \
@@ -165,8 +163,11 @@ actor.grant :type role :name daris:pssd.model.user \
     :perm < :access ACCESS :resource -type service user.describe > 
 
 # access to role namespaces (required since server version 4.7.018)
-actor.grant :type role :name daris:pssd.model.user \
-    :perm < :access ACCESS :resource -type role:namespace * >
+if { [lsearch -exact [xvalues type/access/@name [authorization.resource.type.describe :type role:namespace]] ACCESS] != -1 } {
+    actor.grant :type role :name daris:pssd.model.user \
+        :perm < :access ACCESS :resource -type role:namespace * >
+}
+
 
 # access to dictionary namespace: daris
 actor.grant :type role :name daris:pssd.model.user \
@@ -174,7 +175,7 @@ actor.grant :type role :name daris:pssd.model.user \
 
 # access to dictionary namespace: daris-tags
 actor.grant :type role :name daris:pssd.model.user \
-    :perm < :access * :resource -type dictionary:namespace daris-tags >
+    :perm < :access ADMINISTER :resource -type dictionary:namespace daris-tags >
 
 # ============================================================================
 # role: pssd.model.power.user
@@ -183,7 +184,7 @@ actor.grant :type role :name daris:pssd.model.user \
 # more of the system from aterm. Should be granted directly to a user
 authorization.role.create :ifexists ignore :role daris:pssd.model.power.user
 
-actor.grant :type role :name pssd.model.power.user \
+actor.grant :type role :name daris:pssd.model.power.user \
     :role -type role daris:pssd.model.user \
     :perm < :access MODIFY :resource -type service dictionary.add > \
     :perm < :access MODIFY :resource -type service dictionary.destroy > \
@@ -191,7 +192,7 @@ actor.grant :type role :name pssd.model.power.user \
     :perm < :access MODIFY :resource -type service dictionary.entry.remove > \
     :perm < :access MODIFY :resource -type service asset.doc.type.create > \
     :perm < :access MODIFY :resource -type service asset.doc.type.destroy  > \
-    :perm < :access MODIFY :resource -type service server.log.display ADMINISTER >
+    :perm < :access ADMINISTER :resource -type service server.log.display >
 
 
 # ============================================================================
@@ -255,11 +256,11 @@ actor.grant :type role :name daris:pssd.administrator \
     :role -type role daris:pssd.project.create \
     :role -type role daris:essentials.administrator \
     :role -type role daris:pssd.subject.create \
-    :perm < :access * :resource -type dictionary:namespace daris > \
-    :perm < :access * :resource -type dictionary:namespace daris-tags > \
-    :perm < :access * :resource -type document:namespace daris > \
-    :perm < :access * :resource -type role:namespace daris > \
-    :perm < :access ADMINISTER :resource -type service om.pssd.* > \  
+    :perm < :access ADMINISTER :resource -type dictionary:namespace daris > \
+    :perm < :access ADMINISTER :resource -type dictionary:namespace daris-tags > \
+    :perm < :access ADMINISTER :resource -type document:namespace daris > \
+    :perm < :access ADMINISTER :resource -type role:namespace daris > \
+    :perm < :access ADMINISTER :resource -type service om.pssd.* > \
     :perm < :access ADMINISTER :resource -type service daris.* >
      
 # ============================================================================
@@ -276,7 +277,6 @@ actor.grant :type role :name daris:pssd.dicom-ingest \
     :role -type role daris:pssd.model.doc.user \
     :role -type role daris:pssd.object.admin \
     :perm < :access ADMINISTER :resource -type role:namespace daris > \
-    :perm < :access ACCESS     :resource -type role:namespace * > \
     :perm < :access ACCESS     :resource -type dictionary:namespace daris > \
     :perm < :access ACCESS     :resource -type service actor.describe > \
     :perm < :access ACCESS     :resource -type service actor.have > \
@@ -316,6 +316,11 @@ actor.grant :type role :name daris:pssd.dicom-ingest \
     :perm < :access ACCESS     :resource -type service system.session.self.describe  > \
     :perm < :access ACCESS     :resource -type service user.describe > \
     :perm < :access ACCESS     :resource -type service user.self.describe >
+
+if { [lsearch -exact [xvalues type/access/@name [authorization.resource.type.describe :type role:namespace]] ACCESS] != -1 } {
+    actor.grant :type role :name daris:pssd.dicom-ingest \
+        :perm < :access ACCESS :resource -type role:namespace * >
+}
 
 # ============================================================================
 # detect if "Transform framework" is installed. If it is, set the roles...
