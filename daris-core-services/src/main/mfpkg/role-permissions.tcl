@@ -154,6 +154,7 @@ actor.grant :type role :name daris:pssd.model.user \
     :perm < :access ACCESS :resource -type service system.events.* > \
     :perm < :access ACCESS :resource -type service system.logon > \
     :perm < :access ACCESS :resource -type service system.logoff > \
+    :perm < :access ACCESS :resource -type service system.session.task.describe > \
     :perm < :access ACCESS :resource -type service type.list > \
     :perm < :access ACCESS :resource -type service type.describe > \
     :perm < :access ACCESS :resource -type service type.ext.types > \

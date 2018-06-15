@@ -20,9 +20,9 @@ public class SvcDicomOnsendUserList extends PluginService {
 
     private static final String DEFAULT_AUTH_DOMAIN = "dicom";
 
-    private static final String NAME_SUFFIX = "DARIS_ONSEND";
+    private static final String NAME_SUFFIX = "ONSEND";
 
-    private static final String USER_SUFFIX = "_ONSEND";
+    private static final String USER_SUFFIX = "ONSEND";
 
     private static final String DICOM_INGEST_ROLE = Role.dicomIngestRoleName();
 
@@ -82,7 +82,7 @@ public class SvcDicomOnsendUserList extends PluginService {
                 String user = ue.value("@user");
                 if (user.endsWith(USER_SUFFIX)) {
                     users.add(user);
-                } else if (name.endsWith(NAME_SUFFIX)) {
+                } else if (name != null && name.endsWith(NAME_SUFFIX)) {
                     users.add(user);
                 }
             }
