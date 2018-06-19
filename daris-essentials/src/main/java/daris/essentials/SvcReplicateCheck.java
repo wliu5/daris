@@ -325,8 +325,9 @@ public class SvcReplicateCheck extends PluginService {
 					if (type!=null && type.equals("content/unknown")) type = null;
 					//
 		            String csize = asset.value("asset/content/size/@h");
+		            String path = asset.value("asset/path");
 		            //
-		            w.add("id", new String[]{"exists", "false", "cid", cid, "type", type, "csum-base10", csum, "csize", csize},  primaryID);
+		            w.add("id", new String[]{"exists", "false", "cid", cid, "type", type, "csum-base10", csum, "csize", csize, "path", path},  primaryID);
 				}
 				assetList.add(primaryID);
 			} else {
