@@ -340,6 +340,7 @@ public class SvcReplicateCheck extends PluginService {
 					Date mtime = asset.dateValue("asset/mtime");
 					String type = asset.value("asset/type");
 					String csum = asset.value("asset/content/csum[@base='10']");
+					String csize = asset.value("asset/content/csize");
 
 
 					// Use id overload e.g. "asset.get :id rid=1004.123455"
@@ -350,6 +351,7 @@ public class SvcReplicateCheck extends PluginService {
 					Date mtimeRep = remoteAsset.dateValue("asset/mtime");
 					String cidRep = remoteAsset.value("asset/cid");            // Same for primary and replica
 					String csumRep = remoteAsset.value("asset/content/csum[@base='10']");
+					String csizeRep = remoteAsset.value("asset/content/csize");
 					if (dbg) {
 						if (mtime!=null && mtimeRep!=null) {
 							log(dateTime, "      nig.replicate.check : mtimes=" + mtime + ", " + mtimeRep);
@@ -364,17 +366,18 @@ public class SvcReplicateCheck extends PluginService {
 						if (csumRep!=null) {
 							if (mtime.after(mtimeRep) || !csum.equals(csumRep)) {
 								w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString(),
-										"csum-base10-primary", csum, "csum-base10-replica", csumRep},  primaryID);
+										"csum-base10-primary", csum, "csum-base10-replica", csumRep, "csize-primary", csize, "csize-replicat", csizeRep},  primaryID);
 								assetList.add(primaryID);	
 							}
 						} else {
 							w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString(),
-									"csum-base10-primary", csum, "csum-base10-replica", "missing"},  primaryID);
+									"csum-base10-primary", csum, "csum-base10-replica", "missing", "csize-primary", csize, "csize-replicat", csizeRep},  primaryID);
 							assetList.add(primaryID);	
 						}
 					} else {
 						if (mtime.after(mtimeRep)) {
-							w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString()},
+							w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString(), 
+									"csize-primary", csize, "csize-replicat", csizeRep},
 									primaryID);
 							assetList.add(primaryID);	
 						}
