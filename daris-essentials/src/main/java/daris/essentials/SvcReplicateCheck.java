@@ -92,12 +92,12 @@ public class SvcReplicateCheck extends PluginService {
 
 		// Find route to peer. Exception if can't reach and build in extra checks to make sure we are 
 		// being very safe
-		ServerRoute sr = DistributedAssetUtil.findPeerRoute(executor(), peer);
-		if (sr==null) {
+		ServerRoute srDR = DistributedAssetUtil.findPeerRoute(executor(), peer);
+		if (srDR==null) {
 			throw new Exception("Failed to generated the ServerRoute for the remote host");
 		}
 		String uuidLocal = serverUUID(executor(), null);
-		if (sr.target().equals(uuidLocal)) {
+		if (srDR.target().equals(uuidLocal)) {
 			throw new Exception ("Remote peer UUID appears to be the same as the local host (" + uuidLocal + ") - cannot proceed");
 		}
 
@@ -111,7 +111,7 @@ public class SvcReplicateCheck extends PluginService {
 		}
 		w.add("uuid-local", uuidLocal);
 		while (more) {
-			more = find (executor(),  schemaID, dateTime, wheres, peer, sr, uuidLocal, size, 
+			more = find (executor(),  schemaID, dateTime, wheres, peer, srDR, uuidLocal, size, 
 					assetIDs, checkAsset, useIndexes, dbg,  list, includeDestroyed, idx, count, w);
 			if (dbg) {
 				log(dateTime, "nig.replicate.check : checking for abort \n");
@@ -336,27 +336,7 @@ public class SvcReplicateCheck extends PluginService {
 				// The asset exists as a replica, but perhaps it's been modified.
 				// Very time consuming...
 				if (checkAsset) {
-					// Check times and checksums match
-					XmlDoc.Element asset = AssetUtil.getAsset(executor, null, primaryID);
-					Date ctime = asset.dateValue("asset/ctime");
-					Date mtime = asset.dateValue("asset/mtime");
-					String type = asset.value("asset/type");
-					String csum = asset.value("asset/content/csum[@base='10']");
-					String csize = asset.value("asset/content/csize");
-					String path = asset.value("asset/path");
-
-
-					// Use id overload e.g. "asset.get :id rid=1004.123455"
-					dm = new XmlDocMaker("args");
-					dm.add("id","rid="+rid);
-					XmlDoc.Element remoteAsset = executor.execute(sr, "asset.get", dm.root());
-
-					Date ctimeRep = remoteAsset.dateValue("asset/ctime");
-					Date mtimeRep = remoteAsset.dateValue("asset/mtime");
-					String cidRep = remoteAsset.value("asset/cid");            // Same for primary and replica
-					String csumRep = remoteAsset.value("asset/content/csum[@base='10']");
-					String csizeRep = remoteAsset.value("asset/content/csize");
-					if (assetsDiffer (primaryID, cid, path, type, ctime, mtime, csize, csum, cidRep, ctimeRep, mtimeRep, csizeRep, csumRep, w)) {
+					if (assetsDiffer (executor, sr, primaryID, cid, rid,  w)) {
 						assetList.add(primaryID);
 					}
 				}
@@ -368,9 +348,31 @@ public class SvcReplicateCheck extends PluginService {
 	
 	
 	
-	private Boolean assetsDiffer (String primaryID, String cid, String path, String type, Date ctime, Date mtime, String csize, String csum, 
-			String cidRep, Date ctimeRep, Date mtimeRep, String csizeRep, String csumRep, XmlWriter w) throws Throwable {
+	private Boolean assetsDiffer (ServiceExecutor executor, ServerRoute sr, String primaryID, String cid,  String rid,
+			XmlWriter w) throws Throwable {
 		Boolean differ = false;
+		
+		// Check times and checksums match
+		XmlDoc.Element asset = AssetUtil.getAsset(executor, null, primaryID);
+		Date ctime = asset.dateValue("asset/ctime");
+		Date mtime = asset.dateValue("asset/mtime");
+		String type = asset.value("asset/type");
+		String csum = asset.value("asset/content/csum[@base='10']");
+		String csize = asset.value("asset/content/size");
+		String path = asset.value("asset/path");
+
+
+		// Use id overload e.g. "asset.get :id rid=1004.123455"
+		XmlDocMaker dm = new XmlDocMaker("args");
+		dm.add("id","rid="+rid);
+		XmlDoc.Element remoteAsset = executor.execute(sr, "asset.get", dm.root());
+
+		Date ctimeRep = remoteAsset.dateValue("asset/ctime");
+		Date mtimeRep = remoteAsset.dateValue("asset/mtime");
+		String cidRep = remoteAsset.value("asset/cid");            // Same for primary and replica
+		String csumRep = remoteAsset.value("asset/content/csum[@base='10']");
+		String csizeRep = remoteAsset.value("asset/content/size");
+
 		if ((cid!=null && cidRep!=null && !cid.equals(cidRep)) || !ctime.equals(ctimeRep) || !mtime.equals(mtimeRep) ) {
 			differ = true;
 		}
