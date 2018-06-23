@@ -318,6 +318,7 @@ public class SvcReplicateCheck extends PluginService {
 			// Now take action depending on if the asset exists on the DR or not
 			String cid = CiteableIdUtil.idToCid(executor, primaryID);               // May be null
 			if (result.booleanValue()==false) {
+				// The asset does not exist on the DR
 				if (list) {
 					XmlDoc.Element asset = AssetUtil.getAsset(executor, null, primaryID);
 					String type = asset.value("asset/type");
@@ -335,8 +336,9 @@ public class SvcReplicateCheck extends PluginService {
 				// The asset exists as a replica, but perhaps it's been modified.
 				// Very time consuming...
 				if (checkAsset) {
-					// See if the primary has been modified since the replica was made
+					// Check times and checksums match
 					XmlDoc.Element asset = AssetUtil.getAsset(executor, null, primaryID);
+					Date ctime = asset.dateValue("asset/ctime");
 					Date mtime = asset.dateValue("asset/mtime");
 					String type = asset.value("asset/type");
 					String csum = asset.value("asset/content/csum[@base='10']");
@@ -349,45 +351,49 @@ public class SvcReplicateCheck extends PluginService {
 					dm.add("id","rid="+rid);
 					XmlDoc.Element remoteAsset = executor.execute(sr, "asset.get", dm.root());
 
+					Date ctimeRep = remoteAsset.dateValue("asset/ctime");
 					Date mtimeRep = remoteAsset.dateValue("asset/mtime");
 					String cidRep = remoteAsset.value("asset/cid");            // Same for primary and replica
 					String csumRep = remoteAsset.value("asset/content/csum[@base='10']");
 					String csizeRep = remoteAsset.value("asset/content/csize");
-					if (dbg) {
-						if (mtime!=null && mtimeRep!=null) {
-							log(dateTime, "      nig.replicate.check : mtimes=" + mtime + ", " + mtimeRep);
-						} else {			
-							log(dateTime, "      nig.replicate.check : mtimes are unexpectedly null for asset " + rid);
-						}
-						if (csum!=null && csumRep!=null) {
-							log(dateTime, "      nig.replicate.check : check sums (base 10) =" + csum + ", " + csumRep);
-						}
-					}
-					if (csum!=null) {
-						if (csumRep!=null) {
-							if (mtime.after(mtimeRep) || !csum.equals(csumRep)) {
-								w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString(),
-										"csum-base10-primary", csum, "csum-base10-replica", csumRep, "csize-primary", csize, "csize-replica", csizeRep, "path-primary", path},  primaryID);
-								assetList.add(primaryID);	
-							}
-						} else {
-							w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString(),
-									"csum-base10-primary", csum, "csum-base10-replica", "missing", "csize-primary", csize, "csize-replica", csizeRep, "path-primary", path},  primaryID);
-							assetList.add(primaryID);	
-						}
-					} else {
-						if (mtime.after(mtimeRep)) {
-							w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString(), 
-									"csize-primary", csize, "csize-replicat", csizeRep, "path-primary", path},
-									primaryID);
-							assetList.add(primaryID);	
-						}
+					if (assetsDiffer (primaryID, cid, path, type, ctime, mtime, csize, csum, cidRep, ctimeRep, mtimeRep, csizeRep, csumRep, w)) {
+						assetList.add(primaryID);
 					}
 				}
 			}
 		}
 		//
 		return more;
+	}
+	
+	
+	
+	private Boolean assetsDiffer (String primaryID, String cid, String path, String type, Date ctime, Date mtime, String csize, String csum, 
+			String cidRep, Date ctimeRep, Date mtimeRep, String csizeRep, String csumRep, XmlWriter w) throws Throwable {
+		Boolean differ = false;
+		if ((cid!=null && cidRep!=null && !cid.equals(cidRep)) || !ctime.equals(ctimeRep) || !mtime.equals(mtimeRep) ) {
+			differ = true;
+		}
+		if (!differ) {
+			// If no csum then no content
+			if (csum!=null) {
+				if (csumRep==null) {
+					differ = true;
+				} else {
+					if (!csum.equals(csumRep)) {
+						differ = true;
+					}
+				}			
+			}
+		}
+		
+		// Nulls are ok, the attribute won't show
+		if (differ) {		
+			w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), 
+					"mtime-replica", mtimeRep.toString(), "csum-base10-primary", csum, "csum-base10-replica", csumRep, 
+					"csize-primary", csize, "csize-replica", csizeRep, "path-primary", path},  primaryID);
+		}
+		return differ;
 	}
 
 
