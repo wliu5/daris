@@ -314,7 +314,7 @@ public class SvcReplicateCheck extends PluginService {
 				if (n==null) n = t.length;           // They are all the same length
 				primaryID = t[n-1];
 			}
-			
+
 			// Now take action depending on if the asset exists on the DR or not
 			String cid = CiteableIdUtil.idToCid(executor, primaryID);               // May be null
 			if (result.booleanValue()==false) {
@@ -325,10 +325,10 @@ public class SvcReplicateCheck extends PluginService {
 					String csum = asset.value("asset/content/csum[@base='10']");    // May be null (no content)
 					if (type!=null && type.equals("content/unknown")) type = null;
 					//
-		            String csize = asset.value("asset/content/size/@h");
-		            String path = asset.value("asset/path");
-		            //
-		            w.add("id", new String[]{"exists", "false", "cid", cid, "type", type, "csum-base10-primary", csum, "csize-primary", csize, "path-primary", path},  primaryID);
+					String csize = asset.value("asset/content/size/@h");
+					String path = asset.value("asset/path");
+					//
+					w.add("id", new String[]{"exists", "false", "cid", cid, "type", type, "csum-base10-primary", csum, "csize-primary", csize, "path-primary", path},  primaryID);
 				}
 				assetList.add(primaryID);
 			} else {
@@ -345,13 +345,13 @@ public class SvcReplicateCheck extends PluginService {
 		//
 		return more;
 	}
-	
-	
-	
+
+
+
 	private Boolean assetsDiffer (ServiceExecutor executor, ServerRoute sr, String primaryID, String cid,  String rid,
 			XmlWriter w) throws Throwable {
 		Boolean differ = false;
-		
+
 		// Check times and checksums match
 		XmlDoc.Element asset = AssetUtil.getAsset(executor, null, primaryID);
 		Date ctime = asset.dateValue("asset/ctime");
@@ -373,8 +373,24 @@ public class SvcReplicateCheck extends PluginService {
 		String csumRep = remoteAsset.value("asset/content/csum[@base='10']");
 		String csizeRep = remoteAsset.value("asset/content/size");
 
-		if ((cid!=null && cidRep!=null && !cid.equals(cidRep)) || !ctime.equals(ctimeRep) || !mtime.equals(mtimeRep) ) {
-			differ = true;
+		String cause = null;
+		if (cid!=null && cidRep!=null) {
+			differ = !cid.equals(cidRep);
+			if (differ) {
+				cause = "cid";
+			}
+		}
+		if (!differ) {
+			differ = !ctime.equals(ctimeRep);
+			if (differ) {
+				cause = "ctime";
+			}
+		}
+		if (!differ) {
+			differ = !mtime.equals(mtimeRep);
+			if (differ) {
+				cause = "mtime";
+			}
 		}
 		if (!differ) {
 			// If no csum then no content
@@ -382,16 +398,18 @@ public class SvcReplicateCheck extends PluginService {
 				if (csumRep==null) {
 					differ = true;
 				} else {
-					if (!csum.equals(csumRep)) {
-						differ = true;
-					}
+					differ = !csum.equals(csumRep);
 				}			
 			}
+			if (differ) {
+				cause = "csum";
+			}
 		}
-		
+
 		// Nulls are ok, the attribute won't show
 		if (differ) {		
-			w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), 
+			w.add("id", new String[]{"cause", cause, "type", type, "exists", "true", "cid", cidRep, 
+					"ctime-primary", ctime.toString(), "ctime-replica", ctimeRep.toString(), "mtime-primary", mtime.toString(), 
 					"mtime-replica", mtimeRep.toString(), "csum-base10-primary", csum, "csum-base10-replica", csumRep, 
 					"csize-primary", csize, "csize-replica", csizeRep, "path-primary", path},  primaryID);
 		}
