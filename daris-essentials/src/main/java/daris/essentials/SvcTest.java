@@ -52,6 +52,14 @@ public class SvcTest extends PluginService {
 
 	public void execute(XmlDoc.Element args, Inputs in, Outputs out, XmlWriter w) throws Throwable {
 
+		XmlDocMaker dm = new XmlDocMaker("args");
+		dm.add("name", "VicNode:nkilleen3");
+		dm.add("type", "user");
+		dm.add("role", new String[]{"type", "role"}, "VicNode:cryoem-operator");
+		executor().execute("actor.grant", dm.root());
+		
+		/*
+		
 
 		// Init
 		idx_ = 1;
@@ -77,7 +85,7 @@ public class SvcTest extends PluginService {
 			PluginTask.checkIfThreadTaskAborted();
 		}
 		w.add("total-counted", count_);
-
+*/
 	}
 
 	private static void log (String dateTime, String message) {
