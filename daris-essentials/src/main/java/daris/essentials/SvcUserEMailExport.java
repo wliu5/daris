@@ -5,10 +5,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.Collection;
-import java.util.Vector;
 
 import arc.mf.plugin.*;
-import arc.mf.plugin.PluginService.Interface;
 import arc.mf.plugin.dtype.BooleanType;
 import arc.mf.plugin.dtype.StringType;
 import arc.xml.XmlDoc;
@@ -72,7 +70,7 @@ public class SvcUserEMailExport extends PluginService {
 		XmlDoc.Element r = executor().execute("authentication.domain.describe");
 		Collection<XmlDoc.Element> domains = r.elements("domain");
 
-		// CSV Headers
+		// CSV temporary file and Headers
 		File csvFile = PluginTask.createTemporaryFile(".csv");
 		PrintStream out = new PrintStream(new BufferedOutputStream(new FileOutputStream(csvFile)));
 		{
@@ -92,7 +90,7 @@ public class SvcUserEMailExport extends PluginService {
 				String authority = domain.value("@authority");
 				String protocol = domain.value("@protocol");
 
-				// Find the users
+				// Find the users and iterate
 				XmlDocMaker dm = new XmlDocMaker("args");
 				dm.add("domain", domainName);
 				if (authority!=null) {
