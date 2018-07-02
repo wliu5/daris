@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Vector;
 
 import arc.mf.plugin.*;
 import arc.mf.plugin.dtype.BooleanType;
@@ -82,6 +84,8 @@ public class SvcUserEMailExport extends PluginService {
 
 
 		// Iterate through domains
+		Vector<String> emailsUsed = new Vector<String>();     // List of emails already found. 
+		// Not easy to use a HashSet for uniqueness because we need more than just the email
 		for (XmlDoc.Element domain : domains) {
 			String domainName = domain.value("@name");
 			if (keepDomain (domainName, excludes)) {
@@ -100,12 +104,14 @@ public class SvcUserEMailExport extends PluginService {
 				Collection<XmlDoc.Element> users = r.elements("user");
 				if (users!=null) {
 					for (XmlDoc.Element user : users) {
+
 						Boolean enabled = user.booleanValue("@enabled", true);
 						String email = user.value("e-mail");
 						String userName = domainName + ":" + user.value();
-						Boolean use = email!=null && ((useEnabledOnly&&enabled) || !useEnabledOnly);
+						Boolean use = email!=null && ((useEnabledOnly&&enabled) || !useEnabledOnly) && !alreadyUsed(emailsUsed, email);
 
 						if (use) {
+							emailsUsed.add(email);
 							w.add("email", new String[]{"user", userName, "enabled", Boolean.toString(enabled)}, email);
 							//
 							StringBuilder sb = new StringBuilder();
@@ -114,7 +120,7 @@ public class SvcUserEMailExport extends PluginService {
 							sb.append(Boolean.toString(enabled));
 							sb.append(CSV_DELIMITER);
 							sb.append(email);
-							out.println(sb.toString());			
+							out.println(sb.toString());		
 						}
 					}
 				}
@@ -129,6 +135,13 @@ public class SvcUserEMailExport extends PluginService {
 		csvFile.delete();
 	}
 
+
+	private Boolean alreadyUsed (Vector<String> usedEMails, String email) {
+		for (String usedEMail : usedEMails) {
+			if (email.equals(usedEMail)) return true;
+		}
+		return false;
+	}
 
 	private Boolean keepDomain (String domain, Collection<String> excludes) {
 		if (excludes==null) return true;
