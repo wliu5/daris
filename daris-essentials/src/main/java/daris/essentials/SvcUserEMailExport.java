@@ -2,10 +2,10 @@ package daris.essentials;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Vector;
 
 import arc.mf.plugin.*;
@@ -26,6 +26,7 @@ public class SvcUserEMailExport extends PluginService {
 		_defn = new Interface();
 		_defn.add(new Interface.Element("enabled-only",BooleanType.DEFAULT, "Only search enabled accounts (default true).", 0, 1));
 		_defn.add(new Interface.Element("exclude",StringType.DEFAULT, "Exclude this domain.", 0, Integer.MAX_VALUE));
+		_defn.add(new Interface.Element("email",StringType.DEFAULT, "E-Mail the CSV report to this destination (default none).", 0, Integer.MAX_VALUE));
 	}
 	public String name() {
 		return "nig.user.email.export";
@@ -67,6 +68,7 @@ public class SvcUserEMailExport extends PluginService {
 
 		Boolean  useEnabledOnly  = args.booleanValue("enabled-only", true);
 		Collection<String> excludes = args.values("exclude");
+		String sendToEMail = args.value("email");
 
 		// FInd the domains		
 		XmlDoc.Element r = executor().execute("authentication.domain.describe");
@@ -129,9 +131,35 @@ public class SvcUserEMailExport extends PluginService {
 		out.close();
 
 		// Write CSV file
+		String mimeType = "text/csv";
 		if (outputs!=null) {
-			outputs.output(0).setData(PluginTask.deleteOnCloseInputStream(csvFile), csvFile.length(), "text/csv");
+			outputs.output(0).setData(PluginTask.deleteOnCloseInputStream(csvFile), csvFile.length(), mimeType);
 		}
+
+		// Send via email
+		if (sendToEMail!=null) {
+			String uuid = executor().execute(null, "server.uuid").value("uuid");
+			XmlDocMaker dm = new XmlDocMaker("args");
+			dm.add("name", "mail.from");
+			String from = executor().execute(null, "server.property.get", dm.root()).value("property");
+			// 
+			FileInputStream fis = new FileInputStream(csvFile);
+			PluginService.Input in = new PluginService.Input(fis,csvFile.length(), mimeType, null);
+			PluginService.Inputs ins = new PluginService.Inputs(in);
+			//
+			dm = new XmlDocMaker("args");
+			dm.push("attachment");
+			dm.add("name", "Mediaflux Emails");
+			dm.add("type", mimeType);
+			dm.pop();
+			dm.add("to", sendToEMail);
+			dm.add("subject", "Email List from server" + uuid);
+			dm.add("from", from);
+			executor().execute("mail.send",dm.root(),ins,null);
+			fis.close();
+		}
+
+
 		csvFile.delete();
 	}
 
