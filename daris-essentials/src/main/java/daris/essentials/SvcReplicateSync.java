@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import nig.mf.plugin.util.AssetUtil;
 import nig.mf.pssd.plugin.util.DistributedAssetUtil;
 import arc.mf.plugin.*;
 import arc.mf.plugin.dtype.BooleanType;
@@ -34,6 +35,7 @@ public class SvcReplicateSync extends PluginService {
 		_defn.add(new Interface.Element("debug", BooleanType.DEFAULT, "Write some stuff in the log. Default to false.", 0, 1));
 		_defn.add(new Interface.Element("count-only", BooleanType.DEFAULT, "Just counts (rather than listing each asset) assets for synchronizing. Default to false.", 0, 1));
 		_defn.add(new Interface.Element("list-paths", BooleanType.DEFAULT, "Lists (default false) unique set of namespace paths and number of assets found in that namespace.", 0, 1));
+		_defn.add(new Interface.Element("exists", BooleanType.DEFAULT, "Before actually destroying, check asset still actually exists. Abort if not. Default false.", 0, 1));
 	}
 
 	public String name() {
@@ -70,6 +72,7 @@ public class SvcReplicateSync extends PluginService {
 		Boolean destroy = args.booleanValue("destroy", false);
 		Boolean count = args.booleanValue("count-only", false);
 		Boolean listPaths = args.booleanValue("list-paths", false);
+		Boolean exists = args.booleanValue("exists", false);
 		String size = args.stringValue("size", "5000");
 		Integer t = args.intValue("idx", 1);
 		int[] idx = new int[]{t};
@@ -116,10 +119,10 @@ public class SvcReplicateSync extends PluginService {
 
 		// Destroy assets on remote peer bottom up in DICOM data model
 		// FOr PSSD, 'members=false' so it does not destroy children
-		int n = destroyOrListAssets(executor(), dateTime, srPeer, destroyDICOMSeries, "DICOM Series", destroy, count, listPaths,  w);
-		n += destroyOrListAssets(executor(), dateTime, srPeer, destroyDICOMStudy, "DICOM Study", destroy, count, listPaths, w);
-		n += destroyOrListAssets(executor(), dateTime, srPeer, destroyDICOMPatient, "DICOM Patient", destroy, count, listPaths, w);
-		n += destroyOrListAssets(executor(), dateTime, srPeer, destroyOther, "Other", destroy, count, listPaths, w);
+		int n = destroyOrListAssets(executor(), dateTime, srPeer, destroyDICOMSeries, "DICOM Series", destroy, count, listPaths, exists,  w);
+		n += destroyOrListAssets(executor(), dateTime, srPeer, destroyDICOMStudy, "DICOM Study", destroy, count, listPaths, exists, w);
+		n += destroyOrListAssets(executor(), dateTime, srPeer, destroyDICOMPatient, "DICOM Patient", destroy, count, listPaths, exists, w);
+		n += destroyOrListAssets(executor(), dateTime, srPeer, destroyOther, "Other", destroy, count, listPaths, exists, w);
 
 		if (dbg) {
 			System.out.println("");
@@ -134,7 +137,7 @@ public class SvcReplicateSync extends PluginService {
 
 
 	private int destroyOrListAssets (ServiceExecutor executor, String dateTime, ServerRoute sr, XmlDocMaker list, String type, 
-			Boolean destroy, Boolean count, Boolean listPaths, XmlWriter w) throws Throwable {
+			Boolean destroy, Boolean count, Boolean listPaths, Boolean exists, XmlWriter w) throws Throwable {
 
 		Collection<XmlDoc.Element> elements = list.root().elements("id");
 		if (elements==null) return 0;
@@ -159,12 +162,17 @@ public class SvcReplicateSync extends PluginService {
 				// (originally did in one go)
 				for (XmlDoc.Element el : elements) {
 					String id = el.value();
+					if (exists) {
+						if (!exists(sr, executor, id)) {
+							throw new Exception ("Asset with id '" + id + "' does not exist in destroy loop - aborting");
+						}
+					}
 					String rid = el.value("@rid");
 					String name = el.value("@name");
 					String cid = el.value("@cid");
 					XmlDocMaker dm = new XmlDocMaker("args");
 					dm.add("members", false);
-					dm.add("atomic", true);
+	//				dm.add("atomic", true);
 					dm.add("id", id);
 					executor.execute(sr, "asset.destroy", dm.root());
 					PluginTask.checkIfThreadTaskAborted();
@@ -376,6 +384,15 @@ public class SvcReplicateSync extends PluginService {
 		//
 		return more;
 	}
+
+	private  boolean exists(ServerRoute sr, ServiceExecutor executor, String id) throws Throwable {
+
+		XmlDocMaker dm = new XmlDocMaker("args");
+		dm.add("id", id);
+		XmlDoc.Element r = executor.execute(sr, "asset.exists", dm.root());
+		return r.booleanValue("exists");
+	}
+
 
 	private void log (String dateTime, String message) {
 		System.out.println(dateTime + " : " + message);

@@ -92,12 +92,12 @@ public class SvcReplicateCheck extends PluginService {
 
 		// Find route to peer. Exception if can't reach and build in extra checks to make sure we are 
 		// being very safe
-		ServerRoute sr = DistributedAssetUtil.findPeerRoute(executor(), peer);
-		if (sr==null) {
+		ServerRoute srDR = DistributedAssetUtil.findPeerRoute(executor(), peer);
+		if (srDR==null) {
 			throw new Exception("Failed to generated the ServerRoute for the remote host");
 		}
 		String uuidLocal = serverUUID(executor(), null);
-		if (sr.target().equals(uuidLocal)) {
+		if (srDR.target().equals(uuidLocal)) {
 			throw new Exception ("Remote peer UUID appears to be the same as the local host (" + uuidLocal + ") - cannot proceed");
 		}
 
@@ -111,7 +111,7 @@ public class SvcReplicateCheck extends PluginService {
 		}
 		w.add("uuid-local", uuidLocal);
 		while (more) {
-			more = find (executor(),  schemaID, dateTime, wheres, peer, sr, uuidLocal, size, 
+			more = find (executor(),  schemaID, dateTime, wheres, peer, srDR, uuidLocal, size, 
 					assetIDs, checkAsset, useIndexes, dbg,  list, includeDestroyed, idx, count, w);
 			if (dbg) {
 				log(dateTime, "nig.replicate.check : checking for abort \n");
@@ -314,19 +314,21 @@ public class SvcReplicateCheck extends PluginService {
 				if (n==null) n = t.length;           // They are all the same length
 				primaryID = t[n-1];
 			}
-			
+
 			// Now take action depending on if the asset exists on the DR or not
 			String cid = CiteableIdUtil.idToCid(executor, primaryID);               // May be null
 			if (result.booleanValue()==false) {
+				// The asset does not exist on the DR
 				if (list) {
 					XmlDoc.Element asset = AssetUtil.getAsset(executor, null, primaryID);
 					String type = asset.value("asset/type");
 					String csum = asset.value("asset/content/csum[@base='10']");    // May be null (no content)
 					if (type!=null && type.equals("content/unknown")) type = null;
 					//
-		            String csize = asset.value("asset/content/size/@h");
-		            //
-		            w.add("id", new String[]{"exists", "false", "cid", cid, "type", type, "csum-base10", csum, "csize", csize},  primaryID);
+					String csize = asset.value("asset/content/size/@h");
+					String path = asset.value("asset/path");
+					//
+					w.add("id", new String[]{"exists", "false", "cid", cid, "type", type, "csum-base10-primary", csum, "csize-primary", csize, "path-primary", path},  primaryID);
 				}
 				assetList.add(primaryID);
 			} else {
@@ -334,55 +336,84 @@ public class SvcReplicateCheck extends PluginService {
 				// The asset exists as a replica, but perhaps it's been modified.
 				// Very time consuming...
 				if (checkAsset) {
-					// See if the primary has been modified since the replica was made
-					XmlDoc.Element asset = AssetUtil.getAsset(executor, null, primaryID);
-					Date mtime = asset.dateValue("asset/mtime");
-					String type = asset.value("asset/type");
-					String csum = asset.value("asset/content/csum[@base='10']");
-
-
-					// Use id overload e.g. "asset.get :id rid=1004.123455"
-					dm = new XmlDocMaker("args");
-					dm.add("id","rid="+rid);
-					XmlDoc.Element remoteAsset = executor.execute(sr, "asset.get", dm.root());
-
-					Date mtimeRep = remoteAsset.dateValue("asset/mtime");
-					String cidRep = remoteAsset.value("asset/cid");            // Same for primary and replica
-					String csumRep = remoteAsset.value("asset/content/csum[@base='10']");
-					if (dbg) {
-						if (mtime!=null && mtimeRep!=null) {
-							log(dateTime, "      nig.replicate.check : mtimes=" + mtime + ", " + mtimeRep);
-						} else {			
-							log(dateTime, "      nig.replicate.check : mtimes are unexpectedly null for asset " + rid);
-						}
-						if (csum!=null && csumRep!=null) {
-							log(dateTime, "      nig.replicate.check : check sums (base 10) =" + csum + ", " + csumRep);
-						}
-					}
-					if (csum!=null) {
-						if (csumRep!=null) {
-							if (mtime.after(mtimeRep) || !csum.equals(csumRep)) {
-								w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString(),
-										"csum-base10-primary", csum, "csum-base10-replica", csumRep},  primaryID);
-								assetList.add(primaryID);	
-							}
-						} else {
-							w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString(),
-									"csum-base10-primary", csum, "csum-base10-replica", "missing"},  primaryID);
-							assetList.add(primaryID);	
-						}
-					} else {
-						if (mtime.after(mtimeRep)) {
-							w.add("id", new String[]{"type", type, "exists", "true", "cid", cidRep, "mtime-primary", mtime.toString(), "mtime-replica", mtimeRep.toString()},
-									primaryID);
-							assetList.add(primaryID);	
-						}
+					if (assetsDiffer (executor, sr, primaryID, cid, rid,  w)) {
+						assetList.add(primaryID);
 					}
 				}
 			}
 		}
 		//
 		return more;
+	}
+
+
+
+	private Boolean assetsDiffer (ServiceExecutor executor, ServerRoute sr, String primaryID, String cid,  String rid,
+			XmlWriter w) throws Throwable {
+		Boolean differ = false;
+
+		// Check times and checksums match
+		XmlDoc.Element asset = AssetUtil.getAsset(executor, null, primaryID);
+		Date ctime = asset.dateValue("asset/ctime");
+		Date mtime = asset.dateValue("asset/mtime");
+		String type = asset.value("asset/type");
+		String csum = asset.value("asset/content/csum[@base='10']");
+		String csize = asset.value("asset/content/size");
+		String path = asset.value("asset/path");
+
+
+		// Use id overload e.g. "asset.get :id rid=1004.123455"
+		XmlDocMaker dm = new XmlDocMaker("args");
+		dm.add("id","rid="+rid);
+		XmlDoc.Element remoteAsset = executor.execute(sr, "asset.get", dm.root());
+
+		Date ctimeRep = remoteAsset.dateValue("asset/ctime");
+		Date mtimeRep = remoteAsset.dateValue("asset/mtime");
+		String cidRep = remoteAsset.value("asset/cid");            // Same for primary and replica
+		String csumRep = remoteAsset.value("asset/content/csum[@base='10']");
+		String csizeRep = remoteAsset.value("asset/content/size");
+
+		String cause = null;
+		if (cid!=null && cidRep!=null) {
+			differ = !cid.equals(cidRep);
+			if (differ) {
+				cause = "cid";
+			}
+		}
+		if (!differ) {
+			differ = !ctime.equals(ctimeRep);
+			if (differ) {
+				cause = "ctime";
+			}
+		}
+		if (!differ) {
+			differ = !mtime.equals(mtimeRep);
+			if (differ) {
+				cause = "mtime";
+			}
+		}
+		if (!differ) {
+			// If no csum then no content
+			if (csum!=null) {
+				if (csumRep==null) {
+					differ = true;
+				} else {
+					differ = !csum.equals(csumRep);
+				}			
+			}
+			if (differ) {
+				cause = "csum";
+			}
+		}
+
+		// Nulls are ok, the attribute won't show
+		if (differ) {		
+			w.add("id", new String[]{"cause", cause, "type", type, "exists", "true", "cid", cidRep, 
+					"ctime-primary", ctime.toString(), "ctime-replica", ctimeRep.toString(), "mtime-primary", mtime.toString(), 
+					"mtime-replica", mtimeRep.toString(), "csum-base10-primary", csum, "csum-base10-replica", csumRep, 
+					"csize-primary", csize, "csize-replica", csizeRep, "path-primary", path},  primaryID);
+		}
+		return differ;
 	}
 
 

@@ -79,6 +79,7 @@ public class EssentialsPluginModule implements PluginModule {
         _svs.add(new SvcSecureWalletKeyEntryGenerate());
         //
         _svs.add(new SvcUserFind());
+        _svs.add(new SvcUserEMailExport());
     }
 
     public void shutdown(ConfigurationResolver config) throws Throwable {
