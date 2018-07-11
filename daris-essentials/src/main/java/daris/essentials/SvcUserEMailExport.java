@@ -27,6 +27,7 @@ public class SvcUserEMailExport extends PluginService {
 		_defn.add(new Interface.Element("enabled-only",BooleanType.DEFAULT, "Only search enabled accounts (default true).", 0, 1));
 		_defn.add(new Interface.Element("exclude",StringType.DEFAULT, "Exclude this domain.", 0, Integer.MAX_VALUE));
 		_defn.add(new Interface.Element("email",StringType.DEFAULT, "E-Mail the CSV report to this destination (default none).", 0, Integer.MAX_VALUE));
+		_defn.add(new Interface.Element("role",StringType.DEFAULT, "The user must hold this role (wihc must be of type 'role') to be included. If you provide more than one, the user must hold at least one role in the list to be included.", 0, Integer.MAX_VALUE));
 	}
 	public String name() {
 		return "nig.user.email.export";
@@ -69,6 +70,7 @@ public class SvcUserEMailExport extends PluginService {
 		Boolean  useEnabledOnly  = args.booleanValue("enabled-only", true);
 		Collection<String> excludes = args.values("exclude");
 		String sendToEMail = args.value("email");
+		Collection<String> roles = args.values("role");
 
 		// FInd the domains		
 		XmlDoc.Element r = executor().execute("authentication.domain.describe");
@@ -111,7 +113,10 @@ public class SvcUserEMailExport extends PluginService {
 						String email = user.value("e-mail");
 						String userName = domainName + ":" + user.value();
 						Boolean use = email!=null && ((useEnabledOnly&&enabled) || !useEnabledOnly) && !alreadyUsed(emailsUsed, email);
+						if (use) {
+							if (!hasRole (executor(), roles, userName)) use = false;
 
+						}
 						if (use) {
 							emailsUsed.add(email);
 							w.add("email", new String[]{"user", userName, "enabled", Boolean.toString(enabled)}, email);
@@ -163,6 +168,19 @@ public class SvcUserEMailExport extends PluginService {
 		csvFile.delete();
 	}
 
+	private Boolean hasRole (ServiceExecutor executor, Collection<String> roles, String userName) throws Throwable {
+		if (roles==null) return true;
+		Boolean has = false;
+		for (String role : roles) {
+			XmlDocMaker dm = new XmlDocMaker("args");
+			dm.add("name", userName);
+			dm.add("role", new String[]{"type", "role"}, role);
+			dm.add("type", "user");
+			XmlDoc.Element r = executor.execute("actor.have", dm.root());
+			if (r.booleanValue("actor/role")) has = true;
+		}
+		return has;
+	}
 
 	private Boolean alreadyUsed (Vector<String> usedEMails, String email) {
 		for (String usedEMail : usedEMails) {
