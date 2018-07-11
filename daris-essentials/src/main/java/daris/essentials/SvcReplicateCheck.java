@@ -282,6 +282,7 @@ public class SvcReplicateCheck extends PluginService {
 		XmlDoc.Element r2 = executor.execute(sr, "asset.exists", dm.root());
 		if (r2==null) return more;
 		Collection<XmlDoc.Element> results = r2.elements("exists");
+		if (results==null) return more;
 
 
 		// Create a list of assets that don't have replicas that we want to replicate
