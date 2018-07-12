@@ -4,7 +4,9 @@ import java.util.Date;
 
 import arc.mf.plugin.*;
 import arc.mf.plugin.dtype.BooleanType;
+import arc.mf.plugin.dtype.DoubleType;
 import arc.mf.plugin.dtype.IntegerType;
+import arc.mf.plugin.dtype.LongType;
 import arc.mf.plugin.dtype.StringType;
 import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
@@ -21,7 +23,8 @@ public class SvcTest extends PluginService {
 	public SvcTest() {
 		_defn = new Interface();
 		_defn.add(new Interface.Element("where",StringType.DEFAULT, "Query predicate to restrict the selected assets on the local host. If unset, all assets are considered.", 0, 1));
-		_defn.add(new Interface.Element("size",IntegerType.DEFAULT, "Limit the accumulation loop to this number of assets per iteration (if too large, the host may run out of virtual memory).  Defaults to 10000.", 0, 1));
+		_defn.add(new Interface.Element("size", LongType.DEFAULT, "File size.", 0, 1));
+		_defn.add(new Interface.Element("block-size", LongType.DEFAULT, "Block size", 0, 1));
 		_defn.add(new Interface.Element("use-indexes", BooleanType.DEFAULT, "Turn on or off the use of indexes in the query. Defaults to true.", 0, 1));
 		_defn.add(new Interface.Element("debug", BooleanType.DEFAULT, "Write some stuff in the log. Default to false.", 0, 1));
 	}
@@ -52,12 +55,27 @@ public class SvcTest extends PluginService {
 
 	public void execute(XmlDoc.Element args, Inputs in, Outputs out, XmlWriter w) throws Throwable {
 
+		w.add("max-long", Long.MAX_VALUE);
+		
+		Long size = args.longValue("size");
+		Long blockSize = args.longValue("block-size");
+		w.add("size", size);
+		w.add("block-size", blockSize);
+		//
+		Long f = size/blockSize;
+		Long r = size % blockSize;
+		if (r!=0) f++;
+			
+		Long wasted = (f * blockSize) - size;
+		w.add("wasted", wasted);
+		
+		/*
 		XmlDocMaker dm = new XmlDocMaker("args");
 		dm.add("name", "VicNode:nkilleen3");
 		dm.add("type", "user");
 		dm.add("role", new String[]{"type", "role"}, "VicNode:cryoem-operator");
 		executor().execute("actor.grant", dm.root());
-		
+*/		
 		/*
 		
 

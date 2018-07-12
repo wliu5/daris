@@ -10,6 +10,7 @@ import arc.mf.plugin.*;
 import arc.mf.plugin.dtype.BooleanType;
 import arc.mf.plugin.dtype.FloatType;
 import arc.mf.plugin.dtype.IntegerType;
+import arc.mf.plugin.dtype.LongType;
 import arc.mf.plugin.dtype.StringType;
 import arc.xml.XmlDoc;
 import arc.xml.XmlDocMaker;
@@ -22,22 +23,19 @@ public class SvcQueryFileDistribution extends PluginService {
 	private Long totalTime_;
 
 	private class ValHolder {
-		private Double min_;
-		private Double max_;
-		private Long n_;
-		public ValHolder (Double min, Double max, Long n) {
+		public Double min_;
+		public Double max_;
+		public  Long n_;
+		public Double sum_;
+		public Double wastedSum_;
+		public ValHolder (Double min, Double max, Long n, Double sum, Double wastedSum) {
 			min_ = min;
 			max_ = max;
 			n_ = n;
-		}
-		public void set (Double min, Double max, Long n) {
-			min_ = min;
-			max_ = max;
-			n_ = n;
-		}
-		Double min () {return min_;};
-		Double max () {return max_;};
-		Long n () {return n_;};		
+			//
+			sum_ = sum;
+			wastedSum_ = wastedSum;
+		}	
 	}
 
 
@@ -53,7 +51,7 @@ public class SvcQueryFileDistribution extends PluginService {
 		_defn.add(me);
 		me = new Interface.Element("size", IntegerType.DEFAULT, "Cursor size (default 50000)", 0, 1);
 		_defn.add(me);
-		me = new Interface.Element("block-size", FloatType.DEFAULT, "Block-size to compute wasted space. Default 4096 bytes", 0, 1);
+		me = new Interface.Element("block-size", LongType.DEFAULT, "Block-size to compute wasted space. Default 4096 bytes", 0, 1);
 		_defn.add(me);
 	}
 
@@ -89,7 +87,7 @@ public class SvcQueryFileDistribution extends PluginService {
 		Boolean showAccum = args.booleanValue("show-accum", false);
 		Boolean noAccum = args.booleanValue("no-accum", false);
 		Integer size = args.intValue("size", 50000);
-		Double blockSize = args.doubleValue("block-size", 4096.0D);
+		Long blockSize = args.longValue("block-size", 4096);
 		
 		// Set logarithmic bin width. We use a doubling of size 
 		Double logBinWidth = Math.log10(2.0);
@@ -99,21 +97,23 @@ public class SvcQueryFileDistribution extends PluginService {
 
 		// Iterate through assets and accumulate
 		Boolean more = true;
-		ValHolder vh = new ValHolder(1.0E15, -1.0, 0L);
-		ValHolder wasted = new ValHolder(1.0E15, -1.0, 0L);
+		ValHolder vh = new ValHolder(1.0E15, -1.0, 0L, 0.0, 0.0);
 		totalTime_ = 0L;
 		AtomicInteger idx = new AtomicInteger(1);
 		if (showAccum) w.push("accumulation");
 		while (more) {
-			more = accumulate (executor(), blockSize, noAccum, showAccum, where, size, logBinWidth, bins, idx, vh, wasted, w);
+			more = accumulate (executor(), blockSize, noAccum, showAccum, where, size, logBinWidth, bins, idx, vh, w);
 		}
 		if (showAccum) {
 			w.add("total-elapsed-time", totalTime_);
 			w.pop();
 		}
-		w.add("number-assets", vh.n());
-		w.add("minimum-file-size", vh.min());
-		w.add("maximum-file-size", vh.max());
+		w.add("number-assets", vh.n_);
+		w.add("minimum-file-size", vh.min_);
+		w.add("maximum-file-size", vh.max_);
+		w.add("sum", new String[]{"units", "bytes"},  vh.sum_);
+		w.add("wasted-storage", new String[]{"units", "bytes"},  vh.wastedSum_);
+
 
 		// FInd maximum bin from HashMap (not sorted)
 		Integer maxBin = 0;
@@ -156,13 +156,12 @@ public class SvcQueryFileDistribution extends PluginService {
 				w.add("bin", new String[]{"actual-bin-size", ""+actualSize, "human-bin-size", ""+humanSize + unit}, 0);
 			}
 		}
-		w.add("wasted-storage", new String[]{"units", "bytes"},  wasted.max());
 	}
 
 
-	private Boolean accumulate (ServiceExecutor executor,  Double blockSize, Boolean noAccum, Boolean showAccum, String where, 
+	private Boolean accumulate (ServiceExecutor executor,  Long blockSize, Boolean noAccum, Boolean showAccum, String where, 
 			Integer cursorSize, Double logBinWidth, HashMap<Integer,Long> bins, 
-			AtomicInteger idx, ValHolder vh, ValHolder wastedSum, XmlWriter w) throws Throwable {
+			AtomicInteger idx, ValHolder vh, XmlWriter w) throws Throwable {
 		if (showAccum) {
 			w.push("cycle");
 			w.add("start-index", idx.get());
@@ -188,14 +187,23 @@ public class SvcQueryFileDistribution extends PluginService {
 		
 		if (!noAccum) {
 			for (XmlDoc.Element asset : assets) {
-				Double size = asset.doubleValue("value");
+				Long size = asset.longValue("value");
 				
 				// Just make  use of the  ValHolder container to hold the sum
 				// of the wasted space (for storage with the given block size) 
-				// in the max element
-				Double wasted = size - Math.floor(size/blockSize)*blockSize;
-				Double t = wastedSum.max() + wasted;
-				wastedSum.set(0.0, t, 0L);
+				// in the max element. If a files is 1.8MB and the block size is
+				// 1MB the wasted space is 0.2MB
+				// blocksize - (size - floor(size))
+				// 
+				Long f = size/blockSize;
+				Long rem = size % blockSize;
+				if (rem!=0) f++;
+					
+				Long wasted = (f * blockSize) - size;
+				w.add("wasted", wasted);
+				// 
+				Double t = vh.wastedSum_ + wasted;
+				vh.wastedSum_ = t;
 				//
 				Double ls = Math.log10(size);
 				Integer iBin = setBin (ls, logBinWidth);
@@ -206,7 +214,10 @@ public class SvcQueryFileDistribution extends PluginService {
 					bins.put(iBin, 1L);
 				}
 				// Update
-				vh.set(Math.min(vh.min(), size), Math.max(vh.max(), size), (1L+vh.n()));
+				vh.sum_ = vh.sum_ + size;
+				vh.min_ = Math.min(vh.min_, size);
+				vh.max_ = Math.max(vh.max_, size);
+				vh.n_ = vh.n_++;			
 			}
 		}
 		Long time2 = System.currentTimeMillis();
