@@ -5,8 +5,10 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import arc.dtype.DoubleType;
 import arc.mf.plugin.*;
 import arc.mf.plugin.dtype.BooleanType;
+import arc.mf.plugin.dtype.FloatType;
 import arc.mf.plugin.dtype.IntegerType;
 import arc.mf.plugin.dtype.StringType;
 import arc.xml.XmlDoc;
@@ -51,6 +53,8 @@ public class SvcQueryFileDistribution extends PluginService {
 		_defn.add(me);
 		me = new Interface.Element("size", IntegerType.DEFAULT, "Cursor size (default 50000)", 0, 1);
 		_defn.add(me);
+		me = new Interface.Element("block-size", FloatType.DEFAULT, "Block-size to compute wasted space. Default 4096 bytes", 0, 1);
+		_defn.add(me);
 	}
 
 	public String name() {
@@ -85,6 +89,7 @@ public class SvcQueryFileDistribution extends PluginService {
 		Boolean showAccum = args.booleanValue("show-accum", false);
 		Boolean noAccum = args.booleanValue("no-accum", false);
 		Integer size = args.intValue("size", 50000);
+		Double blockSize = args.doubleValue("block-size", 4096.0D);
 		
 		// Set logarithmic bin width. We use a doubling of size 
 		Double logBinWidth = Math.log10(2.0);
@@ -95,11 +100,12 @@ public class SvcQueryFileDistribution extends PluginService {
 		// Iterate through assets and accumulate
 		Boolean more = true;
 		ValHolder vh = new ValHolder(1.0E15, -1.0, 0L);
+		ValHolder wasted = new ValHolder(1.0E15, -1.0, 0L);
 		totalTime_ = 0L;
 		AtomicInteger idx = new AtomicInteger(1);
 		if (showAccum) w.push("accumulation");
 		while (more) {
-			more = accumulate (executor(), noAccum, showAccum, where, size, logBinWidth, bins, idx, vh, w);
+			more = accumulate (executor(), blockSize, noAccum, showAccum, where, size, logBinWidth, bins, idx, vh, wasted, w);
 		}
 		if (showAccum) {
 			w.add("total-elapsed-time", totalTime_);
@@ -150,11 +156,13 @@ public class SvcQueryFileDistribution extends PluginService {
 				w.add("bin", new String[]{"actual-bin-size", ""+actualSize, "human-bin-size", ""+humanSize + unit}, 0);
 			}
 		}
+		w.add("wasted-storage", new String[]{"uints", "bytes"},  wasted.max());
 	}
 
 
-	private Boolean accumulate (ServiceExecutor executor,  Boolean noAccum, Boolean showAccum, String where, Integer cursorSize, Double logBinWidth, HashMap<Integer,Long> bins, 
-			AtomicInteger idx, ValHolder vh, XmlWriter w) throws Throwable {
+	private Boolean accumulate (ServiceExecutor executor,  Double blockSize, Boolean noAccum, Boolean showAccum, String where, 
+			Integer cursorSize, Double logBinWidth, HashMap<Integer,Long> bins, 
+			AtomicInteger idx, ValHolder vh, ValHolder wastedSum, XmlWriter w) throws Throwable {
 		if (showAccum) {
 			w.push("cycle");
 			w.add("start-index", idx.get());
@@ -177,9 +185,18 @@ public class SvcQueryFileDistribution extends PluginService {
 			idx.set(cursor.intValue("next"));
 		}
 		// Accumulate into logarithmic histogram
+		
 		if (!noAccum) {
 			for (XmlDoc.Element asset : assets) {
 				Double size = asset.doubleValue("value");
+				
+				// Just make  use of the  ValHolder container to hold the sum
+				// of the wasted space (for storage with the given block size) 
+				// in the max element
+				Double wasted = size - Math.floor(size/blockSize)*blockSize;
+				Double t = wastedSum.max() + wasted;
+				wastedSum.set(0.0, t, 0L);
+				//
 				Double ls = Math.log10(size);
 				Integer iBin = setBin (ls, logBinWidth);
 				if (bins.containsKey(iBin)) {
