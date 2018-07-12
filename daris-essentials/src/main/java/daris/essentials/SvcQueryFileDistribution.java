@@ -156,7 +156,7 @@ public class SvcQueryFileDistribution extends PluginService {
 				w.add("bin", new String[]{"actual-bin-size", ""+actualSize, "human-bin-size", ""+humanSize + unit}, 0);
 			}
 		}
-		w.add("wasted-storage", new String[]{"uints", "bytes"},  wasted.max());
+		w.add("wasted-storage", new String[]{"units", "bytes"},  wasted.max());
 	}
 
 
