@@ -200,7 +200,6 @@ public class SvcQueryFileDistribution extends PluginService {
 				if (rem!=0) f++;
 					
 				Long wasted = (f * blockSize) - size;
-				w.add("wasted", wasted);
 				// 
 				Double t = vh.wastedSum_ + wasted;
 				vh.wastedSum_ = t;
@@ -217,7 +216,7 @@ public class SvcQueryFileDistribution extends PluginService {
 				vh.sum_ = vh.sum_ + size;
 				vh.min_ = Math.min(vh.min_, size);
 				vh.max_ = Math.max(vh.max_, size);
-				vh.n_ = vh.n_++;			
+				vh.n_ = vh.n_ + 1;			
 			}
 		}
 		Long time2 = System.currentTimeMillis();
