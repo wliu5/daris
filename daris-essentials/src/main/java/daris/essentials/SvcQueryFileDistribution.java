@@ -108,12 +108,16 @@ public class SvcQueryFileDistribution extends PluginService {
 			w.add("total-elapsed-time", totalTime_);
 			w.pop();
 		}
-		w.add("block-size", blockSize);
 		w.add("number-assets", vh.n_);
 		w.add("minimum-file-size", vh.min_);
 		w.add("maximum-file-size", vh.max_);
 		w.add("sum", new String[]{"units", "bytes"},  vh.sum_);
-		w.add("wasted-storage", new String[]{"units", "bytes"},  vh.wastedSum_);
+		Double fraction = vh.wastedSum_/vh.sum_ * 100.0D;
+		w.push("wasted-storage");
+		w.add("block-size", blockSize);
+		w.add("total", new String[]{"units", "bytes"},  vh.wastedSum_);
+		w.add("percentage",   String.format("%.2f",fraction*100.0D));
+		w.pop();
 
 
 		// FInd maximum bin from HashMap (not sorted)
