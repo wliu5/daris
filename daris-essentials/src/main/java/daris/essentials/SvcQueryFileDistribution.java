@@ -112,7 +112,7 @@ public class SvcQueryFileDistribution extends PluginService {
 		w.add("minimum-file-size", vh.min_);
 		w.add("maximum-file-size", vh.max_);
 		w.add("sum", new String[]{"units", "bytes"},  vh.sum_);
-		Double fraction = vh.wastedSum_/vh.sum_ * 100.0D;
+		Double fraction = vh.wastedSum_/vh.sum_;
 		w.push("wasted-storage");
 		w.add("block-size", blockSize);
 		w.add("total", new String[]{"units", "bytes"},  vh.wastedSum_);
