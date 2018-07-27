@@ -151,7 +151,7 @@ public class SvcProjectUserRemove extends PluginService {
         // TODO: Inconsistency here need to be resolved by Arcitecta: The following command doesn't work:
         // actor.describe :type  user :name  internalsp:aaf:lianne.schmaal@unimelb.edu.au
         // @formatter:on
-        if (authority != null && !"internalsp".equals(authority)) {
+        if (authority != null && !"internalsp".equals(authority) && !"ldap".equals(protocol)) {
             actorName = authority + ":" + actorName;
         }
         XmlDocMaker dm = new XmlDocMaker("args");
