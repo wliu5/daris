@@ -16,12 +16,11 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
-	<!-- DaRIS maven repository on github.com -->
 	<repositories>
 		<repository>
-			<id>daris-maven-repo</id>
-			<name>DaRIS maven repository on github.com</name>
-			<url>https://github.com/uom-daris/mvn-repo/raw/master</url>
+			<id>resplat-public-mvn-repo</id>
+			<name>ResPlat Public Maven Repository</name>
+			<url>https://gitlab.unimelb.edu.au/resplat-public/mvn-repo/raw/master</url>
 		</repository>
 	</repositories>
 	<dependencies>
